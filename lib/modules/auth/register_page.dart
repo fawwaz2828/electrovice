@@ -1,37 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../config/theme.dart';
+import '../../config/routes.dart';
 
-void main() {
-  runApp(const ElectroviceApp());
-}
-
-class ElectroviceApp extends StatelessWidget {
-  const ElectroviceApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Electrovice',
-      theme: ThemeData(
-        primaryColor: const Color(0xFF0061FF),
-        scaffoldBackgroundColor: const Color(0xFFF9FAFC),
-        fontFamily: 'Roboto', // Make sure to load an appropriate font in your pubspec.yaml if needed
-      ),
-      home: const RoleSelectionScreen(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class RoleSelectionScreen extends StatefulWidget {
-  const RoleSelectionScreen({Key? key}) : super(key: key);
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
-  State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
 enum UserRole { customer, technician }
 
-class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
+class _RegisterPageState extends State<RegisterPage> {
   UserRole? _selectedRole = UserRole.technician;
 
   @override
@@ -112,8 +93,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               RoleCard(
                 title: 'I am a Technician',
                 description: 'I want to manage jobs, build my profile, and grow my repair business.',
-                icon: Icons.build_circle, // Wrench-like icon
-                // Alternatively, simply use Icons.build
+                icon: Icons.build_circle, 
                 isSelected: _selectedRole == UserRole.technician,
                 onTap: () {
                   setState(() {
@@ -126,9 +106,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
               // Continue Button
               ElevatedButton(
-                onPressed: _selectedRole != null ? () {} : null,
+                onPressed: _selectedRole != null ? () {
+                  Get.toNamed(AppRoutes.login, arguments: {'role': _selectedRole});
+                } : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0061FF),
+                  backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 56),
                   shape: RoundedRectangleBorder(
@@ -163,7 +145,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Get.toNamed(AppRoutes.login, arguments: {'role': _selectedRole});
+                    },
                     child: const Text(
                       'Log In',
                       style: TextStyle(
@@ -213,7 +197,7 @@ class RoleCard extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isSelected ? const Color(0xFF0061FF) : Colors.transparent,
+                color: isSelected ? AppTheme.primaryColor : Colors.transparent,
                 width: 2,
               ),
               boxShadow: [
@@ -231,12 +215,12 @@ class RoleCard extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF0061FF) : const Color(0xFFD6E4FF),
+                    color: isSelected ? AppTheme.primaryColor : const Color(0xFFD6E4FF),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon == Icons.build_circle ? Icons.build : icon,
-                    color: isSelected ? Colors.white : const Color(0xFF0061FF),
+                    color: isSelected ? Colors.white : AppTheme.primaryColor,
                     size: 28,
                   ),
                 ),
@@ -271,7 +255,7 @@ class RoleCard extends StatelessWidget {
                     width: 22,
                     height: 22,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF0061FF),
+                      color: AppTheme.primaryColor,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -295,7 +279,7 @@ class RoleCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0061FF),
+                  color: AppTheme.primaryColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
