@@ -4,7 +4,7 @@ import '../../config/theme.dart';
 import '../../config/routes.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({Key? key}) : super(key: key);
+  const RegisterPage({super.key});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -13,7 +13,7 @@ class RegisterPage extends StatefulWidget {
 enum UserRole { customer, technician }
 
 class _RegisterPageState extends State<RegisterPage> {
-  UserRole? _selectedRole = UserRole.technician;
+  UserRole? _selectedRole = UserRole.customer;
 
   @override
   Widget build(BuildContext context) {
@@ -35,34 +35,16 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
               const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'E',
-                    style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                      fontStyle: FontStyle.italic,
-                      color: Color(0xFF0061FF),
-                    ),
-                  ),
-                  const Icon(
-                    Icons.bolt,
-                    color: Color(0xFF0061FF),
-                    size: 42,
-                  ),
-                  Text(
-                    'CTROVICE',
-                    style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                      fontStyle: FontStyle.italic,
-                      color: const Color(0xFF0061FF),
-                      letterSpacing: -1.0,
-                    ),
-                  ),
-                ],
+              Image.asset(
+                'assets/images/ELECTROVICE_LOGO_HD.png',
+                height: 48,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Text(
+                    'Image logo.png not found in assets/images/',
+                    style: TextStyle(color: Colors.red),
+                  );
+                },
               ),
               const SizedBox(height: 32),
               const Text(
@@ -80,7 +62,8 @@ class _RegisterPageState extends State<RegisterPage> {
               // Cards
               RoleCard(
                 title: 'I am a Customer',
-                description: 'I want to find expert technicians and repair my devices/vehicles.',
+                description:
+                    'I want to find expert technicians and repair my devices/vehicles.',
                 icon: Icons.person_outline,
                 isSelected: _selectedRole == UserRole.customer,
                 onTap: () {
@@ -92,8 +75,9 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 16),
               RoleCard(
                 title: 'I am a Technician',
-                description: 'I want to manage jobs, build my profile, and grow my repair business.',
-                icon: Icons.build_circle, 
+                description:
+                    'I want to manage jobs, build my profile, and grow my repair business.',
+                icon: Icons.build_circle,
                 isSelected: _selectedRole == UserRole.technician,
                 onTap: () {
                   setState(() {
@@ -106,9 +90,14 @@ class _RegisterPageState extends State<RegisterPage> {
 
               // Continue Button
               ElevatedButton(
-                onPressed: _selectedRole != null ? () {
-                  Get.toNamed(AppRoutes.login, arguments: {'role': _selectedRole});
-                } : null,
+                onPressed: _selectedRole != null
+                    ? () {
+                        Get.toNamed(
+                          AppRoutes.signup,
+                          arguments: {'role': _selectedRole},
+                        );
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
@@ -134,31 +123,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Already have an account? ',
-                    style: TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 14,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Get.toNamed(AppRoutes.login, arguments: {'role': _selectedRole});
-                    },
-                    child: const Text(
-                      'Log In',
-                      style: TextStyle(
-                        color: Color(0xFF0061FF),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 48),
             ],
           ),
@@ -176,13 +140,13 @@ class RoleCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const RoleCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.icon,
     required this.isSelected,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +179,9 @@ class RoleCard extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.primaryColor : const Color(0xFFD6E4FF),
+                    color: isSelected
+                        ? AppTheme.primaryColor
+                        : const Color(0xFFD6E4FF),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -265,10 +231,7 @@ class RoleCard extends StatelessWidget {
                     ),
                   )
                 else
-                  const Icon(
-                    Icons.chevron_right,
-                    color: Color(0xFFCBD5E1),
-                  ),
+                  const Icon(Icons.chevron_right, color: Color(0xFFCBD5E1)),
               ],
             ),
           ),
@@ -277,7 +240,10 @@ class RoleCard extends StatelessWidget {
               top: -12,
               right: 24,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryColor,
                   borderRadius: BorderRadius.circular(12),
