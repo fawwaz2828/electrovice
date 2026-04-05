@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../config/routes.dart';
+import '../../widget/app_bottom_nav_bar.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -7,7 +11,10 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: AppBottomNavBar(
+        selectedItem: AppNavItem.home,
+        onItemSelected: _onNavSelected,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -516,65 +523,30 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home, 'HOME', true),
-              _buildNavItem(Icons.history, 'HISTORY', false),
-              _buildNavItem(Icons.receipt_long_outlined, 'ORDER', false),
-              _buildNavItem(Icons.person_outline, 'PROFILE', false),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isSelected) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFEFF6FF) : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Icon(
-            icon,
-            color: isSelected
-                ? const Color(0xFF0061FF)
-                : const Color(0xFF94A3B8),
-            size: 24,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected
-                ? const Color(0xFF0061FF)
-                : const Color(0xFF94A3B8),
-          ),
-        ),
-      ],
-    );
+  void _onNavSelected(AppNavItem item) {
+    switch (item) {
+      case AppNavItem.home:
+        return;
+      case AppNavItem.profile:
+        Get.offNamed(AppRoutes.profile_page);
+        return;
+      case AppNavItem.active:
+        Get.snackbar(
+          'Coming soon',
+          'Active jobs view is not ready yet.',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+        return;
+      case AppNavItem.history:
+      case AppNavItem.order:
+        Get.snackbar(
+          'Coming soon',
+          '${item.name[0].toUpperCase()}${item.name.substring(1)} is not ready yet.',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+        return;
+    }
   }
 }

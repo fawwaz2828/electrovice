@@ -1,232 +1,149 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-class ProfilePage extends StatelessWidget {
+import '../../config/routes.dart';
+import '../../models/profile_model.dart';
+import '../../widget/app_bottom_nav_bar.dart';
+import 'profile_controller.dart';
+
+class ProfilePage extends GetView<ProfileController> {
   const ProfilePage({super.key});
 
-  static const Color _navy = Color(0xFF183B72);
-  static const Color _blue = Color(0xFF4461F2);
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _line = Color(0xFFE4E9F2);
-  static const Color _muted = Color(0xFF7D8FB3);
-  static const Color _softText = Color(0xFFB6C0D2);
-  static const Color _surface = Colors.white;
-  static const Color _danger = Color(0xFFD34234);
+  static const Color _pageBackground = Color(0xFFF8F9FD);
+  static const Color _cardBackground = Colors.white;
+  static const Color _line = Color(0xFFE5EAF3);
+  static const Color _title = Color(0xFF111111);
+  static const Color _muted = Color(0xFF6F88AE);
+  static const Color _label = Color(0xFFC0C8D7);
+  static const Color _fieldBackground = Color(0xFFF5F6FA);
+  static const Color _danger = Color(0xFFD14638);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: _pageBackground,
+      bottomNavigationBar: AppBottomNavBar(
+        selectedItem: AppNavItem.profile,
+        onItemSelected: _onNavSelected,
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopBar(context),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
-                child: Column(
-                  children: [
-                    _buildProfileHeader(),
-                    const SizedBox(height: 36),
-                    _SectionTitle(title: 'PERSONAL IDENTITY'),
-                    const SizedBox(height: 14),
-                    _CardShell(
-                      child: Column(
-                        children: const [
-                          _FieldBlock(
-                            label: 'FULL NAME',
-                            value: 'Alex Johnson',
-                          ),
-                          SizedBox(height: 18),
-                          _FieldBlock(
-                            label: 'EMAIL ADDRESS',
-                            value: 'alex.johnson@gmail.com',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    _SectionTitle(title: 'CONNECTIVITY'),
-                    const SizedBox(height: 14),
-                    _CardShell(
-                      child: Column(
-                        children: const [
-                          _PhoneBlock(),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    _SectionTitle(title: 'PRIMARY NODES'),
-                    const SizedBox(height: 14),
-                    const _NodeCard(
-                      icon: Icons.home_rounded,
-                      iconBg: _blue,
-                      title: 'Home Base',
-                      subtitle: '241 Oak Ridge, Ste 402 North\nHills, CA 91343',
-                    ),
-                    const SizedBox(height: 12),
-                    const _NodeCard(
-                      icon: Icons.handyman_outlined,
-                      iconBg: Color(0xFFDDE7F8),
-                      iconColor: _navy,
-                      title: 'Headquarters',
-                      subtitle: 'Tech Plaza, Building B, Floor 12',
-                    ),
-                    const SizedBox(height: 30),
-                    _SectionTitle(title: 'SECURITY PROTOCOLS'),
-                    const SizedBox(height: 14),
-                    _CardShell(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: const [
-                          _SecurityTile(
-                            icon: Icons.lock_reset_rounded,
-                            title: 'Change Access Key',
-                          ),
-                          Divider(height: 1, thickness: 1, color: _line),
-                          _SecurityTile(
-                            icon: Icons.shield_outlined,
-                            title: 'Privacy Management',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 26),
-                    _buildLogoutButton(context),
-                    const SizedBox(height: 34),
-                  ],
-                ),
-              ),
-            ),
-            _buildBottomBar(),
-          ],
-        ),
-      ),
-    );
-  }
+        child: Obx(() {
+          final ProfileData data =
+              controller.profile.value ?? ProfileData.sample();
 
-  Widget _buildTopBar(BuildContext context) {
-    return Container(
-      height: 68,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: const BoxDecoration(
-        color: _surface,
-        border: Border(bottom: BorderSide(color: Color(0xFFF0F2F7))),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.maybePop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _navy),
-          ),
-          const Expanded(
-            child: Center(
-              child: Text(
-                'Profile',
-                style: TextStyle(
-                  color: _navy,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.settings_outlined, color: _navy),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader() {
-    return Column(
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 124,
-              height: 154,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.white, width: 3),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x150A1E42),
-                    blurRadius: 18,
-                    offset: Offset(0, 8),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTopBar(),
+                const SizedBox(height: 30),
+                Center(child: _AvatarCard(imageUrl: data.avatarUrl)),
+                const SizedBox(height: 18),
+                Center(
+                  child: Text(
+                    data.fullName,
+                    style: const TextStyle(
+                      color: _title,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                    ),
                   ),
-                ],
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFF7F1E8), Color(0xFFD5DAE8)],
                 ),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(15),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: Alignment(0, -0.5),
-                          radius: 1.05,
-                          colors: [Color(0xFFFBF5EC), Color(0xFFD8DDEA)],
-                        ),
+                const SizedBox(height: 38),
+                const _SectionTitle(title: 'PERSONAL IDENTITY'),
+                const SizedBox(height: 16),
+                _CardShell(
+                  child: Column(
+                    children: [
+                      _InfoField(
+                        label: 'FULL NAME',
+                        value: data.fullName,
                       ),
-                    ),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        height: 62,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Color(0x00000000), Color(0xDD152847)],
+                      const SizedBox(height: 22),
+                      _InfoField(
+                        label: 'EMAIL ADDRESS',
+                        value: data.emailAddress,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
+                const _SectionTitle(title: 'CONNECTIVITY'),
+                const SizedBox(height: 16),
+                _CardShell(
+                  child: _PhoneField(
+                    label: 'MOBILE NUMBER',
+                    value: data.mobileNumber,
+                    isVerified: data.isMobileVerified,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                const _SectionTitle(title: 'PRIMARY NODES'),
+                const SizedBox(height: 16),
+                ...data.primaryNodes.map(
+                  (node) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _NodeTile(node: node),
+                  ),
+                ),
+                const SizedBox(height: 26),
+                const _SectionTitle(title: 'SECURITY PROTOCOLS'),
+                const SizedBox(height: 16),
+                _CardShell(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      for (
+                        int index = 0;
+                        index < data.securityOptions.length;
+                        index++
+                      ) ...[
+                        _SecurityTile(option: data.securityOptions[index]),
+                        if (index != data.securityOptions.length - 1)
+                          const Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: _line,
+                            indent: 18,
+                            endIndent: 18,
                           ),
-                        ),
-                      ),
-                    ),
-                    const Center(
-                      child: Icon(
-                        Icons.person_rounded,
-                        size: 82,
-                        color: Color(0xFF394B66),
-                      ),
-                    ),
-                  ],
+                      ],
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 32),
+                _buildLogoutButton(context),
+              ],
             ),
-            Positioned(
-              right: -2,
-              bottom: -2,
-              child: Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: _navy,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: const Icon(Icons.edit_outlined, size: 17, color: Colors.white),
-              ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Row(
+      children: [
+        const Expanded(
+          child: Text(
+            'Profile',
+            style: TextStyle(
+              color: _title,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
             ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        const Text(
-          'Alex Johnson',
-          style: TextStyle(
-            color: _navy,
-            fontSize: 25,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.6,
           ),
+        ),
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(
+            Icons.settings_outlined,
+            color: Colors.black,
+            size: 26,
+          ),
+          splashRadius: 22,
         ),
       ],
     );
@@ -239,70 +156,71 @@ class ProfilePage extends StatelessWidget {
         onPressed: () => _showLogoutDialog(context),
         style: OutlinedButton.styleFrom(
           foregroundColor: _danger,
-          side: const BorderSide(color: Color(0xFFF1BDB7)),
-          backgroundColor: const Color(0xFFFFFCFC),
-          minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          side: const BorderSide(color: Color(0xFFF0BEB8)),
+          backgroundColor: Colors.white.withOpacity(0.7),
+          minimumSize: const Size.fromHeight(54),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         icon: const Icon(Icons.logout_rounded, size: 18),
         label: const Text(
           'LOG OUT SYSTEM',
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.1,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.3,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBottomBar() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: const BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x140D2348),
-            blurRadius: 28,
-            offset: Offset(0, -8),
-          ),
-        ],
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _BottomNavItem(icon: Icons.home_rounded, label: 'HOME'),
-          _BottomNavItem(icon: Icons.history_rounded, label: 'HISTORY'),
-          _BottomNavItem(icon: Icons.receipt_long_rounded, label: 'ORDER'),
-          _BottomNavItem(
-            icon: Icons.person_outline_rounded,
-            label: 'PROFILE',
-            selected: true,
-          ),
-        ],
-      ),
-    );
+  void _onNavSelected(AppNavItem item) {
+    switch (item) {
+      case AppNavItem.profile:
+        return;
+      case AppNavItem.home:
+        Get.offNamed(AppRoutes.home);
+        return;
+      case AppNavItem.active:
+        Get.snackbar(
+          'Coming soon',
+          'Active jobs view is not ready yet.',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+        return;
+      case AppNavItem.history:
+      case AppNavItem.order:
+        Get.snackbar(
+          'Coming soon',
+          '${item.name[0].toUpperCase()}${item.name.substring(1)} is not ready yet.',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+        return;
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           title: const Text('Log Out'),
           content: const Text('Are you sure you want to log out of the system?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Logged out successfully')),
                 );
@@ -313,6 +231,113 @@ class ProfilePage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _AvatarCard extends StatelessWidget {
+  const _AvatarCard({this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 138,
+          height: 138,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 24,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: imageUrl != null && imageUrl!.trim().isNotEmpty
+                ? Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const _AvatarPlaceholder(),
+                  )
+                : const _AvatarPlaceholder(),
+          ),
+        ),
+        Positioned(
+          right: -2,
+          bottom: -2,
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2.5),
+            ),
+            child: const Icon(
+              Icons.edit_outlined,
+              color: Colors.white,
+              size: 17,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AvatarPlaceholder extends StatelessWidget {
+  const _AvatarPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFFF1E8DC),
+            Color(0xFFE9EEF9),
+          ],
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              height: 44,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x00000000),
+                    Color(0xFF0D1421),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const Center(
+            child: Icon(
+              Icons.person_rounded,
+              size: 78,
+              color: Color(0xFF505A69),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -332,10 +357,10 @@ class _SectionTitle extends StatelessWidget {
             color: ProfilePage._muted,
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            letterSpacing: 1.4,
+            letterSpacing: 1.5,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         const Expanded(
           child: Divider(
             color: ProfilePage._line,
@@ -351,7 +376,7 @@ class _SectionTitle extends StatelessWidget {
 class _CardShell extends StatelessWidget {
   const _CardShell({
     required this.child,
-    this.padding = const EdgeInsets.all(20),
+    this.padding = const EdgeInsets.all(18),
   });
 
   final Widget child;
@@ -363,12 +388,12 @@ class _CardShell extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: ProfilePage._surface,
+        color: ProfilePage._cardBackground,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D1A2E52),
-            blurRadius: 18,
+            color: Color(0x0D14213D),
+            blurRadius: 20,
             offset: Offset(0, 8),
           ),
         ],
@@ -378,8 +403,8 @@ class _CardShell extends StatelessWidget {
   }
 }
 
-class _FieldBlock extends StatelessWidget {
-  const _FieldBlock({
+class _InfoField extends StatelessWidget {
+  const _InfoField({
     required this.label,
     required this.value,
   });
@@ -395,24 +420,24 @@ class _FieldBlock extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            color: ProfilePage._softText,
+            color: ProfilePage._label,
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F5F9),
+            color: ProfilePage._fieldBackground,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
             value,
             style: const TextStyle(
               color: Color(0xFF2A2A2A),
-              fontSize: 15,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -422,64 +447,80 @@ class _FieldBlock extends StatelessWidget {
   }
 }
 
-class _PhoneBlock extends StatelessWidget {
-  const _PhoneBlock();
+class _PhoneField extends StatelessWidget {
+  const _PhoneField({
+    required this.label,
+    required this.value,
+    required this.isVerified,
+  });
+
+  final String label;
+  final String value;
+  final bool isVerified;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'MOBILE NUMBER',
-          style: TextStyle(
-            color: ProfilePage._softText,
+        Text(
+          label,
+          style: const TextStyle(
+            color: ProfilePage._label,
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F5F9),
+            color: ProfilePage._fieldBackground,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  '+1 (555) 012-3456',
-                  style: TextStyle(
+                  value,
+                  style: const TextStyle(
                     color: Color(0xFF2A2A2A),
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.verified, size: 14, color: ProfilePage._navy),
-                    SizedBox(width: 5),
-                    Text(
-                      'VERIFIED',
-                      style: TextStyle(
-                        color: ProfilePage._navy,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
+              if (isVerified)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDEFF4),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.verified,
+                        size: 14,
+                        color: Colors.black,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 5),
+                      Text(
+                        'VERIFIED',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -488,35 +529,28 @@ class _PhoneBlock extends StatelessWidget {
   }
 }
 
-class _NodeCard extends StatelessWidget {
-  const _NodeCard({
-    required this.icon,
-    required this.iconBg,
-    required this.title,
-    required this.subtitle,
-    this.iconColor = Colors.white,
-  });
+class _NodeTile extends StatelessWidget {
+  const _NodeTile({required this.node});
 
-  final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
+  final ProfileNode node;
 
   @override
   Widget build(BuildContext context) {
+    final _NodeVisual visual = _NodeVisual.fromType(node.type);
+
     return _CardShell(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(8),
+              color: visual.backgroundColor,
+              borderRadius: BorderRadius.circular(6),
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(visual.icon, color: visual.iconColor, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -524,32 +558,32 @@ class _NodeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  node.title,
                   style: const TextStyle(
-                    color: Color(0xFF232F46),
+                    color: Color(0xFF23262F),
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  subtitle,
+                  node.subtitle,
                   style: const TextStyle(
-                    color: Color(0xFF4F5D75),
+                    color: Color(0xFF515B6F),
                     fontSize: 13,
-                    height: 1.3,
+                    height: 1.25,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF66748D)),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
+          const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF767E91)),
+          const SizedBox(width: 16),
           const Icon(
             Icons.delete_outline_rounded,
             size: 18,
-            color: Color(0xFF66748D),
+            color: Color(0xFF767E91),
           ),
         ],
       ),
@@ -557,85 +591,70 @@ class _NodeCard extends StatelessWidget {
   }
 }
 
-class _SecurityTile extends StatelessWidget {
-  const _SecurityTile({
+class _NodeVisual {
+  const _NodeVisual({
     required this.icon,
-    required this.title,
+    required this.backgroundColor,
+    required this.iconColor,
   });
 
   final IconData icon;
-  final String title;
+  final Color backgroundColor;
+  final Color iconColor;
+
+  factory _NodeVisual.fromType(String type) {
+    switch (type) {
+      case 'home':
+        return const _NodeVisual(
+          icon: Icons.home_outlined,
+          backgroundColor: Colors.black,
+          iconColor: Colors.white,
+        );
+      case 'hq':
+        return const _NodeVisual(
+          icon: Icons.handyman_outlined,
+          backgroundColor: Color(0xFFDCE8FB),
+          iconColor: Colors.black,
+        );
+      default:
+        return const _NodeVisual(
+          icon: Icons.place_outlined,
+          backgroundColor: Color(0xFFECEFF6),
+          iconColor: Colors.black,
+        );
+    }
+  }
+}
+
+class _SecurityTile extends StatelessWidget {
+  const _SecurityTile({required this.option});
+
+  final SecurityOption option;
 
   @override
   Widget build(BuildContext context) {
+    final IconData icon = switch (option.key) {
+      'change_access_key' => Icons.lock_reset_rounded,
+      'privacy_management' => Icons.shield_outlined,
+      _ => Icons.chevron_right_rounded,
+    };
+
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      leading: Container(
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF4F7FD),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Icon(icon, size: 18, color: ProfilePage._navy),
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      leading: Icon(icon, color: Colors.black, size: 23),
       title: Text(
-        title,
+        option.title,
         style: const TextStyle(
-          color: Color(0xFF1F2B3E),
+          color: Color(0xFF1C1C1C),
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
       ),
       trailing: const Icon(
         Icons.chevron_right_rounded,
-        color: Color(0xFF6D7891),
+        color: Color(0xFF6F7788),
       ),
       onTap: () {},
-    );
-  }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  const _BottomNavItem({
-    required this.icon,
-    required this.label,
-    this.selected = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color color = selected ? ProfilePage._blue : const Color(0xFFA3AEC4);
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: selected ? 14 : 6,
-        vertical: selected ? 10 : 6,
-      ),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFFF1F5FF) : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
