@@ -15,7 +15,7 @@ class ElectroviceApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Electrovice',
       theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.register,
+      initialRoute: AppRoutes.profile_page, // Change this to AppRoutes.login if you want to start with the login page
       getPages: AppRoutes.routes,
       debugShowCheckedModeBanner: false,
     );
