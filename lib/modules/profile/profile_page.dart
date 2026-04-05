@@ -192,13 +192,10 @@ class ProfilePage extends GetView<ProfileController> {
         );
         return;
       case AppNavItem.history:
+        Get.offNamed(AppRoutes.orderHistory);
+        return;
       case AppNavItem.order:
-        Get.snackbar(
-          'Coming soon',
-          '${item.name[0].toUpperCase()}${item.name.substring(1)} is not ready yet.',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-        );
+        Get.offNamed(AppRoutes.orderTracking);
         return;
     }
   }

@@ -365,6 +365,7 @@ class HomePage extends StatelessWidget {
           rating: '4.9',
           distance: '0.8 km',
           verified: true,
+          onTap: () => Get.toNamed(AppRoutes.technicianDetail),
           imageUrl:
               'https://i.pravatar.cc/150?u=a042581f4e29026704d', // Placeholder photo 1
         ),
@@ -375,6 +376,7 @@ class HomePage extends StatelessWidget {
           rating: '5.0',
           distance: '1.2 km',
           jobs: '200+ Jobs',
+          onTap: () => Get.toNamed(AppRoutes.technicianDetail),
           imageUrl:
               'https://i.pravatar.cc/150?u=a042581f4e29026704e', // Placeholder photo 2
         ),
@@ -389,136 +391,140 @@ class HomePage extends StatelessWidget {
     required String distance,
     bool verified = false,
     String? jobs,
+    VoidCallback? onTap,
     required String imageUrl,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              imageUrl,
-              width: 70,
-              height: 70,
-              fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                imageUrl,
+                width: 70,
+                height: 70,
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF8A00),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.white, size: 12),
-                          const SizedBox(width: 2),
-                          Text(
-                            rating,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  specialty,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1D4ED8),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      color: Color(0xFF64748B),
-                      size: 14,
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      distance,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF475569),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    if (verified) ...[
-                      const Icon(
-                        Icons.verified_outlined,
-                        color: Color(0xFF64748B),
-                        size: 14,
-                      ),
-                      const SizedBox(width: 2),
-                      const Text(
-                        'Pro Verified',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF475569),
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ] else if (jobs != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF8A00),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.white, size: 12),
+                            const SizedBox(width: 2),
+                            Text(
+                              rating,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    specialty,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1D4ED8),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
                       const Icon(
-                        Icons.history,
+                        Icons.location_on_outlined,
                         color: Color(0xFF64748B),
                         size: 14,
                       ),
                       const SizedBox(width: 2),
                       Text(
-                        jobs,
+                        distance,
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF475569),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(width: 16),
+                      if (verified) ...[
+                        const Icon(
+                          Icons.verified_outlined,
+                          color: Color(0xFF64748B),
+                          size: 14,
+                        ),
+                        const SizedBox(width: 2),
+                        const Text(
+                          'Pro Verified',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF475569),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ] else if (jobs != null) ...[
+                        const Icon(
+                          Icons.history,
+                          color: Color(0xFF64748B),
+                          size: 14,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          jobs,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF475569),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -539,13 +545,10 @@ class HomePage extends StatelessWidget {
         );
         return;
       case AppNavItem.history:
+        Get.offNamed(AppRoutes.orderHistory);
+        return;
       case AppNavItem.order:
-        Get.snackbar(
-          'Coming soon',
-          '${item.name[0].toUpperCase()}${item.name.substring(1)} is not ready yet.',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-        );
+        Get.offNamed(AppRoutes.orderTracking);
         return;
     }
   }
