@@ -7,9 +7,9 @@ import 'package:electrovice/main.dart';
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const ElectroviceApp());
+    await tester.pumpWidget(const MyApp());
 
-    // Verify that the app title is present or just that it loads without crashing
+    // Verify that the app loads without crashing
     expect(find.byType(MaterialApp), findsWidgets);
   });
 }

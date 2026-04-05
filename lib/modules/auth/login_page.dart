@@ -6,7 +6,7 @@ import '../../modules/auth/auth_controller.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -61,14 +61,12 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('E', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF0061FF))),
-                  const Icon(Icons.bolt, color: Color(0xFF0061FF), size: 42),
-                  Text('CTROVICE', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: const Color(0xFF0061FF), letterSpacing: -1.0)),
-                ],
+              Image.asset(
+                'assets/images/ELECTROVICE_LOGO_HD.png',
+                height: 48,
+                fit: BoxFit.contain,
               ),
+
               const SizedBox(height: 16),
 
               Text(
@@ -86,23 +84,48 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(isTech ? 'WORK EMAIL' : 'EMAIL ADDRESS', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color(0xFF1E40AF))),
+                    Text(
+                      isTech ? 'WORK EMAIL' : 'EMAIL ADDRESS',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                        color: Color(0xFF1E40AF),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: isTech ? 'name@electrovice.pro' : 'name@email.com',
+                        hintText: isTech
+                            ? 'name@electrovice.pro'
+                            : 'name@email.com',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                        filled: true, fillColor: const Color(0xFFF1F5F9),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                        prefixIcon: const Icon(Icons.mail_outline, color: Color(0xFF64748B)),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.mail_outline,
+                          color: Color(0xFF64748B),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 18,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -110,8 +133,26 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('PASSWORD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color(0xFF1E40AF))),
-                        GestureDetector(onTap: () {}, child: const Text('Forgot Password?', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF1E40AF)))),
+                        const Text(
+                          'PASSWORD',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                            color: Color(0xFF1E40AF),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {},
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E40AF),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -120,87 +161,159 @@ class _LoginPageState extends State<LoginPage> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         hintText: '••••••••',
-                        hintStyle: const TextStyle(color: Color(0xFF94A3B8), letterSpacing: 4),
-                        filled: true, fillColor: const Color(0xFFF1F5F9),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: const Color(0xFF64748B)),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        hintStyle: const TextStyle(
+                          color: Color(0xFF94A3B8),
+                          letterSpacing: 4,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: Color(0xFF64748B),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: const Color(0xFF64748B),
+                          ),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 18,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 32),
 
                     // Login Button
-                    Obx(() => ElevatedButton(
-                      onPressed: _authController.isLoading.value ? null : () {
-                        _authController.login(
-                          _emailController.text.trim(),
-                          _passwordController.text.trim(),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      child: _authController.isLoading.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                              SizedBox(width: 8),
-                              Icon(Icons.arrow_forward, size: 20),
-                            ],
+                    Obx(
+                      () => ElevatedButton(
+                        onPressed: _authController.isLoading.value
+                            ? null
+                            : () {
+                                _authController.login(
+                                  _emailController.text.trim(),
+                                  _passwordController.text.trim(),
+                                );
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                    )),
+                          elevation: 0,
+                        ),
+                        child: _authController.isLoading.value
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Login',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward, size: 20),
+                                ],
+                              ),
+                      ),
+                    ),
 
-                    Obx(() => _authController.errorMessage.value.isNotEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Text(_authController.errorMessage.value, style: const TextStyle(color: Colors.red, fontSize: 13), textAlign: TextAlign.center),
-                        )
-                      : const SizedBox(),
+                    Obx(
+                      () => _authController.errorMessage.value.isNotEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: Text(
+                                _authController.errorMessage.value,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 13,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          : const SizedBox(),
                     ),
 
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        Expanded(child: Divider(color: Colors.grey[200], thickness: 2)),
+                        Expanded(
+                          child: Divider(color: Colors.grey[200], thickness: 2),
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(isTech ? 'AUTHORIZED ACCESS ONLY' : 'SECURE ACCESS', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+                          child: Text(
+                            isTech ? 'AUTHORIZED ACCESS ONLY' : 'SECURE ACCESS',
+                            style: const TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
                         ),
-                        Expanded(child: Divider(color: Colors.grey[200], thickness: 2)),
+                        Expanded(
+                          child: Divider(color: Colors.grey[200], thickness: 2),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
 
                     // Google Button
-                    Obx(() => OutlinedButton(
-                      onPressed: _authController.isLoading.value ? null : () {
-                        _authController.loginWithGoogle(role: isTech ? 'technician' : 'customer');
-                      },
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        side: BorderSide.none,
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    Obx(
+                      () => OutlinedButton(
+                        onPressed: _authController.isLoading.value
+                            ? null
+                            : () {
+                                _authController.loginWithGoogle(
+                                  role: isTech ? 'technician' : 'customer',
+                                );
+                              },
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          side: BorderSide.none,
+                          minimumSize: const Size(double.infinity, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.network(
+                              'https://img.icons8.com/color/48/000000/google-logo.png',
+                              width: 24,
+                              height: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Continue with Google',
+                              style: TextStyle(
+                                color: Color(0xFF0F172A),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.network('https://img.icons8.com/color/48/000000/google-logo.png', width: 24, height: 24),
-                          const SizedBox(width: 12),
-                          const Text('Continue with Google', style: TextStyle(color: Color(0xFF0F172A), fontSize: 15, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    )),
+                    ),
                   ],
                 ),
               ),
@@ -209,10 +322,25 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(isTech ? "Don't have technician account? " : "Don't have an account? ", style: const TextStyle(color: Color(0xFF64748B), fontSize: 15)),
+                  Text(
+                    isTech
+                        ? "Don't have technician account? "
+                        : "Don't have an account? ",
+                    style: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 15,
+                    ),
+                  ),
                   GestureDetector(
                     onTap: () => Get.offAllNamed(AppRoutes.register),
-                    child: const Text('Sign Up', style: TextStyle(color: AppTheme.primaryColor, fontSize: 15, fontWeight: FontWeight.w800)),
+                    child: const Text(
+                      'Sign Up',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -220,15 +348,46 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.verified_user_outlined, size: 14, color: Color(0xFF94A3B8)),
+                  const Icon(
+                    Icons.verified_user_outlined,
+                    size: 14,
+                    color: Color(0xFF94A3B8),
+                  ),
                   const SizedBox(width: 6),
-                  const Text('PRECISION ENCRYPTED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0, color: Color(0xFF94A3B8))),
+                  const Text(
+                    'PRECISION ENCRYPTED',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.0,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
                   const SizedBox(width: 16),
-                  Container(width: 4, height: 4, decoration: const BoxDecoration(color: Color(0xFFE2E8F0), shape: BoxShape.circle)),
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE2E8F0),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                   const SizedBox(width: 16),
-                  const Icon(Icons.shield_outlined, size: 14, color: Color(0xFF94A3B8)),
+                  const Icon(
+                    Icons.shield_outlined,
+                    size: 14,
+                    color: Color(0xFF94A3B8),
+                  ),
                   const SizedBox(width: 6),
-                  const Text('SECURE NODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0, color: Color(0xFF94A3B8))),
+                  const Text(
+                    'SECURE NODE',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.0,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 32),

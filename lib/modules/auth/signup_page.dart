@@ -63,14 +63,12 @@ class _SignupPageState extends State<SignupPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('E', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF0061FF))),
-                  const Icon(Icons.bolt, color: Color(0xFF0061FF), size: 42),
-                  Text('CTROVICE', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: const Color(0xFF0061FF), letterSpacing: -1.0)),
-                ],
+              Image.asset(
+                'assets/images/ELECTROVICE_LOGO_HD.png',
+                height: 48,
+                fit: BoxFit.contain,
               ),
+
               const SizedBox(height: 16),
 
               Text(
@@ -88,7 +86,7 @@ class _SignupPageState extends State<SignupPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10))],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 10))],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

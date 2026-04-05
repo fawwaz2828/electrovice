@@ -6,7 +6,7 @@ import '../../config/routes.dart';
 enum UserRole { customer, technician }
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({Key? key}) : super(key: key);
+  const RegisterPage({super.key});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -28,14 +28,12 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 60),
               const Text('WELCOME TO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color(0xFF1E293B))),
               const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('E', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF0061FF))),
-                  const Icon(Icons.bolt, color: Color(0xFF0061FF), size: 42),
-                  Text('CTROVICE', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: const Color(0xFF0061FF), letterSpacing: -1.0)),
-                ],
+              Image.asset(
+                'assets/images/ELECTROVICE_LOGO_HD.png',
+                height: 48,
+                fit: BoxFit.contain,
               ),
+
               const SizedBox(height: 32),
               const Text(
                 'Choose how you would like to use the\nplatform',
@@ -107,13 +105,13 @@ class RoleCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const RoleCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.icon,
     required this.isSelected,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +129,7 @@ class RoleCard extends StatelessWidget {
                 color: isSelected ? Colors.black : Colors.transparent,
                 width: 2,
               ),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
