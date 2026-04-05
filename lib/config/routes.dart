@@ -1,12 +1,29 @@
 import 'package:get/get.dart';
 import '../modules/auth/login_page.dart';
 import '../modules/auth/register_page.dart';
+import '../modules/profile/profile_page.dart';
+import '../modules/profile/profile_controller.dart';
 import '../modules/auth/signup_page.dart';
 import '../modules/home/home_page.dart';
+import '../modules/booking/booking_controller.dart';
+import '../modules/booking/booking_form_page.dart';
+import '../modules/booking/booking_history_page.dart';
+import '../modules/booking/booking_technician_detail_page.dart';
+import '../modules/booking/booking_tracking_page.dart';
+import '../modules/booking/checkout_page.dart';
+import '../modules/technician/technician_controller.dart';
+import '../modules/technician/technician_profile_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
-  static const String register = '/register'; 
+  static const String register = '/register';
+  static const String profile_page = '/profile';
+  static const String technicianProfile = '/technician/profile';
+  static const String technicianDetail = '/customer/technician-detail';
+  static const String createOrder = '/customer/create-order';
+  static const String checkout = '/customer/checkout';
+  static const String orderTracking = '/customer/order-tracking';
+  static const String orderHistory = '/customer/order-history';
   static const String signup = '/signup';
   static const String home = '/home';
 
@@ -18,6 +35,65 @@ class AppRoutes {
     GetPage(
       name: register,
       page: () => const RegisterPage(),
+    ),
+    GetPage(
+      name: profile_page,
+      page: () => const ProfilePage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<ProfileController>(() => ProfileController());
+      }),
+    ),
+    GetPage(
+      name: technicianProfile,
+      page: () => const TechnicianProfilePage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
+    ),
+    GetPage(
+      name: technicianDetail,
+      page: () => const BookingTechnicianDetailPage(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<BookingController>()) {
+          Get.put(BookingController());
+        }
+      }),
+    ),
+    GetPage(
+      name: createOrder,
+      page: () => const BookingFormPage(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<BookingController>()) {
+          Get.put(BookingController());
+        }
+      }),
+    ),
+    GetPage(
+      name: checkout,
+      page: () => const CheckoutPage(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<BookingController>()) {
+          Get.put(BookingController());
+        }
+      }),
+    ),
+    GetPage(
+      name: orderTracking,
+      page: () => const BookingTrackingPage(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<BookingController>()) {
+          Get.put(BookingController());
+        }
+      }),
+    ),
+    GetPage(
+      name: orderHistory,
+      page: () => const BookingHistoryPage(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<BookingController>()) {
+          Get.put(BookingController());
+        }
+      }),
     ),
     GetPage(
       name: signup,
