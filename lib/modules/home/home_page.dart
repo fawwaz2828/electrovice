@@ -465,7 +465,7 @@ class HomePage extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1D4ED8),
+                      color: Color.fromARGB(255, 0, 0, 0),
                       letterSpacing: 0.5,
                     ),
                   ),
