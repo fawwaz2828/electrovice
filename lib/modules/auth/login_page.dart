@@ -6,7 +6,7 @@ import '../../modules/auth/auth_controller.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -18,14 +18,19 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
 
   late UserRole _role;
-
-  //New Add for Authentication
   final AuthController _authController = Get.put(AuthController());
 
   @override
   void initState() {
     super.initState();
-    _role = Get.arguments?['role'] ?? UserRole.customer;
+    final argRole = Get.arguments?['role'];
+    if (argRole is String) {
+      _role = argRole == 'technician' ? UserRole.technician : UserRole.customer;
+    } else if (argRole is UserRole) {
+      _role = argRole;
+    } else {
+      _role = UserRole.customer;
+    }
   }
 
   @override
@@ -46,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1E293B)),
-          onPressed: () => Get.offAllNamed(AppRoutes.signup),
+          onPressed: () => Get.offAllNamed(AppRoutes.register),
         ),
       ),
       body: SafeArea(
@@ -56,7 +61,6 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 12),
-<<<<<<< HEAD
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -66,53 +70,15 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              if (isTech) ...[
-                const Text('TECHNICIAN LOGIN', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0F172A), letterSpacing: -0.5)),
-=======
-              // App Logo
-              Image.asset(
-                'assets/images/ELECTROVICE_LOGO_HD.png',
-                height: 48,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Text(
-                    'Image logo.png not found in assets/images/',
-                    style: TextStyle(color: Colors.red),
-                  );
-                },
+
+              Text(
+                isTech ? 'Welcome Back, Technician' : 'Welcome Back, Customer',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF475569),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              const SizedBox(height: 16),
-
-              // Dynamic Title
-              if (isTech) ...[
-                const Text(
-                  'Technician Login',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                    letterSpacing: -0.5,
-                  ),
-                ),
->>>>>>> d29feedf15af469c170d0ebc6887c63bdc2c6d24
-                const SizedBox(height: 12),
-                const Text('Access your repair dashboard and\nservice requests.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Color(0xFF475569), height: 1.4, fontWeight: FontWeight.w500)),
-              ] else ...[
-<<<<<<< HEAD
-                const Text('Welcome Back, Customer', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
-              ],
-=======
-                const Text(
-                  'Customer Login',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF334155),
-                  ),
-                ),
-              ],
-
->>>>>>> d29feedf15af469c170d0ebc6887c63bdc2c6d24
               const SizedBox(height: 32),
 
               Container(
@@ -131,36 +97,16 @@ class _LoginPageState extends State<LoginPage> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-<<<<<<< HEAD
                         hintText: isTech ? 'name@electrovice.pro' : 'name@email.com',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                        filled: true,
-                        fillColor: const Color(0xFFF1F5F9),
+                        filled: true, fillColor: const Color(0xFFF1F5F9),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                         prefixIcon: const Icon(Icons.mail_outline, color: Color(0xFF64748B)),
                         contentPadding: const EdgeInsets.symmetric(vertical: 18),
-=======
-                        hintText: isTech
-                            ? 'name@electrovice.pro'
-                            : 'name@company.com',
-                        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                        filled: true,
-                        fillColor: const Color(0xFFF1F5F9), // light gray bg
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.mail_outline,
-                          color: Color(0xFF64748B),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 18,
-                        ),
->>>>>>> d29feedf15af469c170d0ebc6887c63bdc2c6d24
                       ),
                     ),
                     const SizedBox(height: 24),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -174,49 +120,20 @@ class _LoginPageState extends State<LoginPage> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         hintText: '••••••••',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          letterSpacing: 4,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF1F5F9),
-<<<<<<< HEAD
+                        hintStyle: const TextStyle(color: Color(0xFF94A3B8), letterSpacing: 4),
+                        filled: true, fillColor: const Color(0xFFF1F5F9),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                         prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
                         suffixIcon: IconButton(
                           icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: const Color(0xFF64748B)),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-=======
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
                         ),
-                        prefixIcon: const Icon(
-                          Icons.lock_outline,
-                          color: Color(0xFF64748B),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: const Color(0xFF64748B),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
->>>>>>> d29feedf15af469c170d0ebc6887c63bdc2c6d24
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 18,
-                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 18),
                       ),
                     ),
                     const SizedBox(height: 32),
 
-                    // Login Button New ADD Authentication
+                    // Login Button
                     Obx(() => ElevatedButton(
                       onPressed: _authController.isLoading.value ? null : () {
                         _authController.login(
@@ -225,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
+                        backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 56),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -243,7 +160,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                     )),
 
-                    // Error message
                     Obx(() => _authController.errorMessage.value.isNotEmpty
                       ? Padding(
                           padding: const EdgeInsets.only(top: 12),
@@ -252,45 +168,26 @@ class _LoginPageState extends State<LoginPage> {
                       : const SizedBox(),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     Row(
                       children: [
-                        Expanded(
-                          child: Divider(color: Colors.grey[200], thickness: 2),
-                        ),
+                        Expanded(child: Divider(color: Colors.grey[200], thickness: 2)),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-<<<<<<< HEAD
                           child: Text(isTech ? 'AUTHORIZED ACCESS ONLY' : 'SECURE ACCESS', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
-=======
-                          child: Text(
-                            isTech ? 'AUTHORIZED ACCESS ONLY' : 'SECURE ACCESS',
-                            style: const TextStyle(
-                              color: Color(0xFF94A3B8),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
->>>>>>> d29feedf15af469c170d0ebc6887c63bdc2c6d24
                         ),
-                        Expanded(
-                          child: Divider(color: Colors.grey[200], thickness: 2),
-                        ),
+                        Expanded(child: Divider(color: Colors.grey[200], thickness: 2)),
                       ],
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
-                    OutlinedButton(
-                      onPressed: () {},
+                    // Google Button
+                    Obx(() => OutlinedButton(
+                      onPressed: _authController.isLoading.value ? null : () {
+                        _authController.loginWithGoogle(role: isTech ? 'technician' : 'customer');
+                      },
                       style: OutlinedButton.styleFrom(
-<<<<<<< HEAD
                         backgroundColor: const Color(0xFFF1F5F9),
-=======
-                        backgroundColor: const Color(
-                          0xFFF1F5F9,
-                        ), // light gray instead of white based on design
->>>>>>> d29feedf15af469c170d0ebc6887c63bdc2c6d24
                         side: BorderSide.none,
                         minimumSize: const Size(double.infinity, 56),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -298,31 +195,12 @@ class _LoginPageState extends State<LoginPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-<<<<<<< HEAD
-                          RichText(text: const TextSpan(children: [TextSpan(text: 'G', style: TextStyle(color: Color(0xFFEA4335), fontSize: 20, fontWeight: FontWeight.bold))])),
-=======
-                          // A simple colored 'G' icon for Google replacement (since we don't have svg right now)
-                          RichText(
-                            text: const TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'G',
-                                  style: TextStyle(
-                                    color: Color(0xFFEA4335),
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Product Sans',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
->>>>>>> d29feedf15af469c170d0ebc6887c63bdc2c6d24
+                          Image.network('https://img.icons8.com/color/48/000000/google-logo.png', width: 24, height: 24),
                           const SizedBox(width: 12),
                           const Text('Continue with Google', style: TextStyle(color: Color(0xFF0F172A), fontSize: 15, fontWeight: FontWeight.w600)),
                         ],
                       ),
-                    ),
+                    )),
                   ],
                 ),
               ),
@@ -331,34 +209,10 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-<<<<<<< HEAD
                   Text(isTech ? "Don't have technician account? " : "Don't have an account? ", style: const TextStyle(color: Color(0xFF64748B), fontSize: 15)),
                   GestureDetector(
                     onTap: () => Get.offAllNamed(AppRoutes.register),
                     child: const Text('Sign Up', style: TextStyle(color: AppTheme.primaryColor, fontSize: 15, fontWeight: FontWeight.w800)),
-=======
-                  Text(
-                    isTech
-                        ? "Don't have technician account? "
-                        : "Don't have an account? ",
-                    style: const TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 15,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Get.offAllNamed(AppRoutes.signup);
-                    },
-                    child: const Text(
-                      'Sign Up',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
->>>>>>> d29feedf15af469c170d0ebc6887c63bdc2c6d24
                   ),
                 ],
               ),
@@ -366,28 +220,13 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.verified_user_outlined,
-                    size: 14,
-                    color: Color(0xFF94A3B8),
-                  ),
+                  const Icon(Icons.verified_user_outlined, size: 14, color: Color(0xFF94A3B8)),
                   const SizedBox(width: 6),
                   const Text('PRECISION ENCRYPTED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0, color: Color(0xFF94A3B8))),
                   const SizedBox(width: 16),
-                  Container(
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE2E8F0),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
+                  Container(width: 4, height: 4, decoration: const BoxDecoration(color: Color(0xFFE2E8F0), shape: BoxShape.circle)),
                   const SizedBox(width: 16),
-                  const Icon(
-                    Icons.shield_outlined,
-                    size: 14,
-                    color: Color(0xFF94A3B8),
-                  ),
+                  const Icon(Icons.shield_outlined, size: 14, color: Color(0xFF94A3B8)),
                   const SizedBox(width: 6),
                   const Text('SECURE NODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0, color: Color(0xFF94A3B8))),
                 ],

@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "448331924833-4cqdbhvnosaolta51houe5ivu6rkj7ig.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.electrovice",
+            "certificate_hash": "bc0d27cd5eb88baf8d4cff164b5623a471c8a825"
+          }
+        },
+        {
           "client_id": "448331924833-7rucurk101pojq63c9gonbf48rc4irgb.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "448331924833-7rucurk101pojq63c9gonbf48rc4irgb.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "448331924833-poh3lnakh6ptb20gp3u0o63gquc0lub0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.electrovice"
+              }
             }
           ]
         }

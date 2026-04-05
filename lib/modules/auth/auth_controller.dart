@@ -8,43 +8,78 @@ class AuthController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = ''.obs;
 
-Future<void> login(String email, String password) async {
-  isLoading.value = true;
-  errorMessage.value = '';
-  try {
-    final credential = await _authService.loginWithEmail(
-      email: email,
-      password: password,
-    );
-    
-    // Kalau Firestore kosong, default ke customer
-    final role = await _authService.getUserRole(credential.user!.uid) ?? 'customer';
-    Get.offAllNamed(AppRoutes.home, arguments: {'role': role});
-    
-  } catch (e) {
-    errorMessage.value = _parseError(e.toString());
-  } finally {
-    isLoading.value = false;
+  // Login email/password
+  Future<void> login(String email, String password) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final user = await _authService.loginWithEmail(
+        email: email,
+        password: password,
+      );
+      final role = await _authService.getUserRole(user!.uid) ?? 'customer';
+      Get.offAllNamed(AppRoutes.home, arguments: {'role': role});
+    } catch (e) {
+      errorMessage.value = _parseError(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
-}
 
-Future<void> register(String email, String password, String name, String role) async {
-  isLoading.value = true;
-  errorMessage.value = '';
-  try {
-    await _authService.registerWithEmail(
-      email: email,
-      password: password,
-      name: name,
-      role: role,
-    );
-    Get.offAllNamed(AppRoutes.home, arguments: {'role': role});
-  } catch (e) {
-    errorMessage.value = _parseError(e.toString());
-  } finally {
-    isLoading.value = false;
+  // Register email/password — setelah register balik ke login
+  Future<void> register(String email, String password, String name, String role) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      await _authService.registerWithEmail(
+        email: email,
+        password: password,
+        name: name,
+        role: role,
+      );
+      Get.offAllNamed(AppRoutes.login, arguments: {'role': role == 'technician' ? 'technician' : 'customer'});
+      Get.snackbar('Berhasil!', 'Akun berhasil dibuat. Silakan login.', snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      errorMessage.value = _parseError(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
-}
+
+  // Google Sign-In
+  Future<void> loginWithGoogle({String role = 'customer'}) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final result = await _authService.signInWithGoogle(role: role);
+      if (result == null) {
+        isLoading.value = false;
+        return;
+      }
+
+      final user = result['user'];
+      final isNewUser = result['isNew'] as bool;
+      
+      if (isNewUser) {
+        // User baru → logout dulu, arahkan ke login
+        await _authService.logout();
+        Get.offAllNamed(AppRoutes.login, arguments: {'role': role});
+        Get.snackbar(
+          'Akun Dibuat!', 
+          'Silakan login kembali dengan akun Google kamu.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        // User lama → langsung ke home
+        final userRole = await _authService.getUserRole(user.uid) ?? role;
+        Get.offAllNamed(AppRoutes.home, arguments: {'role': userRole});
+      }
+    } catch (e) {
+      errorMessage.value = _parseError(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   Future<void> logout() async {
     await _authService.logout();
@@ -58,6 +93,7 @@ Future<void> register(String email, String password, String name, String role) a
     if (error.contains('email-already-in-use')) return 'Email sudah digunakan';
     if (error.contains('weak-password')) return 'Password minimal 6 karakter';
     if (error.contains('invalid-email')) return 'Format email tidak valid';
-    return error; // Return the actual error to see what's failing
+    if (error.contains('network')) return 'Periksa koneksi internet';
+    return 'Terjadi kesalahan, coba lagi';
   }
 }
