@@ -9,168 +9,169 @@ import 'technician_controller.dart';
 class TechnicianProfilePage extends GetView<TechnicianController> {
   const TechnicianProfilePage({super.key});
 
-  static const Color _background = Color(0xFFF4F4F4);
-  static const Color _card = Colors.white;
-  static const Color _ink = Color(0xFF171717);
-  static const Color _muted = Color(0xFF7B8091);
-  static const Color _line = Color(0xFFE7E8ED);
-  static const Color _blueChip = Color(0xFFDCE8FF);
-  static const Color _blueText = Color(0xFF2B4E91);
-  static const Color _accent = Color(0xFF3151FF);
-  static const List<AppBottomNavEntry> _navItems = [
-    AppBottomNavEntry(
-      item: AppNavItem.home,
-      icon: Icons.home_filled,
-      label: 'HOME',
-    ),
-    AppBottomNavEntry(
-      item: AppNavItem.active,
-      icon: Icons.handyman_outlined,
-      label: 'ACTIVE',
-    ),
-    AppBottomNavEntry(
-      item: AppNavItem.profile,
-      icon: Icons.person_outline_rounded,
-      label: 'PROFILE',
-    ),
-  ];
+  static const Color _background = Color(0xFFF2F3F7);
+  static const Color _ink = Color(0xFF0F172A);
 
   @override
   Widget build(BuildContext context) {
+    final TechnicianProfileData data = controller.profile.value ?? TechnicianProfileData.sample();
+
     return Scaffold(
       backgroundColor: _background,
-      bottomNavigationBar: AppBottomNavBar(
-        selectedItem: AppNavItem.profile,
-        onItemSelected: _onNavSelected,
-        items: _navItems,
-      ),
+      extendBody: true,
+      bottomNavigationBar: const TechnicianNavBar(selectedItem: AppNavItem.profile),
       body: SafeArea(
-        child: Obx(() {
-          final TechnicianProfileData data =
-              controller.profile.value ?? TechnicianProfileData.sample();
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              
+              // ── Top Bar ─────────────────────────────────────────────
+              _buildTopBar(),
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTopBar(),
-                const SizedBox(height: 16),
-                _ProfileHero(data: data),
-                const SizedBox(height: 14),
-                _StatsRow(data: data),
-                const SizedBox(height: 14),
-                _ServiceHistoryHeader(label: data.completedWindowLabel),
-                const SizedBox(height: 10),
-                ...data.serviceHistory.map(
-                  (job) => Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: _HistoryCard(job: job),
-                  ),
+              const SizedBox(height: 16),
+
+              // ── Profile Identity Card ──────────────────────────────
+              _ProfileHeroCard(data: data),
+
+              const SizedBox(height: 16),
+
+              // ── Stats Row ──────────────────────────────────────────
+              _StatsGrid(data: data),
+
+              const SizedBox(height: 32),
+
+              // ── Service History Section ─────────────────────────────
+              _ServiceHistoryHeader(label: data.completedWindowLabel),
+              const SizedBox(height: 16),
+              
+              ...data.serviceHistory.map(
+                (job) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _HistoryCard(job: job),
                 ),
-              ],
-            ),
-          );
-        }),
+              ),
+
+              const SizedBox(height: 120),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildTopBar() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Expanded(
-          child: Text(
-            'Profile',
-            style: TextStyle(
-              color: _ink,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+        const Text(
+          'Profile',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            color: _ink,
           ),
         ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.settings_outlined, color: Colors.black),
-          splashRadius: 20,
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.settings_outlined, color: _ink, size: 22),
         ),
       ],
     );
   }
-
-  void _onNavSelected(AppNavItem item) {
-    switch (item) {
-      case AppNavItem.profile:
-        return;
-      case AppNavItem.home:
-        Get.offNamed(AppRoutes.home);
-        return;
-      case AppNavItem.active:
-        Get.snackbar(
-          'Coming soon',
-          'Technician active jobs view is not ready yet.',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-        );
-        return;
-      case AppNavItem.history:
-      case AppNavItem.order:
-        return;
-    }
-  }
 }
 
-class _ProfileHero extends StatelessWidget {
-  const _ProfileHero({required this.data});
-
+class _ProfileHeroCard extends StatelessWidget {
   final TechnicianProfileData data;
+  const _ProfileHeroCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: TechnicianProfilePage._card,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         children: [
-          _TechnicianAvatar(imageUrl: data.avatarUrl),
-          const SizedBox(height: 12),
+          // Avatar with badge
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: const DecorationImage(
+                    image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -8,
+                right: -8,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3254FF),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                  ),
+                  child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 16),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           Text(
             data.fullName,
-            textAlign: TextAlign.center,
             style: const TextStyle(
-              color: TechnicianProfilePage._ink,
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0F172A),
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: TechnicianProfilePage._blueChip,
+              color: const Color(0xFFEEF2FF),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               data.specialty,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: TechnicianProfilePage._blueText,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.1,
-                height: 1.2,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF3254FF),
+                letterSpacing: 0.8,
               ),
             ),
           ),
@@ -180,161 +181,58 @@ class _ProfileHero extends StatelessWidget {
   }
 }
 
-class _TechnicianAvatar extends StatelessWidget {
-  const _TechnicianAvatar({this.imageUrl});
-
-  final String? imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 102,
-          height: 102,
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE7EEF9),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: imageUrl != null && imageUrl!.trim().isNotEmpty
-                ? Image.network(
-                    imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _TechnicianAvatarFallback(),
-                  )
-                : const _TechnicianAvatarFallback(),
-          ),
-        ),
-        Positioned(
-          right: -4,
-          bottom: -4,
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: TechnicianProfilePage._blueText,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: const Icon(Icons.settings, color: Colors.white, size: 14),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TechnicianAvatarFallback extends StatelessWidget {
-  const _TechnicianAvatarFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1F2D48), Color(0xFF05070B)],
-        ),
-      ),
-      child: const Center(
-        child: Icon(
-          Icons.person_rounded,
-          color: Color(0xFFC8D0DD),
-          size: 56,
-        ),
-      ),
-    );
-  }
-}
-
-class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.data});
-
+class _StatsGrid extends StatelessWidget {
   final TechnicianProfileData data;
+  const _StatsGrid({required this.data});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: _StatTile(
-            value: '${data.yearsExperience}+',
-            label: 'YEARS EXP.',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            value: '${data.successRate}%',
-            label: 'SUCCESS',
-            valueColor: const Color(0xFF7A541A),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            value: data.rating.toStringAsFixed(1),
-            icon: Icons.star,
-            iconColor: TechnicianProfilePage._accent,
-          ),
-        ),
+        Expanded(child: _StatBox(value: '${data.yearsExperience}+', label: 'YEARS EXP.')),
+        const SizedBox(width: 12),
+        Expanded(child: _StatBox(value: '${data.successRate}%', label: 'SUCCESS')),
+        const SizedBox(width: 12),
+        Expanded(child: _StatBox(value: data.rating.toStringAsFixed(1), label: '★', labelIsIcon: true)),
       ],
     );
   }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({
-    required this.value,
-    this.label,
-    this.icon,
-    this.valueColor = TechnicianProfilePage._ink,
-    this.labelColor = TechnicianProfilePage._muted,
-    this.iconColor = TechnicianProfilePage._muted,
-  });
-
+class _StatBox extends StatelessWidget {
   final String value;
-  final String? label;
-  final IconData? icon;
-  final Color valueColor;
-  final Color labelColor;
-  final Color iconColor;
+  final String label;
+  final bool labelIsIcon;
+  const _StatBox({required this.value, required this.label, this.labelIsIcon = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: TechnicianProfilePage._card,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Text(
             value,
-            style: TextStyle(
-              color: valueColor,
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
           ),
-          const SizedBox(height: 4),
-          if (icon != null)
-            Icon(icon, color: iconColor, size: 16)
-          else if (label != null)
+          const SizedBox(height: 6),
+          if (labelIsIcon)
+            const Icon(Icons.star_rounded, color: Color(0xFF3254FF), size: 18)
+          else
             Text(
-              label!,
-              style: TextStyle(
-                color: labelColor,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.7,
-              ),
+              label,
+              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.5),
             ),
         ],
       ),
@@ -343,33 +241,27 @@ class _StatTile extends StatelessWidget {
 }
 
 class _ServiceHistoryHeader extends StatelessWidget {
-  const _ServiceHistoryHeader({required this.label});
-
   final String label;
+  const _ServiceHistoryHeader({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Icon(Icons.history_rounded, color: Colors.black, size: 20),
-        const SizedBox(width: 8),
-        const Expanded(
-          child: Text(
-            'Service History',
-            style: TextStyle(
-              color: TechnicianProfilePage._ink,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
+        const Row(
+          children: [
+            Icon(Icons.history_rounded, color: Color(0xFF0F172A), size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Service History',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
             ),
-          ),
+          ],
         ),
         Text(
           label,
-          style: const TextStyle(
-            color: TechnicianProfilePage._muted,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.5),
         ),
       ],
     );
@@ -377,25 +269,16 @@ class _ServiceHistoryHeader extends StatelessWidget {
 }
 
 class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({required this.job});
-
   final TechnicianJobRecord job;
+  const _HistoryCard({required this.job});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: TechnicianProfilePage._card,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
@@ -408,100 +291,65 @@ class _HistoryCard extends StatelessWidget {
                   children: [
                     Text(
                       job.title,
-                      style: const TextStyle(
-                        color: TechnicianProfilePage._ink,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        height: 1.25,
-                      ),
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0F172A), height: 1.3),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
                       'Client: ${job.clientName}',
-                      style: const TextStyle(
-                        color: TechnicianProfilePage._muted,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    _formatCurrency(job.amount),
-                    style: const TextStyle(
-                      color: TechnicianProfilePage._ink,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    '\$${job.amount.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Text(
                         job.rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          color: TechnicianProfilePage._ink,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
                       ),
-                      const SizedBox(width: 3),
-                      const Icon(Icons.star, color: Color(0xFFF4A340), size: 14),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
                     ],
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          const Divider(color: TechnicianProfilePage._line, height: 1),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  job.completedDateLabel,
-                  style: const TextStyle(
-                    color: TechnicianProfilePage._muted,
-                    fontSize: 13,
-                  ),
-                ),
+              Text(
+                job.completedDateLabel,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
               ),
-              FilledButton(
+              ElevatedButton(
                 onPressed: () {},
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFD7E6FF),
-                  foregroundColor: TechnicianProfilePage._blueText,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEEF2FF),
+                  foregroundColor: const Color(0xFF3254FF),
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shadowColor: Colors.transparent,
+                  minimumSize: const Size(120, 44),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text(
-                  'View Receipt',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
+                child: const Text('View Receipt', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
               ),
             ],
           ),
         ],
       ),
     );
-  }
-
-  String _formatCurrency(double amount) {
-    if (amount == amount.roundToDouble()) {
-      return '\$${amount.toStringAsFixed(2)}';
-    }
-
-    return '\$${amount.toStringAsFixed(2)}';
   }
 }

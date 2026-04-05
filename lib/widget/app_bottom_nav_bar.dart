@@ -1,4 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../config/routes.dart';
+
+class TechnicianNavBar extends StatelessWidget {
+  const TechnicianNavBar({super.key, required this.selectedItem});
+
+  final AppNavItem selectedItem;
+
+  void _onNavSelected(AppNavItem item) {
+    if (item == selectedItem) return;
+
+    switch (item) {
+      case AppNavItem.home:
+        Get.offNamed(AppRoutes.technicianHome);
+        break;
+      case AppNavItem.active:
+        Get.offNamed(AppRoutes.activeJob);
+        break;
+      case AppNavItem.profile:
+        Get.offNamed(AppRoutes.technicianProfile);
+        break;
+      default:
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBottomNavBar(
+      selectedItem: selectedItem,
+      onItemSelected: _onNavSelected,
+      items: AppBottomNavBar.technicianItems,
+    );
+  }
+}
 
 enum AppNavItem {
   home,
@@ -32,13 +67,13 @@ class AppBottomNavBar extends StatelessWidget {
   final ValueChanged<AppNavItem> onItemSelected;
   final List<AppBottomNavEntry> items;
 
-  static const Color _background = Color(0xFF030303);
-  static const Color _inactive = Color(0xFF8E97B1);
-  static const Color _active = Color(0xFF3254FF);
+  static const Color _background = Colors.black;
+  static const Color _inactive = Color(0xFF9CA3AF);
+  static const Color _active = Color(0xFF3B82F6);
   static const List<AppBottomNavEntry> _defaultItems = [
     AppBottomNavEntry(
       item: AppNavItem.home,
-      icon: Icons.home_filled,
+      icon: Icons.home_rounded,
       label: 'HOME',
     ),
     AppBottomNavEntry(
@@ -53,6 +88,24 @@ class AppBottomNavBar extends StatelessWidget {
     ),
     AppBottomNavEntry(
       item: AppNavItem.profile,
+      icon: Icons.person_rounded,
+      label: 'PROFILE',
+    ),
+  ];
+
+  static const List<AppBottomNavEntry> technicianItems = [
+    AppBottomNavEntry(
+      item: AppNavItem.home,
+      icon: Icons.home_filled,
+      label: 'HOME',
+    ),
+    AppBottomNavEntry(
+      item: AppNavItem.active,
+      icon: Icons.build_rounded,
+      label: 'ACTIVE',
+    ),
+    AppBottomNavEntry(
+      item: AppNavItem.profile,
       icon: Icons.person_outline_rounded,
       label: 'PROFILE',
     ),
@@ -60,18 +113,19 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+    return Container(
+      color: Colors.transparent,
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
           color: _background,
-          borderRadius: BorderRadius.circular(34),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(40),
+          boxShadow: [
             BoxShadow(
-              color: Color(0x22000000),
-              blurRadius: 24,
-              offset: Offset(0, 10),
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -119,8 +173,10 @@ class _NavBarItem extends StatelessWidget {
           vertical: 10,
         ),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF0E1A52) : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
+          color: selected
+              ? const Color(0xFF0F2B5B).withValues(alpha: 0.75)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(28),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

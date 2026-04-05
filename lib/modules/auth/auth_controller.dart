@@ -18,7 +18,7 @@ class AuthController extends GetxController {
         password: password,
       );
       final role = await _authService.getUserRole(user!.uid) ?? 'customer';
-      Get.offAllNamed(AppRoutes.home, arguments: {'role': role});
+      _navigateToHome(role);
     } catch (e) {
       errorMessage.value = _parseError(e.toString());
     } finally {
@@ -26,7 +26,7 @@ class AuthController extends GetxController {
     }
   }
 
-  // Register email/password — setelah register balik ke login
+  // Register email/password
   Future<void> register(String email, String password, String name, String role) async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -37,8 +37,8 @@ class AuthController extends GetxController {
         name: name,
         role: role,
       );
-      Get.offAllNamed(AppRoutes.login, arguments: {'role': role == 'technician' ? 'technician' : 'customer'});
-      Get.snackbar('Berhasil!', 'Akun berhasil dibuat. Silakan login.', snackPosition: SnackPosition.BOTTOM);
+      _navigateToHome(role);
+      Get.snackbar('Berhasil!', 'Akun berhasil dibuat.', snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
       errorMessage.value = _parseError(e.toString());
     } finally {
@@ -61,23 +61,31 @@ class AuthController extends GetxController {
       final isNewUser = result['isNew'] as bool;
       
       if (isNewUser) {
-        // User baru → logout dulu, arahkan ke login
-        await _authService.logout();
-        Get.offAllNamed(AppRoutes.login, arguments: {'role': role});
+        // User baru → stay logged in (jangan logout lagi)
+        final userRole = await _authService.getUserRole(user.uid) ?? role;
+        _navigateToHome(userRole);
         Get.snackbar(
           'Akun Dibuat!', 
-          'Silakan login kembali dengan akun Google kamu.',
+          'Pendaftaran Google berhasil.',
           snackPosition: SnackPosition.BOTTOM,
         );
       } else {
         // User lama → langsung ke home
         final userRole = await _authService.getUserRole(user.uid) ?? role;
-        Get.offAllNamed(AppRoutes.home, arguments: {'role': userRole});
+        _navigateToHome(userRole);
       }
     } catch (e) {
       errorMessage.value = _parseError(e.toString());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  void _navigateToHome(String role) {
+    if (role == 'technician') {
+      Get.offAllNamed(AppRoutes.technicianHome);
+    } else {
+      Get.offAllNamed(AppRoutes.home);
     }
   }
 

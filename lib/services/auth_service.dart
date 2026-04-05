@@ -29,7 +29,7 @@ class AuthService {
             'role': role,
             'createdAt': FieldValue.serverTimestamp(),
         });
-        await _auth.signOut(); // logout dulu, user harus login manual
+        // await _auth.signOut(); // User stays logged in
         return user;
     }
 

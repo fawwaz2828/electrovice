@@ -18,15 +18,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-<<<<<<< HEAD
-      title: 'ELEcTROVICE',
+      title: 'Electrovice',
       debugShowCheckedModeBanner: false,
       initialRoute: AppRoutes.register,
-=======
-      title: 'Electrovice',
-      theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.home, // Change this to AppRoutes.login if you want to start with the login page
->>>>>>> c390707f315f0f5e377fe4ecdbd7a990109242fe
       getPages: AppRoutes.routes,
     );
   }

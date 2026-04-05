@@ -13,12 +13,20 @@ import '../modules/booking/booking_tracking_page.dart';
 import '../modules/booking/checkout_page.dart';
 import '../modules/technician/technician_controller.dart';
 import '../modules/technician/technician_profile_page.dart';
+import '../modules/technician/technician_home_page.dart';
+import '../modules/technician/job_detail_page.dart';
+import '../modules/technician/verification_page.dart';
+import '../modules/technician/active_job_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String profile_page = '/profile';
   static const String technicianProfile = '/technician/profile';
+  static const String technicianHome = '/technician/home';
+  static const String jobDetail = '/technician/job-detail';
+  static const String activeJob = '/technician/active-job';
+  static const String verification = '/technician/verification';
   static const String technicianDetail = '/customer/technician-detail';
   static const String createOrder = '/customer/create-order';
   static const String checkout = '/customer/checkout';
@@ -102,6 +110,22 @@ class AppRoutes {
     GetPage(
       name: home,
       page: () => const HomePage(),
+    ),
+    GetPage(
+      name: technicianHome,
+      page: () => const TechnicianHomePage(),
+    ),
+    GetPage(
+      name: jobDetail,
+      page: () => const JobDetailPage(),
+    ),
+    GetPage(
+      name: verification,
+      page: () => const VerificationPage(),
+    ),
+    GetPage(
+      name: activeJob,
+      page: () => const ActiveJobPage(),
     ),
   ];
 }

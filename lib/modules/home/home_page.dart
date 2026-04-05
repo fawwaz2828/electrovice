@@ -1,30 +1,25 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import '../../widget/custom_bottom_nav_bar.dart';
-=======
 import 'package:get/get.dart';
-
 import '../../config/routes.dart';
 import '../../widget/app_bottom_nav_bar.dart';
->>>>>>> c390707f315f0f5e377fe4ecdbd7a990109242fe
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  void _onNavSelected(AppNavItem item) {
+    if (item == AppNavItem.home) return;
+    // Navigation for other tabs can be added here
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< HEAD
       backgroundColor: const Color(0xFFF2F3F7),
       extendBody: true,
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 0),
-=======
-      backgroundColor: const Color(0xFFF8FAFC),
       bottomNavigationBar: AppBottomNavBar(
         selectedItem: AppNavItem.home,
         onItemSelected: _onNavSelected,
       ),
->>>>>>> c390707f315f0f5e377fe4ecdbd7a990109242fe
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -45,7 +40,7 @@ class HomePage extends StatelessWidget {
                     // Logo
                     Image.asset(
                       'assets/images/ELECTROVICE_LOGO_HD.png',
-                      height: 15,
+                      height: 36,
                       fit: BoxFit.contain,
                     ),
                     // Bell notification
@@ -141,7 +136,7 @@ class _HeroMapCard extends StatelessWidget {
               fit: BoxFit.cover,
               color: Colors.black.withValues(alpha: 0.35),
               colorBlendMode: BlendMode.darken,
-              errorBuilder: (_, _, _) =>
+              errorBuilder: (_, err, _st) =>
                   Container(color: const Color(0xFF334155)),
             ),
 
@@ -173,73 +168,70 @@ class _HeroMapCard extends StatelessWidget {
               left: 12,
               right: 12,
               bottom: 12,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Text left
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Find Nearby\nTechnicians',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                height: 1.25,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              '12 active specialists available now',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFFCBD5E1),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Explore Map button
-                      GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const Text(
-                            'Explore Map',
+                ),
+                child: Row(
+                  children: [
+                    // Text left
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Find Nearby\nTechnicians',
                             style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
                               color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
+                              height: 1.25,
                             ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            '12 active specialists available now',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFFCBD5E1),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Explore Map button
+                    GestureDetector(
+                      onTap: () {},
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: const Text(
+                          'Explore Map',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -409,7 +401,7 @@ class _RepairCategories extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(50),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -524,15 +516,8 @@ class _FeaturedSpecialists extends StatelessWidget {
           specialty: 'HEAVY APPLIANCES EXPERT',
           rating: '4.9',
           distance: '0.8 km',
-<<<<<<< HEAD
           badge: const _VerifiedBadge(),
           imageUrl: 'https://i.pravatar.cc/300?u=marcus',
-=======
-          verified: true,
-          onTap: () => Get.toNamed(AppRoutes.technicianDetail),
-          imageUrl:
-              'https://i.pravatar.cc/150?u=a042581f4e29026704d', // Placeholder photo 1
->>>>>>> c390707f315f0f5e377fe4ecdbd7a990109242fe
         ),
         const SizedBox(height: 12),
         _SpecialistCard(
@@ -540,22 +525,14 @@ class _FeaturedSpecialists extends StatelessWidget {
           specialty: 'IT & COMPUTING',
           rating: '5.0',
           distance: '1.2 km',
-<<<<<<< HEAD
           badge: const _JobsBadge(jobs: '200+ Jobs'),
           imageUrl: 'https://i.pravatar.cc/300?u=elena_rodriguez',
-=======
-          jobs: '200+ Jobs',
-          onTap: () => Get.toNamed(AppRoutes.technicianDetail),
-          imageUrl:
-              'https://i.pravatar.cc/150?u=a042581f4e29026704e', // Placeholder photo 2
->>>>>>> c390707f315f0f5e377fe4ecdbd7a990109242fe
         ),
       ],
     );
   }
 }
 
-<<<<<<< HEAD
 class _SpecialistCard extends StatelessWidget {
   final String name;
   final String specialty;
@@ -599,7 +576,7 @@ class _SpecialistCard extends StatelessWidget {
               width: 72,
               height: 72,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+              errorBuilder: (_, err, _st) => Container(
                 width: 72,
                 height: 72,
                 color: const Color(0xFFE2E8F0),
@@ -753,174 +730,5 @@ class _JobsBadge extends StatelessWidget {
         ),
       ],
     );
-=======
-  Widget _buildSpecialistCard({
-    required String name,
-    required String specialty,
-    required String rating,
-    required String distance,
-    bool verified = false,
-    String? jobs,
-    VoidCallback? onTap,
-    required String imageUrl,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.network(
-                imageUrl,
-                width: 70,
-                height: 70,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF8A00),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.white, size: 12),
-                            const SizedBox(width: 2),
-                            Text(
-                              rating,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    specialty,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1D4ED8),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        color: Color(0xFF64748B),
-                        size: 14,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        distance,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF475569),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      if (verified) ...[
-                        const Icon(
-                          Icons.verified_outlined,
-                          color: Color(0xFF64748B),
-                          size: 14,
-                        ),
-                        const SizedBox(width: 2),
-                        const Text(
-                          'Pro Verified',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF475569),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ] else if (jobs != null) ...[
-                        const Icon(
-                          Icons.history,
-                          color: Color(0xFF64748B),
-                          size: 14,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          jobs,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF475569),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _onNavSelected(AppNavItem item) {
-    switch (item) {
-      case AppNavItem.home:
-        return;
-      case AppNavItem.profile:
-        Get.offNamed(AppRoutes.profile_page);
-        return;
-      case AppNavItem.active:
-        Get.snackbar(
-          'Coming soon',
-          'Active jobs view is not ready yet.',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-        );
-        return;
-      case AppNavItem.history:
-        Get.offNamed(AppRoutes.orderHistory);
-        return;
-      case AppNavItem.order:
-        Get.offNamed(AppRoutes.orderTracking);
-        return;
-    }
->>>>>>> c390707f315f0f5e377fe4ecdbd7a990109242fe
   }
 }
