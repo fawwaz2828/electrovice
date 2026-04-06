@@ -69,7 +69,6 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
       ),
     );
   }
-  }
 
   Widget _buildLogoutButton(BuildContext context) {
     return InkWell(

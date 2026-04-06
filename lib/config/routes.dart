@@ -49,17 +49,23 @@ class AppRoutes {
       page: () => const RegisterPage(),
     ),
     GetPage(
-      name: profile_page,
-      page: () => const ProfilePage(),
+      name: signup,
+      page: () => const SignupPage(),
+    ),
+
+    // ── Customer ────────────────────────────────────────────────
+    GetPage(
+      name: home,
+      page: () => const HomePage(),
       binding: BindingsBuilder(() {
-        Get.lazyPut<ProfileController>(() => ProfileController());
+        Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
       }),
     ),
     GetPage(
-      name: technicianProfile,
-      page: () => const TechnicianProfilePage(),
+      name: profile_page,
+      page: () => const ProfilePage(),
       binding: BindingsBuilder(() {
-        Get.lazyPut<TechnicianController>(() => TechnicianController());
+        Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
       }),
     ),
     GetPage(
@@ -108,16 +114,11 @@ class AppRoutes {
       }),
     ),
     GetPage(
-      name: signup,
-      page: () => const SignupPage(),
+      name: technicianList,
+      page: () => const TechnicianListPage(),
     ),
-    GetPage(
-      name: home,
-      page: () => const HomePage(),
-      binding: BindingsBuilder(() {
-        Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
-      }),
-    ),
+
+    // ── Technician ───────────────────────────────────────────────
     GetPage(
       name: technicianHome,
       page: () => const TechnicianHomePage(),
@@ -126,35 +127,38 @@ class AppRoutes {
       }),
     ),
     GetPage(
+      name: technicianProfile,
+      page: () => const TechnicianProfilePage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
       name: jobDetail,
       page: () => const JobDetailPage(),
       binding: BindingsBuilder(() {
-        Get.lazyPut<TechnicianController>(() => TechnicianController());
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),
     ),
     GetPage(
       name: verification,
       page: () => const VerificationPage(),
       binding: BindingsBuilder(() {
-        Get.lazyPut<TechnicianController>(() => TechnicianController());
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),
     ),
     GetPage(
       name: activeJob,
       page: () => const ActiveJobPage(),
       binding: BindingsBuilder(() {
-        Get.lazyPut<TechnicianController>(() => TechnicianController());
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),
-    ),
-    GetPage(
-      name: technicianList,
-      page: () => const TechnicianListPage(),
     ),
     GetPage(
       name: jobSummary,
       page: () => const JobSummaryPage(),
       binding: BindingsBuilder(() {
-        Get.lazyPut<TechnicianController>(() => TechnicianController());
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),
     ),
   ];

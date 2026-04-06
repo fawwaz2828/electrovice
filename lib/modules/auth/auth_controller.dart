@@ -38,6 +38,9 @@ class AuthController extends GetxController {
         name: name,
         role: role,
       );
+
+      await Future.delayed(const Duration(seconds: 1));
+
       await _navigateToHome(role);
       Get.snackbar(
         'Berhasil!',
@@ -86,10 +89,6 @@ class AuthController extends GetxController {
     if (role == 'technician') {
       Get.offAllNamed(AppRoutes.technicianHome);
     } else {
-      // Put ProfileController dulu sebelum navigate
-      // supaya data user sudah siap saat HomePage dibuka
-      final profileController = Get.put(ProfileController());
-      await profileController.reloadProfile();
       Get.offAllNamed(AppRoutes.home);
     }
   }
