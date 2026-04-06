@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../models/user_model.dart';
 
 class AuthService {
     final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -17,20 +18,38 @@ class AuthService {
         required String role,
         required String name,
     }) async {
-        final credential = await _auth.createUserWithEmailAndPassword(
-            email: email,
-            password: password,
-        );
-        final user = credential.user!;
-            await _firestore.collection('users').doc(user.uid).set({
-            'uid': user.uid,
-            'email': email,
-            'name': name,
-            'role': role,
-            'createdAt': FieldValue.serverTimestamp(),
-        });
-        // await _auth.signOut(); // User stays logged in
-        return user;
+    final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+    );
+    final user = credential.user!;
+
+    final Map<String, dynamic> userData = {
+        'uid': user.uid,
+        'email': email,
+        'name': name,
+        'role': role,
+        'createdAt': FieldValue.serverTimestamp(),
+    };
+
+    // Jika teknisi, langsung buat technicianProfile kosong
+    if (role == 'technician') {
+        userData['technicianProfile'] = {
+        'category': 'electronic', // default, bisa diubah di profile setup
+        'bio': '',
+        'specialty': '',
+        'rating': 0.0,
+        'totalRatings': 0,
+        'totalJobs': 0,
+        'yearsExperience': 0,
+        'successRate': 100,
+        'serviceRadius': 10.0,
+        'isAvailable': false,
+        };
+    }
+
+    await _firestore.collection('users').doc(user.uid).set(userData);
+    return user;
     }
 
     // Login email/password
@@ -47,6 +66,8 @@ class AuthService {
 
     // Google Sign-In
     Future<Map<String, dynamic>?> signInWithGoogle({String role = 'customer'}) async {
+        await _googleSignIn.signOut();
+
         final googleUser = await _googleSignIn.signIn();
         if (googleUser == null) return null;
 
@@ -60,31 +81,49 @@ class AuthService {
         final user = userCredential.user!;
         bool isNew = false;
 
-        // Cek apakah user sudah ada di Firestore
         final doc = await _firestore.collection('users').doc(user.uid).get();
         if (!doc.exists) {
             isNew = true;
-            // User baru via Google — simpan ke Firestore
-            await _firestore.collection('users').doc(user.uid).set({
-                'uid': user.uid,
-                'email': user.email,
-                'name': user.displayName ?? 'User',
-                'role': role,
-                'createdAt': FieldValue.serverTimestamp(),
-            });
-        }
 
-        return { 'user': user, 'isNew': isNew };
+            final Map<String, dynamic> userData = {
+            'uid': user.uid,
+            'email': user.email,
+            'name': user.displayName ?? 'User',
+            'role': role,
+            'createdAt': FieldValue.serverTimestamp(),
+            };
+
+            if (role == 'technician') {
+                userData['technicianProfile'] = {
+                    'category': 'electronic',
+                    'bio': '',
+                    'specialty': '',
+                    'rating': 0.0,
+                    'totalRatings': 0,
+                    'totalJobs': 0,
+                    'yearsExperience': 0,
+                    'successRate': 100,
+                    'serviceRadius': 10.0,
+                    'isAvailable': false,
+                };
+            }
+
+            await _firestore.collection('users').doc(user.uid).set(userData);
+        }
+        return {'user': user, 'isNew': isNew};
     }
 
-
+    // Tambah method baru — fetch sebagai UserModel
+    Future<UserModel?> getUserModel(String uid) async {
+        final doc = await _firestore.collection('users').doc(uid).get();
+        if (!doc.exists || doc.data() == null) return null;
+        return UserModel.fromMap(uid, doc.data()!);
+    }
 
     Future<void> logout() async {
-        try {
-            await _googleSignIn.disconnect();
-        } catch (_) {}
-        await _googleSignIn.signOut();
-        await _auth.signOut();
+        await _auth.signOut();        // Firebase dulu
+        await _googleSignIn.signOut(); // Hapus sesi Google
+        // disconnect() tidak perlu — cukup signOut
     }
 
     Future<String?> getUserRole(String uid) async {

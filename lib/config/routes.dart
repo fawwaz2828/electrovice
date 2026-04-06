@@ -13,6 +13,7 @@ import '../modules/booking/booking_tracking_page.dart';
 import '../modules/booking/checkout_page.dart';
 import '../modules/technician/technician_controller.dart';
 import '../modules/technician/technician_profile_page.dart';
+import '../modules/technician/technician_profile_edit_page.dart';
 import '../modules/technician/technician_home_page.dart';
 import '../modules/technician/job_detail_page.dart';
 import '../modules/technician/verification_page.dart';
@@ -38,6 +39,7 @@ class AppRoutes {
   static const String home = '/home';
   static const String technicianList = '/customer/technician-list';
   static const String jobSummary = '/technician/job-summary';
+  static const technicianProfileEdit = '/technician/profile/edit';
 
   static final routes = [
     GetPage(
@@ -129,6 +131,13 @@ class AppRoutes {
     GetPage(
       name: technicianProfile,
       page: () => const TechnicianProfilePage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: technicianProfileEdit,
+      page: () => const TechnicianProfileEditPage(),
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),
