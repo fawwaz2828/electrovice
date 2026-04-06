@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../technician/technician_controller.dart';
 
 class VerificationPage extends StatefulWidget {
   const VerificationPage({super.key});
@@ -15,6 +16,8 @@ class _VerificationPageState extends State<VerificationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<TechnicianController>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       extendBody: true,
@@ -89,7 +92,10 @@ class _VerificationPageState extends State<VerificationPage> {
 
               // Verify Button
               ElevatedButton(
-                onPressed: () => Get.offNamed(AppRoutes.activeJob),
+                onPressed: () {
+                  controller.verifyJob();
+                  Get.offNamed(AppRoutes.activeJob);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,

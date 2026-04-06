@@ -256,16 +256,7 @@ class _AvatarCard extends StatelessWidget {
               ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: imageUrl != null && imageUrl!.trim().isNotEmpty
-                ? Image.network(
-                    imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _AvatarPlaceholder(),
-                  )
-                : const _AvatarPlaceholder(),
-          ),
+          child: const _AvatarPlaceholder(),
         ),
         Positioned(
           right: -2,

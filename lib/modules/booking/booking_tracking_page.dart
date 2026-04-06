@@ -278,15 +278,14 @@ class _TechnicianContactCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A1F28),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: imageUrl != null && imageUrl!.trim().isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(imageUrl!, fit: BoxFit.cover),
-                      )
-                    : const Icon(Icons.person, color: Colors.white),
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: Color(0xFF94A3B8),
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

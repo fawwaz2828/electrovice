@@ -18,6 +18,7 @@ import '../modules/technician/job_detail_page.dart';
 import '../modules/technician/verification_page.dart';
 import '../modules/technician/active_job_page.dart';
 import '../modules/technician/technician_list_page.dart';
+import '../modules/technician/job_summary_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -36,6 +37,7 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String home = '/home';
   static const String technicianList = '/customer/technician-list';
+  static const String jobSummary = '/technician/job-summary';
 
   static final routes = [
     GetPage(
@@ -59,7 +61,6 @@ class AppRoutes {
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(() => TechnicianController());
       }),
-      transition: Transition.fade,
     ),
     GetPage(
       name: technicianDetail,
@@ -117,27 +118,41 @@ class AppRoutes {
     GetPage(
       name: technicianHome,
       page: () => const TechnicianHomePage(),
-      transition: Transition.fade,
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
     ),
     GetPage(
       name: jobDetail,
       page: () => const JobDetailPage(),
-      transition: Transition.fade,
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
     ),
     GetPage(
       name: verification,
       page: () => const VerificationPage(),
-      transition: Transition.fade,
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
     ),
     GetPage(
       name: activeJob,
       page: () => const ActiveJobPage(),
-      transition: Transition.fade,
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
     ),
     GetPage(
       name: technicianList,
       page: () => const TechnicianListPage(),
-      transition: Transition.fade,
+    ),
+    GetPage(
+      name: jobSummary,
+      page: () => const JobSummaryPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
     ),
   ];
 }

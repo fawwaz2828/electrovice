@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../config/routes.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../technician/technician_controller.dart';
 
 class ActiveJobPage extends StatefulWidget {
   const ActiveJobPage({super.key});
@@ -11,6 +14,7 @@ class ActiveJobPage extends StatefulWidget {
 class _ActiveJobPageState extends State<ActiveJobPage> {
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<TechnicianController>();
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F7),
       extendBody: true,
@@ -62,7 +66,10 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
 
               // ── Main Action Button ──────────────────────────────────
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  controller.completeJob();
+                  Get.offAllNamed(AppRoutes.jobSummary);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,

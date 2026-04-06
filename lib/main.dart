@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: AppRoutes.register,
       getPages: AppRoutes.routes,
+      defaultTransition: Transition.noTransition,
     );
   }
 }

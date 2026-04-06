@@ -210,10 +210,14 @@ class _ProfileHeroCard extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
-                  image: const DecorationImage(
-                    image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop'),
-                    fit: BoxFit.cover,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.person_rounded,
+                    color: Color(0xFF94A3B8),
+                    size: 60,
                   ),
                 ),
               ),

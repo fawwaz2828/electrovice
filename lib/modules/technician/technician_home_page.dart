@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../../config/routes.dart';
 
+import '../technician/technician_controller.dart';
+
 class TechnicianHomePage extends StatefulWidget {
   const TechnicianHomePage({super.key});
 
@@ -10,8 +12,89 @@ class TechnicianHomePage extends StatefulWidget {
   State<TechnicianHomePage> createState() => _TechnicianHomePageState();
 }
 
+class _ActiveJobPlaceholderCard extends StatelessWidget {
+  final String title;
+  const _ActiveJobPlaceholderCard({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0061FF),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0061FF).withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bolt_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'ACTIVE JOB',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const Spacer(),
+              const Text(
+                'IN PROGRESS',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Get.toNamed(AppRoutes.verification),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF0061FF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'VIEW WORK ORDER',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TechnicianHomePageState extends State<TechnicianHomePage> {
-  bool _isOnline = true;
+  final controller = Get.find<TechnicianController>();
   _FilterTab _selectedFilter = _FilterTab.distance;
 
   @override
@@ -27,97 +110,98 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-
-              // ── Header ───────────────────────────────────────────────
-              _Header(
-                isOnline: _isOnline,
-                onToggle: (v) => setState(() => _isOnline = v),
-              ),
-
-              const SizedBox(height: 20),
-
-              // ── Earnings Card ─────────────────────────────────────────
-              const _EarningsCard(),
-
-              const SizedBox(height: 14),
-
-              // ── Orders Completed Card ─────────────────────────────────
-              const _OrdersCompletedCard(),
-
-              const SizedBox(height: 28),
-
-              // ── Incoming Requests ─────────────────────────────────────
-              Row(
+          child: Obx(() => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Incoming Requests',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                  const SizedBox(height: 20),
+
+                  // ── Header ───────────────────────────────────────────────
+                  _Header(
+                    isOnline: controller.isOnline.value,
+                    onToggle: (v) => controller.isOnline.value = v,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ── Earnings Card ─────────────────────────────────────────
+                  const _EarningsCard(),
+
+                  const SizedBox(height: 14),
+
+                  // ── Orders Completed Card ─────────────────────────────────
+                  const _OrdersCompletedCard(),
+
+                  const SizedBox(height: 28),
+
+                  if (controller.currentJob.value != null) ...[
+                    const Text(
+                      'Current Assignment',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  _FilterChip(
-                    label: 'DISTANCE',
-                    selected: _selectedFilter == _FilterTab.distance,
-                    onTap: () =>
-                        setState(() => _selectedFilter = _FilterTab.distance),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: 'URGENCY',
-                    selected: _selectedFilter == _FilterTab.urgency,
-                    onTap: () =>
-                        setState(() => _selectedFilter = _FilterTab.urgency),
-                  ),
+                    const SizedBox(height: 16),
+                    _ActiveJobPlaceholderCard(
+                      title: controller.currentJob.value!.title,
+                    ),
+                  ] else ...[
+                    // ── Incoming Requests ─────────────────────────────────────
+                    Row(
+                      children: [
+                        const Text(
+                          'Incoming Requests',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const Spacer(),
+                        _FilterChip(
+                          label: 'DISTANCE',
+                          selected: _selectedFilter == _FilterTab.distance,
+                          onTap: () => setState(
+                              () => _selectedFilter = _FilterTab.distance),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'URGENCY',
+                          selected: _selectedFilter == _FilterTab.urgency,
+                          onTap: () => setState(
+                              () => _selectedFilter = _FilterTab.urgency),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Request Cards ─────────────────────────────────────────
+                    ...controller.incomingRequests.map((job) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _RequestCard(
+                            category: job.title.contains('MacBook')
+                                ? 'HARDWARE REPAIR'
+                                : 'NETWORK SETUP',
+                            categoryColor: job.title.contains('MacBook')
+                                ? const Color(0xFF0061FF)
+                                : const Color(0xFF059669),
+                            icon: job.title.contains('MacBook')
+                                ? Icons.laptop_rounded
+                                : Icons.router_rounded,
+                            distance: job.completedDateLabel, // Reusing field for mock
+                            title: job.title,
+                            description: job.title.contains('MacBook')
+                                ? 'The client reports a cracked retina display with vertical flickering lines.'
+                                : 'Small office requiring configuration of a 3-node mesh system.',
+                          ),
+                        )),
+                  ],
+
+                  const SizedBox(height: 120),
                 ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // ── Request Cards ─────────────────────────────────────────
-              const _RequestCard(
-                category: 'HARDWARE REPAIR',
-                categoryColor: Color(0xFF0061FF),
-                icon: Icons.laptop_rounded,
-                distance: '2.4km away',
-                title: 'MacBook Pro Screen Replacement',
-                description:
-                    'The client reports a cracked retina display with vertical flickering lines. Urgent onsite assessment requested.',
-              ),
-
-              const SizedBox(height: 12),
-
-              const _RequestCard(
-                category: 'NETWORK SETUP',
-                categoryColor: Color(0xFF059669),
-                icon: Icons.router_rounded,
-                distance: '0.8km away',
-                title: 'Mesh Wi-Fi Configuration',
-                description:
-                    'Small office requiring configuration of a 3-node mesh system and firewall setup.',
-              ),
-
-              const SizedBox(height: 12),
-
-              const _RequestCard(
-                category: 'PERIPHERALS',
-                categoryColor: Color(0xFFD97706),
-                icon: Icons.print_rounded,
-                distance: '4.1km away',
-                title: 'Industrial Printer Jam',
-                description:
-                    'HP LaserJet Enterprise M608. Error code 13.01.00 indicating internal tray sensor failure.',
-              ),
-
-              const SizedBox(height: 120),
-            ],
-          ),
+              )),
         ),
       ),
     );
