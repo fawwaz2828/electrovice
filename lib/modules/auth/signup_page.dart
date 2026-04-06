@@ -206,7 +206,7 @@ class _SignupPageState extends State<SignupPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.network('https://img.icons8.com/color/48/000000/google-logo.png', width: 24, height: 24),
+                          Image.asset('assets/images/google.png', width: 24, height: 24),
                           const SizedBox(width: 12),
                           const Text('Sign up with Google', style: TextStyle(color: Color(0xFF0F172A), fontSize: 15, fontWeight: FontWeight.w600)),
                         ],

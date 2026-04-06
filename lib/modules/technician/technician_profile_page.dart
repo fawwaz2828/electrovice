@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../config/routes.dart';
 import '../../models/technician_model.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'technician_controller.dart';
@@ -14,51 +13,53 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
 
   @override
   Widget build(BuildContext context) {
-    final TechnicianProfileData data = controller.profile.value ?? TechnicianProfileData.sample();
-
     return Scaffold(
       backgroundColor: _background,
       extendBody: true,
       bottomNavigationBar: const TechnicianNavBar(selectedItem: AppNavItem.profile),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              
-              // ── Top Bar ─────────────────────────────────────────────
-              _buildTopBar(),
+        child: Obx(() {
+          final TechnicianProfileData data = controller.profile.value ?? TechnicianProfileData.sample();
 
-              const SizedBox(height: 16),
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                
+                // ── Top Bar ─────────────────────────────────────────────
+                _buildTopBar(),
 
-              // ── Profile Identity Card ──────────────────────────────
-              _ProfileHeroCard(data: data),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                // ── Profile Identity Card ──────────────────────────────
+                _ProfileHeroCard(data: data),
 
-              // ── Stats Row ──────────────────────────────────────────
-              _StatsGrid(data: data),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 32),
+                // ── Stats Row ──────────────────────────────────────────
+                _StatsGrid(data: data),
 
-              // ── Service History Section ─────────────────────────────
-              _ServiceHistoryHeader(label: data.completedWindowLabel),
-              const SizedBox(height: 16),
-              
-              ...data.serviceHistory.map(
-                (job) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _HistoryCard(job: job),
+                const SizedBox(height: 32),
+
+                // ── Service History Section ─────────────────────────────
+                _ServiceHistoryHeader(label: data.completedWindowLabel),
+                const SizedBox(height: 16),
+                
+                ...data.serviceHistory.map(
+                  (job) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _HistoryCard(job: job),
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 120),
-            ],
-          ),
-        ),
+                const SizedBox(height: 120),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }

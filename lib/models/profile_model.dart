@@ -47,6 +47,26 @@ class ProfileData {
     );
   }
 
+  ProfileData copyWith({
+    String? fullName,
+    String? emailAddress,
+    String? mobileNumber,
+    bool? isMobileVerified,
+    String? avatarUrl,
+    List<ProfileNode>? primaryNodes,
+    List<SecurityOption>? securityOptions,
+  }) {
+    return ProfileData(
+      fullName: fullName ?? this.fullName,
+      emailAddress: emailAddress ?? this.emailAddress,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
+      isMobileVerified: isMobileVerified ?? this.isMobileVerified,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      primaryNodes: primaryNodes ?? this.primaryNodes,
+      securityOptions: securityOptions ?? this.securityOptions,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'fullName': fullName,

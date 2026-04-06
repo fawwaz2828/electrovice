@@ -296,8 +296,8 @@ class _LoginPageState extends State<LoginPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Image.network(
-                              'https://img.icons8.com/color/48/000000/google-logo.png',
+                            Image.asset(
+                              'assets/images/google.png',
                               width: 24,
                               height: 24,
                             ),

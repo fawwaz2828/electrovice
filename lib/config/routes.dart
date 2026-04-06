@@ -110,10 +110,16 @@ class AppRoutes {
     GetPage(
       name: home,
       page: () => const HomePage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
+      }),
     ),
     GetPage(
       name: technicianHome,
       page: () => const TechnicianHomePage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
     ),
     GetPage(
       name: jobDetail,

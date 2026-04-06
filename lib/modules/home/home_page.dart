@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../profile/profile_controller.dart';
+import '../technician/technician_controller.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends GetView<ProfileController> {
   const HomePage({super.key});
 
   void _onNavSelected(AppNavItem item) {
@@ -33,35 +35,61 @@ class HomePage extends StatelessWidget {
                   horizontal: 20.0,
                   vertical: 16.0,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Logo
-                    Image.asset(
-                      'assets/images/ELECTROVICE_LOGO_HD.png',
-                      height: 36,
-                      fit: BoxFit.contain,
-                    ),
-                    // Bell notification
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Logo
+                        Image.asset(
+                          'assets/images/ELECTROVICE_LOGO_HD.png',
+                          height: 36,
+                          fit: BoxFit.contain,
+                        ),
+                        // Bell notification
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: Color(0xFF1E293B),
-                        size: 20,
+                          child: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: Color(0xFF1E293B),
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Obx(() {
+                      final name = controller.profile.value?.fullName.split(' ').first ?? 'Friend';
+                      return Text(
+                        'Good morning, $name!',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF1E293B),
+                          height: 1.1,
+                        ),
+                      );
+                    }),
+                    const Text(
+                      'Ready to fix your electronics today?',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -298,7 +326,7 @@ class _SearchBar extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════
 //  CURRENT REPAIR CARD
 // ═══════════════════════════════════════════════════════════════
-class _CurrentRepairCard extends StatelessWidget {
+class _CurrentRepairCard extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Container(

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../services/auth_service.dart';
 import '../../config/routes.dart';
+import '../profile/profile_controller.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
@@ -18,7 +19,7 @@ class AuthController extends GetxController {
         password: password,
       );
       final role = await _authService.getUserRole(user!.uid) ?? 'customer';
-      _navigateToHome(role);
+      await _navigateToHome(role);
     } catch (e) {
       errorMessage.value = _parseError(e.toString());
     } finally {
@@ -37,8 +38,12 @@ class AuthController extends GetxController {
         name: name,
         role: role,
       );
-      _navigateToHome(role);
-      Get.snackbar('Berhasil!', 'Akun berhasil dibuat.', snackPosition: SnackPosition.BOTTOM);
+      await _navigateToHome(role);
+      Get.snackbar(
+        'Berhasil!',
+        'Akun berhasil dibuat.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } catch (e) {
       errorMessage.value = _parseError(e.toString());
     } finally {
@@ -59,20 +64,16 @@ class AuthController extends GetxController {
 
       final user = result['user'];
       final isNewUser = result['isNew'] as bool;
-      
+      final userRole = await _authService.getUserRole(user.uid) ?? role;
+
+      await _navigateToHome(userRole);
+
       if (isNewUser) {
-        // User baru → stay logged in (jangan logout lagi)
-        final userRole = await _authService.getUserRole(user.uid) ?? role;
-        _navigateToHome(userRole);
         Get.snackbar(
-          'Akun Dibuat!', 
+          'Akun Dibuat!',
           'Pendaftaran Google berhasil.',
           snackPosition: SnackPosition.BOTTOM,
         );
-      } else {
-        // User lama → langsung ke home
-        final userRole = await _authService.getUserRole(user.uid) ?? role;
-        _navigateToHome(userRole);
       }
     } catch (e) {
       errorMessage.value = _parseError(e.toString());
@@ -81,16 +82,24 @@ class AuthController extends GetxController {
     }
   }
 
-  void _navigateToHome(String role) {
+  Future<void> _navigateToHome(String role) async {
     if (role == 'technician') {
       Get.offAllNamed(AppRoutes.technicianHome);
     } else {
+      // Put ProfileController dulu sebelum navigate
+      // supaya data user sudah siap saat HomePage dibuka
+      final profileController = Get.put(ProfileController());
+      await profileController.reloadProfile();
       Get.offAllNamed(AppRoutes.home);
     }
   }
 
   Future<void> logout() async {
     await _authService.logout();
+    // Hapus ProfileController saat logout
+    if (Get.isRegistered<ProfileController>()) {
+      Get.delete<ProfileController>();
+    }
     Get.offAllNamed(AppRoutes.register);
   }
 

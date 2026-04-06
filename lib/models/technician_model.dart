@@ -42,6 +42,28 @@ class TechnicianProfileData {
     );
   }
 
+  TechnicianProfileData copyWith({
+    String? fullName,
+    String? specialty,
+    int? yearsExperience,
+    int? successRate,
+    double? rating,
+    String? completedWindowLabel,
+    String? avatarUrl,
+    List<TechnicianJobRecord>? serviceHistory,
+  }) {
+    return TechnicianProfileData(
+      fullName: fullName ?? this.fullName,
+      specialty: specialty ?? this.specialty,
+      yearsExperience: yearsExperience ?? this.yearsExperience,
+      successRate: successRate ?? this.successRate,
+      rating: rating ?? this.rating,
+      completedWindowLabel: completedWindowLabel ?? this.completedWindowLabel,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      serviceHistory: serviceHistory ?? this.serviceHistory,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'fullName': fullName,

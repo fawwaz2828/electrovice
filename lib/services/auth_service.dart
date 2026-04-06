@@ -91,4 +91,9 @@ class AuthService {
         final doc = await _firestore.collection('users').doc(uid).get();
         return doc.data()?['role'];
     }
+
+    Future<Map<String, dynamic>?> getUserData(String uid) async {
+        final doc = await _firestore.collection('users').doc(uid).get();
+        return doc.data();
+    }
 }

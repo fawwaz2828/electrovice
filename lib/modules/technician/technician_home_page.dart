@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../../config/routes.dart';
+import 'technician_controller.dart';
 
 class TechnicianHomePage extends StatefulWidget {
   const TechnicianHomePage({super.key});
@@ -11,6 +12,7 @@ class TechnicianHomePage extends StatefulWidget {
 }
 
 class _TechnicianHomePageState extends State<TechnicianHomePage> {
+  final TechnicianController _controller = Get.find<TechnicianController>();
   bool _isOnline = true;
   _FilterTab _selectedFilter = _FilterTab.distance;
 
@@ -31,7 +33,11 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
               const SizedBox(height: 20),
 
               // ── Header ───────────────────────────────────────────────
-              _Header(isOnline: _isOnline, onToggle: (v) => setState(() => _isOnline = v)),
+              Obx(() => _Header(
+                isOnline: _isOnline, 
+                onToggle: (v) => setState(() => _isOnline = v),
+                name: _controller.profile.value?.fullName.split(' ').first ?? 'Technician',
+              )),
 
               const SizedBox(height: 20),
 
@@ -128,18 +134,19 @@ enum _FilterTab { distance, urgency }
 class _Header extends StatelessWidget {
   final bool isOnline;
   final ValueChanged<bool> onToggle;
-  const _Header({required this.isOnline, required this.onToggle});
+  final String name;
+  const _Header({required this.isOnline, required this.onToggle, required this.name});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Expanded(
+        Expanded(
           child: Text(
-            "Today's\nSummary",
-            style: TextStyle(
-              fontSize: 28,
+            "Hello, $name!\nHere's Today's Summary",
+            style: const TextStyle(
+              fontSize: 24,
               fontWeight: FontWeight.w900,
               color: Color(0xFF0F172A),
               height: 1.15,
