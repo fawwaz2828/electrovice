@@ -587,71 +587,60 @@ class _SpecialistCard extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name + Rating badge
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E293B),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Rating badge (blue)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0061FF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            color: Colors.white,
-                            size: 13,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            rating,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF8A00),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.white, size: 12),
+                            const SizedBox(width: 2),
+                            Text(
+                              rating,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    specialty,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1D4ED8),
+                      letterSpacing: 0.5,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-
-                // Specialty
-                Text(
-                  specialty,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF64748B),
-                    letterSpacing: 0.3,
                   ),
                 ),
                 const SizedBox(height: 10),
