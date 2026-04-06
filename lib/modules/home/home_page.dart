@@ -8,20 +8,12 @@ import '../technician/technician_controller.dart';
 class HomePage extends GetView<ProfileController> {
   const HomePage({super.key});
 
-  void _onNavSelected(AppNavItem item) {
-    if (item == AppNavItem.home) return;
-    // Navigation for other tabs can be added here
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F7),
       extendBody: true,
-      bottomNavigationBar: AppBottomNavBar(
-        selectedItem: AppNavItem.home,
-        onItemSelected: _onNavSelected,
-      ),
+      bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.home),
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -292,10 +284,11 @@ class _SearchBar extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: TextField(
-              style: TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
-              decoration: InputDecoration(
+              onSubmitted: (_) => Get.toNamed(AppRoutes.technicianList),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
+              decoration: const InputDecoration(
                 hintText: 'Search for hardware repair...',
                 hintStyle: TextStyle(color: Color(0xFFADB5BD), fontSize: 14),
                 border: InputBorder.none,
@@ -303,18 +296,21 @@ class _SearchBar extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            margin: const EdgeInsets.all(6),
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.search_rounded,
-              color: Colors.white,
-              size: 20,
+          GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.technicianList),
+            child: Container(
+              margin: const EdgeInsets.all(6),
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.search_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],
@@ -580,135 +576,121 @@ class _SpecialistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Image.network(
-              imageUrl,
+    return GestureDetector(
+      onTap: () => Get.toNamed(AppRoutes.technicianDetail),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar
+            Container(
               width: 72,
               height: 72,
-              fit: BoxFit.cover,
-              errorBuilder: (_, err, _st) => Container(
-                width: 72,
-                height: 72,
-                color: const Color(0xFFE2E8F0),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: Color(0xFF94A3B8),
-                  size: 36,
-                ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.person_rounded,
+                color: Color(0xFF94A3B8),
+                size: 36,
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name + Rating badge
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E293B),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Rating badge (blue)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0061FF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            color: Colors.white,
-                            size: 13,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            rating,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF8A00),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.white, size: 12),
+                            const SizedBox(width: 2),
+                            Text(
+                              rating,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-
-                // Specialty
-                Text(
-                  specialty,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF64748B),
-                    letterSpacing: 0.3,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 10),
+                  const SizedBox(height: 4),
+                  Text(
+                    specialty,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1D4ED8),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
 
-                // Distance + badge
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_rounded,
-                      color: Color(0xFF94A3B8),
-                      size: 14,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      distance,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w600,
+                  // Distance + badge
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_rounded,
+                        color: Color(0xFF94A3B8),
+                        size: 14,
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    badge,
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 3),
+                      Text(
+                        distance,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      badge,
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -230,16 +230,7 @@ class _AvatarCard extends StatelessWidget {
             color: const Color(0xFFD9E4F8),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: imageUrl != null && imageUrl!.trim().isNotEmpty
-                ? Image.network(
-                    imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _AvatarFallback(),
-                  )
-                : const _AvatarFallback(),
-          ),
+          child: const _AvatarFallback(),
         ),
         Positioned(
           right: -2,

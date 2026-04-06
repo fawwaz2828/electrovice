@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../technician/technician_controller.dart';
 
 class JobDetailPage extends StatelessWidget {
   const JobDetailPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<TechnicianController>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F7),
       extendBody: true,
@@ -466,7 +469,10 @@ class JobDetailPage extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: ElevatedButton(
-                      onPressed: () => Get.toNamed(AppRoutes.verification),
+                      onPressed: () {
+                        controller.acceptJob(controller.incomingRequests.first);
+                        Get.toNamed(AppRoutes.verification);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
@@ -493,7 +499,7 @@ class JobDetailPage extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () => Get.back(),
                       style: TextButton.styleFrom(
                         backgroundColor: const Color(0xFFE2E8F0),
                         foregroundColor: const Color(0xFF475569),
@@ -647,16 +653,7 @@ class _AvatarCard extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(13),
-        child: imageUrl != null && imageUrl!.trim().isNotEmpty
-            ? Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _AvatarPlaceholder(),
-              )
-            : const _AvatarPlaceholder(),
-      ),
+      child: const _AvatarPlaceholder(),
     );
   }
 }

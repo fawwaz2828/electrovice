@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../config/routes.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../technician/technician_controller.dart';
 
 class ActiveJobPage extends StatefulWidget {
   const ActiveJobPage({super.key});
@@ -11,10 +14,13 @@ class ActiveJobPage extends StatefulWidget {
 class _ActiveJobPageState extends State<ActiveJobPage> {
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<TechnicianController>();
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F7),
       extendBody: true,
-      bottomNavigationBar: const TechnicianNavBar(selectedItem: AppNavItem.active),
+      bottomNavigationBar: const TechnicianNavBar(
+        selectedItem: AppNavItem.active,
+      ),
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -24,21 +30,9 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              
-              // ── Work Order Header ───────────────────────────────────
+
+              // ── Main Work Order Card ───────────────────────────────
               const _WorkOrderHeader(),
-
-              const SizedBox(height: 16),
-
-              // ── Time & Location ─────────────────────────────────────
-              const _TimeElapsedCard(),
-              const SizedBox(height: 12),
-              const _LocationCard(),
-
-              const SizedBox(height: 24),
-
-              // ── Task Progress ───────────────────────────────────────
-              const _TaskProgressSection(),
 
               const SizedBox(height: 24),
 
@@ -72,12 +66,17 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
 
               // ── Main Action Button ──────────────────────────────────
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  controller.completeJob();
+                  Get.offAllNamed(AppRoutes.jobSummary);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 64),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32),
+                  ),
                   elevation: 0,
                 ),
                 child: const Row(
@@ -87,7 +86,10 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                     SizedBox(width: 12),
                     Text(
                       'Complete Repair',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
@@ -99,7 +101,11 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                   child: Text(
                     'By clicking complete, you confirm all safety checks are performed and a diagnostic report will be sent to the customer.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), height: 1.4),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF94A3B8),
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ),
@@ -139,7 +145,10 @@ class _WorkOrderHeader extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
@@ -173,13 +182,24 @@ class _WorkOrderHeader extends StatelessWidget {
           const Text(
             'MacBook Pro -\nScreen Damage',
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
               color: Color(0xFF111111),
               height: 1.2,
               letterSpacing: -0.5,
             ),
           ),
+          const SizedBox(height: 24),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 20),
+
+          // Nested Cards
+          const _TimeElapsedCard(),
+          const SizedBox(height: 12),
+          const _LocationCard(),
+
+          const SizedBox(height: 24),
+          const _TaskProgressSection(),
         ],
       ),
     );
@@ -194,7 +214,7 @@ class _TimeElapsedCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: const Color(0xFFF2F3F7),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -222,7 +242,11 @@ class _TimeElapsedCard extends StatelessWidget {
                 TextSpan(text: '01:42:15'),
                 TextSpan(
                   text: ' hrs',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8)),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                  ),
                 ),
               ],
             ),
@@ -241,7 +265,7 @@ class _LocationCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: const Color(0xFFF2F3F7),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -269,7 +293,11 @@ class _LocationCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.near_me_rounded, size: 16, color: Color(0xFF111111)),
+              const Icon(
+                Icons.near_me_rounded,
+                size: 16,
+                color: Color(0xFF111111),
+              ),
               const SizedBox(width: 8),
               const Text(
                 'Map View',
@@ -326,7 +354,9 @@ class _TaskProgressSection extends StatelessWidget {
                 height: 8,
                 margin: EdgeInsets.only(right: index == 3 ? 0 : 8),
                 decoration: BoxDecoration(
-                  color: completed ? const Color(0xFF3254FF) : const Color(0xFFF1F5F9),
+                  color: completed
+                      ? const Color(0xFF3254FF)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -342,7 +372,11 @@ class _ActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String sublabel;
-  const _ActionCard({required this.icon, required this.label, required this.sublabel});
+  const _ActionCard({
+    required this.icon,
+    required this.label,
+    required this.sublabel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -409,7 +443,11 @@ class _TechnicianNotesCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.description_outlined, color: Color(0xFF111111), size: 20),
+              Icon(
+                Icons.description_outlined,
+                color: Color(0xFF111111),
+                size: 20,
+              ),
               SizedBox(width: 10),
               Text(
                 'TECHNICIAN NOTES',
@@ -433,8 +471,13 @@ class _TechnicianNotesCard extends StatelessWidget {
             child: const TextField(
               maxLines: null,
               decoration: InputDecoration(
-                hintText: 'Document technical adjustments, parts used, or upcoming requirements...',
-                hintStyle: TextStyle(fontSize: 14, color: Color(0xFF94A3B8), height: 1.5),
+                hintText:
+                    'Document technical adjustments, parts used, or upcoming requirements...',
+                hintStyle: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF94A3B8),
+                  height: 1.5,
+                ),
                 border: InputBorder.none,
               ),
             ),

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../models/technician_model.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../../config/routes.dart';
 import 'technician_controller.dart';
 
 class TechnicianProfilePage extends GetView<TechnicianController> {
@@ -55,11 +56,97 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
                   ),
                 ),
 
+              const SizedBox(height: 24),
+
+              // ── Logout Button ───────────────────────────────────────
+              _buildLogoutButton(context),
+
                 const SizedBox(height: 120),
               ],
             ),
           );
         }),
+      ),
+    );
+  }
+  }
+
+  Widget _buildLogoutButton(BuildContext context) {
+    return InkWell(
+      onTap: () => _showLogoutDialog(context),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF0BEB8), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE11D48).withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.logout_rounded,
+              color: Color(0xFFE11D48),
+              size: 20,
+            ),
+            SizedBox(width: 10),
+            Text(
+              'LOG OUT SYSTEM',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFFE11D48),
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Log Out',
+          style: TextStyle(fontWeight: FontWeight.w900, color: _ink),
+        ),
+        content: const Text(
+          'Are you sure you want to log out of the technician system?',
+          style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w700),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.offAllNamed(AppRoutes.login),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE11D48),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
       ),
     );
   }
@@ -126,10 +213,14 @@ class _ProfileHeroCard extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
-                  image: const DecorationImage(
-                    image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop'),
-                    fit: BoxFit.cover,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.person_rounded,
+                    color: Color(0xFF94A3B8),
+                    size: 60,
                   ),
                 ),
               ),

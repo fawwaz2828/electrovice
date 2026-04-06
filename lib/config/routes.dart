@@ -17,6 +17,8 @@ import '../modules/technician/technician_home_page.dart';
 import '../modules/technician/job_detail_page.dart';
 import '../modules/technician/verification_page.dart';
 import '../modules/technician/active_job_page.dart';
+import '../modules/technician/technician_list_page.dart';
+import '../modules/technician/job_summary_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -34,6 +36,8 @@ class AppRoutes {
   static const String orderHistory = '/customer/order-history';
   static const String signup = '/signup';
   static const String home = '/home';
+  static const String technicianList = '/customer/technician-list';
+  static const String jobSummary = '/technician/job-summary';
 
   static final routes = [
     GetPage(
@@ -124,14 +128,34 @@ class AppRoutes {
     GetPage(
       name: jobDetail,
       page: () => const JobDetailPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
     ),
     GetPage(
       name: verification,
       page: () => const VerificationPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
     ),
     GetPage(
       name: activeJob,
       page: () => const ActiveJobPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
+    ),
+    GetPage(
+      name: technicianList,
+      page: () => const TechnicianListPage(),
+    ),
+    GetPage(
+      name: jobSummary,
+      page: () => const JobSummaryPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController());
+      }),
     ),
   ];
 }

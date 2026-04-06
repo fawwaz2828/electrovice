@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../config/routes.dart';
 import '../../models/booking_model.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
@@ -15,10 +14,7 @@ class BookingTrackingPage extends GetView<BookingController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
-      bottomNavigationBar: AppBottomNavBar(
-        selectedItem: AppNavItem.order,
-        onItemSelected: _onNavSelected,
-      ),
+      bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.order),
       body: SafeArea(
         child: Obx(() {
           final OrderTrackingData tracking = controller.trackingData;
@@ -60,23 +56,6 @@ class BookingTrackingPage extends GetView<BookingController> {
     );
   }
 
-  void _onNavSelected(AppNavItem item) {
-    switch (item) {
-      case AppNavItem.home:
-        Get.offNamed(AppRoutes.home);
-        return;
-      case AppNavItem.history:
-        Get.offNamed(AppRoutes.orderHistory);
-        return;
-      case AppNavItem.order:
-        return;
-      case AppNavItem.profile:
-        Get.offNamed(AppRoutes.profile_page);
-        return;
-      case AppNavItem.active:
-        return;
-    }
-  }
 }
 
 class _LiveMapCard extends StatelessWidget {
@@ -299,15 +278,14 @@ class _TechnicianContactCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A1F28),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: imageUrl != null && imageUrl!.trim().isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(imageUrl!, fit: BoxFit.cover),
-                      )
-                    : const Icon(Icons.person, color: Colors.white),
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: Color(0xFF94A3B8),
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
