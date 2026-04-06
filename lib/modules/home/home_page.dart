@@ -6,20 +6,12 @@ import '../../widget/app_bottom_nav_bar.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  void _onNavSelected(AppNavItem item) {
-    if (item == AppNavItem.home) return;
-    // Navigation for other tabs can be added here
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F7),
       extendBody: true,
-      bottomNavigationBar: AppBottomNavBar(
-        selectedItem: AppNavItem.home,
-        onItemSelected: _onNavSelected,
-      ),
+      bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.home),
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -40,7 +32,7 @@ class HomePage extends StatelessWidget {
                     // Logo
                     Image.asset(
                       'assets/images/ELECTROVICE_LOGO_HD.png',
-                      height: 36,
+                      height: 20,
                       fit: BoxFit.contain,
                     ),
                     // Bell notification
@@ -264,10 +256,11 @@ class _SearchBar extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: TextField(
-              style: TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
-              decoration: InputDecoration(
+              onSubmitted: (_) => Get.toNamed(AppRoutes.technicianList),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
+              decoration: const InputDecoration(
                 hintText: 'Search for hardware repair...',
                 hintStyle: TextStyle(color: Color(0xFFADB5BD), fontSize: 14),
                 border: InputBorder.none,
@@ -275,18 +268,21 @@ class _SearchBar extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            margin: const EdgeInsets.all(6),
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.search_rounded,
-              color: Colors.white,
-              size: 20,
+          GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.technicianList),
+            child: Container(
+              margin: const EdgeInsets.all(6),
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.search_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],
@@ -587,60 +583,60 @@ class _SpecialistCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF8A00),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.white, size: 12),
-                            const SizedBox(width: 2),
-                            Text(
-                              rating,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    specialty,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1D4ED8),
-                      letterSpacing: 0.5,
                     ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF8A00),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.white, size: 12),
+                          const SizedBox(width: 2),
+                          Text(
+                            rating,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  specialty,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1D4ED8),
+                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 10),

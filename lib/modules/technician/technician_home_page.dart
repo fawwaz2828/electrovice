@@ -19,7 +19,9 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F7),
       extendBody: true,
-      bottomNavigationBar: const TechnicianNavBar(selectedItem: AppNavItem.home),
+      bottomNavigationBar: const TechnicianNavBar(
+        selectedItem: AppNavItem.home,
+      ),
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -31,7 +33,10 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
               const SizedBox(height: 20),
 
               // ── Header ───────────────────────────────────────────────
-              _Header(isOnline: _isOnline, onToggle: (v) => setState(() => _isOnline = v)),
+              _Header(
+                isOnline: _isOnline,
+                onToggle: (v) => setState(() => _isOnline = v),
+              ),
 
               const SizedBox(height: 20),
 
@@ -60,13 +65,15 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                   _FilterChip(
                     label: 'DISTANCE',
                     selected: _selectedFilter == _FilterTab.distance,
-                    onTap: () => setState(() => _selectedFilter = _FilterTab.distance),
+                    onTap: () =>
+                        setState(() => _selectedFilter = _FilterTab.distance),
                   ),
                   const SizedBox(width: 8),
                   _FilterChip(
                     label: 'URGENCY',
                     selected: _selectedFilter == _FilterTab.urgency,
-                    onTap: () => setState(() => _selectedFilter = _FilterTab.urgency),
+                    onTap: () =>
+                        setState(() => _selectedFilter = _FilterTab.urgency),
                   ),
                 ],
               ),
@@ -168,7 +175,9 @@ class _Header extends StatelessWidget {
                   fontSize: 9,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.4,
-                  color: isOnline ? const Color(0xFF0061FF) : const Color(0xFF94A3B8),
+                  color: isOnline
+                      ? const Color(0xFF0061FF)
+                      : const Color(0xFF94A3B8),
                   height: 1.4,
                 ),
               ),
@@ -280,7 +289,7 @@ class _OrdersCompletedCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: const Color.fromARGB(255, 0, 0, 0),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -316,8 +325,10 @@ class _OrdersCompletedCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: const Color(0xFF1E293B),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF3254FF)),
+                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF3254FF),
+                    ),
                     minHeight: 6,
                   ),
                 ),
@@ -340,7 +351,10 @@ class _OrdersCompletedCard extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF1E293B), width: 2),
+              border: Border.all(
+                color: const Color.fromARGB(255, 0, 0, 0),
+                width: 2,
+              ),
             ),
             child: const Icon(
               Icons.check_circle_outline_rounded,
@@ -375,7 +389,9 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF0F172A) : Colors.transparent,
+          color: selected
+              ? const Color.fromARGB(255, 0, 0, 0)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(

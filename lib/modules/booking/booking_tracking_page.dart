@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../config/routes.dart';
 import '../../models/booking_model.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
@@ -15,10 +14,7 @@ class BookingTrackingPage extends GetView<BookingController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
-      bottomNavigationBar: AppBottomNavBar(
-        selectedItem: AppNavItem.order,
-        onItemSelected: _onNavSelected,
-      ),
+      bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.order),
       body: SafeArea(
         child: Obx(() {
           final OrderTrackingData tracking = controller.trackingData;
@@ -60,23 +56,6 @@ class BookingTrackingPage extends GetView<BookingController> {
     );
   }
 
-  void _onNavSelected(AppNavItem item) {
-    switch (item) {
-      case AppNavItem.home:
-        Get.offNamed(AppRoutes.home);
-        return;
-      case AppNavItem.history:
-        Get.offNamed(AppRoutes.orderHistory);
-        return;
-      case AppNavItem.order:
-        return;
-      case AppNavItem.profile:
-        Get.offNamed(AppRoutes.profile_page);
-        return;
-      case AppNavItem.active:
-        return;
-    }
-  }
 }
 
 class _LiveMapCard extends StatelessWidget {

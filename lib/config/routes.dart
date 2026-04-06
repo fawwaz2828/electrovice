@@ -17,6 +17,7 @@ import '../modules/technician/technician_home_page.dart';
 import '../modules/technician/job_detail_page.dart';
 import '../modules/technician/verification_page.dart';
 import '../modules/technician/active_job_page.dart';
+import '../modules/technician/technician_list_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -34,6 +35,7 @@ class AppRoutes {
   static const String orderHistory = '/customer/order-history';
   static const String signup = '/signup';
   static const String home = '/home';
+  static const String technicianList = '/customer/technician-list';
 
   static final routes = [
     GetPage(
@@ -57,6 +59,7 @@ class AppRoutes {
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(() => TechnicianController());
       }),
+      transition: Transition.fade,
     ),
     GetPage(
       name: technicianDetail,
@@ -114,18 +117,27 @@ class AppRoutes {
     GetPage(
       name: technicianHome,
       page: () => const TechnicianHomePage(),
+      transition: Transition.fade,
     ),
     GetPage(
       name: jobDetail,
       page: () => const JobDetailPage(),
+      transition: Transition.fade,
     ),
     GetPage(
       name: verification,
       page: () => const VerificationPage(),
+      transition: Transition.fade,
     ),
     GetPage(
       name: activeJob,
       page: () => const ActiveJobPage(),
+      transition: Transition.fade,
+    ),
+    GetPage(
+      name: technicianList,
+      page: () => const TechnicianListPage(),
+      transition: Transition.fade,
     ),
   ];
 }

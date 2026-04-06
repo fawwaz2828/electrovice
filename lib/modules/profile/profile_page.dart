@@ -16,16 +16,12 @@ class ProfilePage extends GetView<ProfileController> {
   static const Color _muted = Color(0xFF6F88AE);
   static const Color _label = Color(0xFFC0C8D7);
   static const Color _fieldBackground = Color(0xFFF5F6FA);
-  static const Color _danger = Color(0xFFD14638);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _pageBackground,
-      bottomNavigationBar: AppBottomNavBar(
-        selectedItem: AppNavItem.profile,
-        onItemSelected: _onNavSelected,
-      ),
+      bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.profile),
       body: SafeArea(
         child: Obx(() {
           final ProfileData data =
@@ -150,84 +146,87 @@ class ProfilePage extends GetView<ProfileController> {
   }
 
   Widget _buildLogoutButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () => _showLogoutDialog(context),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: _danger,
-          side: const BorderSide(color: Color(0xFFF0BEB8)),
-          backgroundColor: Colors.white.withOpacity(0.7),
-          minimumSize: const Size.fromHeight(54),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+    return InkWell(
+      onTap: () => _showLogoutDialog(context),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF0BEB8), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE11D48).withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        icon: const Icon(Icons.logout_rounded, size: 18),
-        label: const Text(
-          'LOG OUT SYSTEM',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.3,
-          ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.logout_rounded,
+              color: Color(0xFFE11D48),
+              size: 20,
+            ),
+            SizedBox(width: 10),
+            Text(
+              'LOG OUT SYSTEM',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFFE11D48),
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _onNavSelected(AppNavItem item) {
-    switch (item) {
-      case AppNavItem.profile:
-        return;
-      case AppNavItem.home:
-        Get.offNamed(AppRoutes.home);
-        return;
-      case AppNavItem.active:
-        Get.snackbar(
-          'Coming soon',
-          'Active jobs view is not ready yet.',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-        );
-        return;
-      case AppNavItem.history:
-        Get.offNamed(AppRoutes.orderHistory);
-        return;
-      case AppNavItem.order:
-        Get.offNamed(AppRoutes.orderTracking);
-        return;
-    }
-  }
-
   void _showLogoutDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Log Out',
+          style: TextStyle(fontWeight: FontWeight.w900, color: _title),
+        ),
+        content: const Text(
+          'Are you sure you want to log out of the system?',
+          style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w700),
+            ),
           ),
-          title: const Text('Log Out'),
-          content: const Text('Are you sure you want to log out of the system?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+          ElevatedButton(
+            onPressed: () {
+              Get.offAllNamed(AppRoutes.login);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Logged out successfully')),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE11D48),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logged out successfully')),
-                );
-              },
-              style: FilledButton.styleFrom(backgroundColor: _danger),
-              child: const Text('Log Out'),
-            ),
-          ],
-        );
-      },
+            child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
     );
   }
 }

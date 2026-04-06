@@ -18,7 +18,7 @@ class _VerificationPageState extends State<VerificationPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       extendBody: true,
-      bottomNavigationBar: const TechnicianNavBar(selectedItem: AppNavItem.home),
+      bottomNavigationBar: const TechnicianNavBar(selectedItem: AppNavItem.active),
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
