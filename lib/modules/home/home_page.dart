@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
+import '../../services/technician_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
-import '../profile/profile_controller.dart';
-import '../technician/technician_controller.dart';
+import 'home_controller.dart';
 
-class HomePage extends GetView<ProfileController> {
+class HomePage extends GetView<HomeController> {
   const HomePage({super.key});
 
   @override
@@ -16,119 +16,110 @@ class HomePage extends GetView<ProfileController> {
       bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.home),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Header ──────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20.0,
-                  vertical: 16.0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Logo
-                        Image.asset(
-                          'assets/images/ELECTROVICE_LOGO_HD.png',
-                          height: 36,
-                          fit: BoxFit.contain,
-                        ),
-                        // Bell notification
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.06),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+        child: RefreshIndicator(
+          onRefresh: () => controller.loadNearbyTechnicians(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header ──────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                    vertical: 16.0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/ELECTROVICE_LOGO_HD.png',
+                            height: 36,
+                            fit: BoxFit.contain,
                           ),
-                          child: const Icon(
-                            Icons.notifications_none_rounded,
-                            color: Color(0xFF1E293B),
-                            size: 20,
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.notifications_none_rounded,
+                              color: Color(0xFF1E293B),
+                              size: 20,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Obx(() {
-                      final name = controller.profile.value?.fullName.split(' ').first ?? 'Friend';
-                      return Text(
-                        'Good morning, $name!',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF1E293B),
-                          height: 1.1,
-                        ),
-                      );
-                    }),
-                    const Text(
-                      'Ready to fix your electronics today?',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      Obx(() => Text(
+                            'Hi, ${controller.userName.value.isEmpty ? 'there' : controller.userName.value}! 👋',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF1E293B),
+                              height: 1.1,
+                            ),
+                          )),
+                      const Text(
+                        'Butuh bantuan perbaikan hari ini?',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              // ── Hero Map Card ────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: _HeroMapCard(),
-              ),
+                // ── Hero CTA Card ────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: _HeroCTACard(),
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // ── Search Bar ───────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: _SearchBar(),
-              ),
+                // ── Search Bar ───────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: _SearchBar(),
+                ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-              // ── Current Repair Card ──────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: _CurrentRepairCard(),
-              ),
+                // ── Repair Categories ────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: const _RepairCategories(),
+                ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 28),
 
-              // ── Repair Categories ────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: _RepairCategories(),
-              ),
+                // ── Nearby Technicians ───────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: _NearbyTechniciansSection(),
+                ),
 
-              const SizedBox(height: 28),
-
-              // ── Featured Specialists ─────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: _FeaturedSpecialists(),
-              ),
-
-              // Bottom padding for nav bar
-              const SizedBox(height: 110),
-            ],
+                const SizedBox(height: 110),
+              ],
+            ),
           ),
         ),
       ),
@@ -137,122 +128,111 @@ class HomePage extends GetView<ProfileController> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  HERO MAP CARD
+//  HERO CTA CARD
 // ═══════════════════════════════════════════════════════════════
-class _HeroMapCard extends StatelessWidget {
+class _HeroCTACard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: SizedBox(
-        height: 220,
-        width: double.infinity,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Map background image
-            Image.network(
-              'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=800&auto=format&fit=crop',
-              fit: BoxFit.cover,
-              color: Colors.black.withValues(alpha: 0.35),
-              colorBlendMode: BlendMode.darken,
-              errorBuilder: (_, err, st) =>
-                  Container(color: const Color(0xFF334155)),
+    return GestureDetector(
+      onTap: () => Get.toNamed(AppRoutes.technicianList),
+      child: Container(
+        height: 160,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0061FF).withValues(alpha: 0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
-
-            // Wrench / pin icon in the map
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Decorative circle
             Positioned(
-              top: 52,
-              left: MediaQuery.of(context).size.width * 0.32,
+              right: -20,
+              top: -20,
               child: Container(
-                width: 36,
-                height: 36,
+                width: 140,
+                height: 140,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.build_rounded,
-                  color: Colors.white,
-                  size: 16,
+                  color: Colors.white.withValues(alpha: 0.05),
                 ),
               ),
             ),
-
-            // Bottom frosted card
             Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
+              right: 20,
+              bottom: -30,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.04),
                 ),
-                child: Row(
-                  children: [
-                    // Text left
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Find Nearby\nTechnicians',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              height: 1.25,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            '12 active specialists available now',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFFCBD5E1),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Explore Map button
-                    GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: const Text(
-                          'Explore Map',
+              ),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Cari Teknisi\nTerdekat',
                           style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
                             color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                            height: 1.2,
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Elektronik & kendaraan',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF93C5FD),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0061FF),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'Lihat Semua →',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const Icon(
+                    Icons.handyman_rounded,
+                    color: Colors.white,
+                    size: 64,
+                  ),
+                ],
               ),
             ),
           ],
@@ -268,37 +248,38 @@ class _HeroMapCard extends StatelessWidget {
 class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 16),
-          Expanded(
-            child: TextField(
-              onSubmitted: (_) => Get.toNamed(AppRoutes.technicianList),
-              style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
-              decoration: const InputDecoration(
-                hintText: 'Search for hardware repair...',
-                hintStyle: TextStyle(color: Color(0xFFADB5BD), fontSize: 14),
-                border: InputBorder.none,
-                isDense: true,
+    return GestureDetector(
+      onTap: () => Get.toNamed(AppRoutes.technicianList),
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const SizedBox(width: 16),
+            const Icon(Icons.search_rounded,
+                color: Color(0xFFADB5BD), size: 20),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Cari teknisi atau jenis perbaikan...',
+                style: TextStyle(
+                  color: Color(0xFFADB5BD),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-          ),
-          GestureDetector(
-            onTap: () => Get.toNamed(AppRoutes.technicianList),
-            child: Container(
+            Container(
               margin: const EdgeInsets.all(6),
               width: 40,
               height: 40,
@@ -307,102 +288,13 @@ class _SearchBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
-                Icons.search_rounded,
+                Icons.tune_rounded,
                 color: Colors.white,
-                size: 20,
+                size: 18,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  CURRENT REPAIR CARD
-// ═══════════════════════════════════════════════════════════════
-class _CurrentRepairCard extends GetView<ProfileController> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Icon
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.assignment_outlined,
-              color: Color(0xFF334155),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          // Text
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'CURRENT REPAIR',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF94A3B8),
-                    letterSpacing: 0.6,
-                  ),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  'MacBook Pro M1 •\nScreen Replacement',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E293B),
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0061FF),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'IN PROGRESS',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -412,11 +304,29 @@ class _CurrentRepairCard extends GetView<ProfileController> {
 //  REPAIR CATEGORIES
 // ═══════════════════════════════════════════════════════════════
 class _RepairCategories extends StatelessWidget {
+  const _RepairCategories();
+
   static const _categories = [
-    {'icon': Icons.tv_rounded, 'label': 'TV & AUDIO'},
-    {'icon': Icons.laptop_rounded, 'label': 'COMPUTERS'},
-    {'icon': Icons.kitchen_rounded, 'label': 'APPLIANCES'},
-    {'icon': Icons.directions_car_rounded, 'label': 'VEHICLES'},
+    {
+      'icon': Icons.laptop_rounded,
+      'label': 'KOMPUTER',
+      'category': 'electronic'
+    },
+    {
+      'icon': Icons.phone_android_rounded,
+      'label': 'HANDPHONE',
+      'category': 'electronic'
+    },
+    {
+      'icon': Icons.directions_car_rounded,
+      'label': 'KENDARAAN',
+      'category': 'vehicle'
+    },
+    {
+      'icon': Icons.kitchen_rounded,
+      'label': 'ELEKTRONIK',
+      'category': 'electronic'
+    },
   ];
 
   @override
@@ -436,12 +346,11 @@ class _RepairCategories extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Title row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Repair Categories',
+                'Kategori Layanan',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -449,9 +358,9 @@ class _RepairCategories extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () => Get.toNamed(AppRoutes.technicianList),
                 child: const Text(
-                  'View All',
+                  'Lihat Semua',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -462,14 +371,13 @@ class _RepairCategories extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-
-          // Category icons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: _categories.map((c) {
               return _CategoryItem(
                 icon: c['icon'] as IconData,
                 label: c['label'] as String,
+                category: c['category'] as String,
               );
             }).toList(),
           ),
@@ -482,12 +390,17 @@ class _RepairCategories extends StatelessWidget {
 class _CategoryItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _CategoryItem({required this.icon, required this.label});
+  final String category;
+  const _CategoryItem(
+      {required this.icon, required this.label, required this.category});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => Get.toNamed(
+        AppRoutes.technicianList,
+        arguments: {'category': category},
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -518,66 +431,95 @@ class _CategoryItem extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  FEATURED SPECIALISTS
+//  NEARBY TECHNICIANS SECTION
 // ═══════════════════════════════════════════════════════════════
-class _FeaturedSpecialists extends StatelessWidget {
+class _NearbyTechniciansSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Featured Specialists',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1E293B),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Teknisi Terdekat',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => Get.toNamed(AppRoutes.technicianList),
+              child: const Text(
+                'Lihat Semua',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0061FF),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 14),
-        _SpecialistCard(
-          name: 'Marcus Thorne',
-          specialty: 'HEAVY APPLIANCES EXPERT',
-          rating: '4.9',
-          distance: '0.8 km',
-          badge: const _VerifiedBadge(),
-          imageUrl: 'https://i.pravatar.cc/300?u=marcus',
-        ),
-        const SizedBox(height: 12),
-        _SpecialistCard(
-          name: 'Elena Rodriguez',
-          specialty: 'IT & COMPUTING',
-          rating: '5.0',
-          distance: '1.2 km',
-          badge: const _JobsBadge(jobs: '200+ Jobs'),
-          imageUrl: 'https://i.pravatar.cc/300?u=elena_rodriguez',
-        ),
+        Obx(() {
+          if (controller.isLoadingTechnicians.value) {
+            return Column(
+              children: List.generate(
+                2,
+                (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: _TechnicianCardSkeleton(),
+                ),
+              ),
+            );
+          }
+
+          if (controller.locationError.value.isNotEmpty) {
+            return _ErrorState(
+              message: controller.locationError.value,
+              onRetry: controller.loadNearbyTechnicians,
+            );
+          }
+
+          if (controller.nearbyTechnicians.isEmpty) {
+            return _EmptyState(
+              onExplore: () => Get.toNamed(AppRoutes.technicianList),
+            );
+          }
+
+          return Column(
+            children: controller.nearbyTechnicians
+                .map((t) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _TechnicianCard(technician: t),
+                    ))
+                .toList(),
+          );
+        }),
       ],
     );
   }
 }
 
-class _SpecialistCard extends StatelessWidget {
-  final String name;
-  final String specialty;
-  final String rating;
-  final String distance;
-  final Widget badge;
-  final String imageUrl;
-
-  const _SpecialistCard({
-    required this.name,
-    required this.specialty,
-    required this.rating,
-    required this.distance,
-    required this.badge,
-    required this.imageUrl,
-  });
+// ── Technician Card ────────────────────────────────────────────
+class _TechnicianCard extends StatelessWidget {
+  final TechnicianOnlineModel technician;
+  const _TechnicianCard({required this.technician});
 
   @override
   Widget build(BuildContext context) {
+    final priceLabel = technician.serviceEstimates.isNotEmpty
+        ? technician.serviceEstimates.first.priceLabel
+        : 'Hubungi';
+
     return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.technicianDetail),
+      onTap: () => Get.toNamed(
+        AppRoutes.technicianDetail,
+        arguments: technician,
+      ),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -592,102 +534,109 @@ class _SpecialistCard extends StatelessWidget {
           ],
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Avatar
             Container(
-              width: 72,
-              height: 72,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 color: const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(
-                Icons.person_rounded,
-                color: Color(0xFF94A3B8),
-                size: 36,
-              ),
+              child: technician.photoUrl != null &&
+                      technician.photoUrl!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.network(technician.photoUrl!,
+                          fit: BoxFit.cover),
+                    )
+                  : const Icon(Icons.person_rounded,
+                      color: Color(0xFF94A3B8), size: 32),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
+            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF8A00),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.white, size: 12),
-                            const SizedBox(width: 2),
-                            Text(
-                              rating,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
                   Text(
-                    specialty,
+                    technician.name,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1D4ED8),
-                      letterSpacing: 0.5,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 10),
-
-                  // Distance + badge
+                  const SizedBox(height: 2),
+                  Text(
+                    technician.specialty.isEmpty
+                        ? technician.category
+                        : technician.specialty,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1D4ED8),
+                      letterSpacing: 0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.location_on_rounded,
-                        color: Color(0xFF94A3B8),
-                        size: 14,
-                      ),
+                      const Icon(Icons.location_on_rounded,
+                          size: 12, color: Color(0xFF94A3B8)),
                       const SizedBox(width: 3),
                       Text(
-                        distance,
+                        technician.distanceLabel,
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      badge,
+                      const SizedBox(width: 10),
+                      const Icon(Icons.star_rounded,
+                          size: 12, color: Color(0xFFF59E0B)),
+                      const SizedBox(width: 3),
+                      Text(
+                        technician.rating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
+            ),
+            // Price + arrow
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  priceLabel,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0061FF),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.chevron_right_rounded,
+                      size: 18, color: Color(0xFF475569)),
+                ),
+              ],
             ),
           ],
         ),
@@ -696,49 +645,134 @@ class _SpecialistCard extends StatelessWidget {
   }
 }
 
-class _VerifiedBadge extends StatelessWidget {
-  const _VerifiedBadge();
+// ── Skeleton ───────────────────────────────────────────────────
+class _TechnicianCardSkeleton extends StatelessWidget {
+  const _TechnicianCardSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.verified_rounded, color: Color(0xFF0061FF), size: 14),
-        SizedBox(width: 3),
-        Text(
-          'Pro Verified',
-          style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFF64748B),
-            fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          _shimmer(width: 64, height: 64, radius: 14),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _shimmer(width: 120, height: 14),
+                const SizedBox(height: 8),
+                _shimmer(width: 80, height: 11),
+                const SizedBox(height: 8),
+                _shimmer(width: 100, height: 11),
+              ],
+            ),
           ),
-        ),
-      ],
+          _shimmer(width: 50, height: 32, radius: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _shimmer({
+    required double width,
+    required double height,
+    double radius = 6,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(radius),
+      ),
     );
   }
 }
 
-class _JobsBadge extends StatelessWidget {
-  final String jobs;
-  const _JobsBadge({required this.jobs});
+// ── Empty State ─────────────────────────────────────────────────
+class _EmptyState extends StatelessWidget {
+  final VoidCallback onExplore;
+  const _EmptyState({required this.onExplore});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.history_rounded, color: Color(0xFF94A3B8), size: 14),
-        const SizedBox(width: 3),
-        Text(
-          jobs,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF64748B),
-            fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          const Icon(Icons.search_off_rounded,
+              size: 48, color: Color(0xFF94A3B8)),
+          const SizedBox(height: 12),
+          const Text(
+            'Belum ada teknisi tersedia\ndi area kamu saat ini.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: onExplore,
+            child: const Text(
+              'Cari di radius lebih luas →',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF0061FF),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Error State ─────────────────────────────────────────────────
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        children: [
+          const Icon(Icons.location_off_rounded,
+              size: 40, color: Color(0xFF94A3B8)),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: onRetry,
+            child: const Text(
+              'Coba lagi',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF0061FF),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

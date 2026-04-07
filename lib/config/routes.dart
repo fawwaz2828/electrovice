@@ -5,6 +5,7 @@ import '../modules/profile/profile_page.dart';
 import '../modules/profile/profile_controller.dart';
 import '../modules/auth/signup_page.dart';
 import '../modules/home/home_page.dart';
+import '../modules/home/home_controller.dart';
 import '../modules/booking/booking_controller.dart';
 import '../modules/booking/booking_form_page.dart';
 import '../modules/booking/booking_history_page.dart';
@@ -21,6 +22,7 @@ import '../modules/technician/active_job_page.dart';
 import '../modules/technician/technician_list_page.dart';
 import '../modules/technician/job_summary_page.dart';
 import '../modules/technician/mapbox_location_picker_page.dart';
+import '../modules/profile/profile_edit_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -41,6 +43,7 @@ class AppRoutes {
   static const String technicianList = '/customer/technician-list';
   static const String jobSummary = '/technician/job-summary';
   static const technicianProfileEdit = '/technician/profile/edit';
+  static const profileEdit = '/profile/edit';
   static const mapboxLocationPicker = '/mapbox-location-picker';
 
   static final routes = [
@@ -63,6 +66,7 @@ class AppRoutes {
       page: () => const HomePage(),
       binding: BindingsBuilder(() {
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
+        Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
       }),
     ),
     GetPage(
@@ -120,6 +124,13 @@ class AppRoutes {
     GetPage(
       name: technicianList,
       page: () => const TechnicianListPage(),
+    ),
+    GetPage(
+      name: profileEdit,
+      page: () => const ProfileEditPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
+      }),
     ),
 
     // ── Technician ───────────────────────────────────────────────
