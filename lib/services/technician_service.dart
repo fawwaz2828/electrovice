@@ -5,7 +5,7 @@ import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
 class TechnicianService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // ── UPDATE PROFILE (sudah ada, tidak berubah) ──────────────────
+  // ── UPDATE PROFILE (update ke 2 collection sekaligus) ──────────
   Future<void> updateTechnicianProfile(
     String uid, {
     required String name,
@@ -14,7 +14,16 @@ class TechnicianService {
     required String bio,
     required int yearsExperience,
     required double serviceRadius,
+    required bool isAvailable,
+    required String workshopAddress,
+    required double lat,
+    required double lng,
+    required List<String> accreditations,
+    required List<Map<String, dynamic>> serviceEstimates,
   }) async {
+    final GeoFirePoint point = GeoFirePoint(GeoPoint(lat, lng));
+
+    // Update collection users
     await _firestore.collection('users').doc(uid).update({
       'name': name,
       'technicianProfile.category': category,
@@ -24,6 +33,22 @@ class TechnicianService {
       'technicianProfile.serviceRadius': serviceRadius,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    // Update collection technicians_online
+    await _firestore.collection('technicians_online').doc(uid).set({
+      'uid': uid,
+      'name': name,
+      'specialty': specialty,
+      'category': category,
+      'isAvailable': isAvailable,
+      'workshopAddress': workshopAddress,
+      'location': point.data,
+      'accreditations': accreditations,
+      'serviceEstimates': serviceEstimates,
+      'serviceRadius': serviceRadius,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    // merge: true supaya rating & totalJobs tidak tertimpa
   }
 
   // ── GET CURRENT LOCATION ───────────────────────────────────────
@@ -43,16 +68,14 @@ class TechnicianService {
     );
   }
 
-  // ── GET TECHNICIAN LIST (radius 10km) ──────────────────────────
+  // ── GET TECHNICIAN LIST ────────────────────────────────────────
   Future<List<TechnicianOnlineModel>> getTechnicianList({
     required double lat,
     required double lng,
     double radiusKm = 10,
-    String? category, // filter optional
+    String? category,
   }) async {
     final collection = _firestore.collection('technicians_online');
-
-    // Query radius pakai geoflutterfire_plus
     final geoRef = GeoCollectionReference<Map<String, dynamic>>(collection);
     final center = GeoFirePoint(GeoPoint(lat, lng));
 
@@ -69,58 +92,38 @@ class TechnicianService {
         .where((doc) => doc.data() != null)
         .map((doc) {
           final data = doc.data()!;
-          // Hitung jarak dari posisi customer
-          final GeoPoint geopoint = data['location']['geopoint'] as GeoPoint;
+          final GeoPoint geopoint =
+              data['location']['geopoint'] as GeoPoint;
           final double distanceKm = Geolocator.distanceBetween(
                 lat, lng,
                 geopoint.latitude, geopoint.longitude,
               ) / 1000;
-
-          return TechnicianOnlineModel.fromMap(data, distanceKm: distanceKm);
+          return TechnicianOnlineModel.fromMap(data,
+              distanceKm: distanceKm);
         })
         .toList();
 
-    // Filter kategori kalau ada
     if (category != null && category.isNotEmpty) {
-      result = result
-          .where((t) => t.category == category)
-          .toList();
+      result = result.where((t) => t.category == category).toList();
     }
 
-    // Sort by jarak terdekat
     result.sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
-
     return result;
   }
 
-  // ── GET TECHNICIAN DETAIL BY UID ──────────────────────────────
+  // ── GET TECHNICIAN DETAIL ──────────────────────────────────────
   Future<TechnicianOnlineModel?> getTechnicianDetail(String uid) async {
     final doc = await _firestore
         .collection('technicians_online')
         .doc(uid)
         .get();
-
     if (!doc.exists || doc.data() == null) return null;
     return TechnicianOnlineModel.fromMap(doc.data()!);
   }
-
-  // ── SET ONLINE STATUS (dipanggil saat teknisi buka app) ────────
-  Future<void> setOnlineStatus(
-    String uid, {
-    required bool isAvailable,
-    required double lat,
-    required double lng,
-  }) async {
-    final GeoFirePoint point = GeoFirePoint(GeoPoint(lat, lng));
-    await _firestore.collection('technicians_online').doc(uid).update({
-      'isAvailable': isAvailable,
-      'location': point.data,
-      'lastSeen': FieldValue.serverTimestamp(),
-    });
-  }
 }
 
-// ── MODEL ──────────────────────────────────────────────────────────
+// ── MODELS ────────────────────────────────────────────────────────
+
 class TechnicianOnlineModel {
   final String uid;
   final String name;
@@ -156,13 +159,11 @@ class TechnicianOnlineModel {
     Map<String, dynamic> map, {
     double distanceKm = 0,
   }) {
-    // Parse accreditations
     final List<String> accreditations =
         (map['accreditations'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
             .toList();
 
-    // Parse serviceEstimates
     final List<ServiceEstimate> estimates =
         (map['serviceEstimates'] as List<dynamic>? ?? [])
             .whereType<Map>()
@@ -187,11 +188,8 @@ class TechnicianOnlineModel {
     );
   }
 
-  // Format jarak untuk ditampilkan di UI
   String get distanceLabel {
-    if (distanceKm < 1) {
-      return '${(distanceKm * 1000).toInt()} m';
-    }
+    if (distanceKm < 1) return '${(distanceKm * 1000).toInt()} m';
     return '${distanceKm.toStringAsFixed(1)} km';
   }
 }
@@ -215,9 +213,8 @@ class ServiceEstimate {
     );
   }
 
-  // Format harga untuk UI: "$120 - $180" atau "From $200"
   String get priceLabel {
-    if (minPrice == maxPrice) return 'From \$$minPrice';
-    return '\$$minPrice - \$$maxPrice';
+    if (minPrice == maxPrice) return 'Dari Rp$minPrice';
+    return 'Rp$minPrice - Rp$maxPrice';
   }
 }
