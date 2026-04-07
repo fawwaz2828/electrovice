@@ -5,6 +5,7 @@ import '../modules/profile/profile_page.dart';
 import '../modules/profile/profile_controller.dart';
 import '../modules/auth/signup_page.dart';
 import '../modules/home/home_page.dart';
+import '../modules/home/home_controller.dart';
 import '../modules/booking/booking_controller.dart';
 import '../modules/booking/booking_form_page.dart';
 import '../modules/booking/booking_history_page.dart';
@@ -65,6 +66,7 @@ class AppRoutes {
       page: () => const HomePage(),
       binding: BindingsBuilder(() {
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
+        Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
       }),
     ),
     GetPage(
