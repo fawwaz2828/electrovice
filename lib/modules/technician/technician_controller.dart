@@ -68,9 +68,32 @@ class TechnicianController extends GetxController {
         completedWindowLabel: profile.value!.completedWindowLabel,
         avatarUrl: profile.value!.avatarUrl,
         serviceHistory: newHistory,
+        description: profile.value!.description,
+        certifications: profile.value!.certifications,
+        address: profile.value!.address,
       );
       
       currentJob.value = null;
+    }
+  }
+
+  void updateProfileInfo({
+    String? fullName,
+    String? description,
+    List<String>? certifications,
+    String? address,
+    String? avatarUrl,
+    String? specialty,
+  }) {
+    if (profile.value != null) {
+      profile.value = profile.value!.copyWith(
+        fullName: fullName,
+        description: description,
+        certifications: certifications,
+        address: address,
+        avatarUrl: avatarUrl,
+        specialty: specialty,
+      );
     }
   }
 

@@ -11,6 +11,7 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
 
   static const Color _background = Color(0xFFF2F3F7);
   static const Color _ink = Color(0xFF0F172A);
+  static const Color _blue = Color(0xFF3254FF);
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +45,33 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
                 _StatsGrid(data: data),
 
                 const SizedBox(height: 32),
+
+                // ── Bio Section ────────────────────────────────────────
+                if (data.description != null && data.description!.isNotEmpty) ...[
+                  _SectionHeader(title: 'Professional Bio', icon: Icons.description_rounded),
+                  const SizedBox(height: 12),
+                  _InfoCard(text: data.description!),
+                  const SizedBox(height: 32),
+                ],
+
+                // ── Certifications Section ──────────────────────────────
+                if (data.certifications.isNotEmpty) ...[
+                  _SectionHeader(title: 'Certifications', icon: Icons.verified_rounded),
+                  const SizedBox(height: 12),
+                  ...data.certifications.map((cert) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _InfoCard(text: cert),
+                  )),
+                  const SizedBox(height: 24),
+                ],
+
+                // ── Location Section ───────────────────────────────────
+                if (data.address != null && data.address!.isNotEmpty) ...[
+                  _SectionHeader(title: 'Service Location', icon: Icons.location_on_rounded),
+                  const SizedBox(height: 12),
+                  _InfoCard(text: data.address!),
+                  const SizedBox(height: 32),
+                ],
 
                 // ── Service History Section ─────────────────────────────
                 _ServiceHistoryHeader(label: data.completedWindowLabel),
@@ -162,20 +190,24 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
             color: _ink,
           ),
         ),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        InkWell(
+          onTap: () => Get.toNamed(AppRoutes.technicianEditProfile),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.edit_note_rounded, color: _blue, size: 24),
           ),
-          child: const Icon(Icons.settings_outlined, color: _ink, size: 22),
         ),
       ],
     );
@@ -213,15 +245,23 @@ class _ProfileHeroCard extends StatelessWidget {
                 height: 120,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(30),
+                  image: data.avatarUrl != null && data.avatarUrl!.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(data.avatarUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: const Center(
-                  child: Icon(
-                    Icons.person_rounded,
-                    color: Color(0xFF94A3B8),
-                    size: 60,
-                  ),
-                ),
+                child: data.avatarUrl == null || data.avatarUrl!.isEmpty
+                    ? const Center(
+                        child: Icon(
+                          Icons.person_rounded,
+                          color: Color(0xFF94A3B8),
+                          size: 65,
+                        ),
+                      )
+                    : null,
               ),
               Positioned(
                 bottom: -8,
@@ -355,6 +395,52 @@ class _ServiceHistoryHeader extends StatelessWidget {
           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.5),
         ),
       ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  const _SectionHeader({required this.title, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF0F172A), size: 20),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  final String text;
+  const _InfoCard({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Color(0xFF64748B),
+          fontWeight: FontWeight.w500,
+          height: 1.5,
+        ),
+      ),
     );
   }
 }
