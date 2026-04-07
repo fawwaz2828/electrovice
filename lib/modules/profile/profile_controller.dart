@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/profile_model.dart';
+import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 
 class ProfileController extends GetxController {
@@ -9,13 +11,10 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Set sample dulu supaya UI tidak kosong saat loading
-    profile.value = ProfileData.sample();
     reloadProfile();
   }
 
   Future<void> reloadProfile() async {
-    // Tunggu currentUser ready (maksimal 3 detik)
     int retry = 0;
     while (_authService.currentUser == null && retry < 6) {
       await Future.delayed(const Duration(milliseconds: 500));
@@ -26,25 +25,18 @@ class ProfileController extends GetxController {
     if (user == null) return;
 
     try {
-      final userData = await _authService.getUserData(user.uid);
-      print('DEBUG userData: $userData');
-      if (userData != null) {
-        final currentProfile = profile.value ?? ProfileData.sample();
-        profile.value = currentProfile.copyWith(
-          fullName: userData['name'] ?? user.displayName ?? currentProfile.fullName,
-          emailAddress: userData['email'] ?? user.email ?? currentProfile.emailAddress,
-        );
-      } else {
-        // Fallback dari Firebase Auth langsung
-        final currentProfile = profile.value ?? ProfileData.sample();
-        profile.value = currentProfile.copyWith(
-          fullName: user.displayName ?? currentProfile.fullName,
-          emailAddress: user.email ?? currentProfile.emailAddress,
-        );
-      }
+      final userModel = await _authService.getUserModel(user.uid);
+      if (userModel == null) return;
+
+      // Update seluruh profile sekaligus — tidak ada .sample() sama sekali
+      final current = profile.value ?? ProfileData.sample();
+      profile.value = current.copyWith(
+        fullName: userModel.name,
+        emailAddress: userModel.email,
+        // phone bisa ditambah nanti kalau ProfileData sudah ada field-nya
+      );
     } catch (e) {
-      // Gagal load → tetap pakai data yang ada, jangan crash
-      print('ProfileController: gagal load user data - $e');
+      debugPrint('ProfileController: gagal load - $e');
     }
   }
 
