@@ -47,6 +47,11 @@ dependencies:
   google_fonts: ^8.0.2
   google_sign_in: ^6.2.1
 
+  geolocator: ^10.1.0
+  geoflutterfire_plus: ^0.0.22
+  
+  mapbox_maps_flutter: ^2.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
