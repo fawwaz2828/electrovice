@@ -164,7 +164,7 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       itemCount: 3,
-      itemBuilder: (_, __) => Padding(
+      itemBuilder: (_, _) => Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: _SkeletonCard(),
       ),
@@ -321,7 +321,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) {
+      builder: (_, _) {
         final c = Colors.grey.withOpacity(_anim.value);
         return Container(
           decoration: BoxDecoration(

@@ -185,7 +185,7 @@ class JobDetailPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Icon(Icons.location_on_rounded, color: Color(0xFF6F88AE), size: 16),
-                                  const SizedBox(width: 6),
+                                  SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
                                       '241 Oak Ridge, Ste 402\nNorth Hills, CA 91343',

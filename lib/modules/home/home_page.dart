@@ -156,7 +156,7 @@ class _HeroMapCard extends StatelessWidget {
               fit: BoxFit.cover,
               color: Colors.black.withValues(alpha: 0.35),
               colorBlendMode: BlendMode.darken,
-              errorBuilder: (_, err, _st) =>
+              errorBuilder: (_, err, st) =>
                   Container(color: const Color(0xFF334155)),
             ),
 

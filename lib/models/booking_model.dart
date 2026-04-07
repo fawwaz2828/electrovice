@@ -75,7 +75,7 @@ class CustomerTechnicianDetail {
           .whereType<Map>()
           .map(
             (item) => ServiceEstimate.fromMap(
-              Map<String, dynamic>.from(item as Map<dynamic, dynamic>),
+              Map<String, dynamic>.from(item),
             ),
           )
           .toList(),
@@ -85,7 +85,7 @@ class CustomerTechnicianDetail {
           .whereType<Map>()
           .map(
             (item) => CustomerReview.fromMap(
-              Map<String, dynamic>.from(item as Map<dynamic, dynamic>),
+              Map<String, dynamic>.from(item),
             ),
           )
           .toList(),
@@ -264,7 +264,7 @@ class CheckoutSummary {
           .whereType<Map>()
           .map(
             (item) => PaymentOption.fromMap(
-              Map<String, dynamic>.from(item as Map<dynamic, dynamic>),
+              Map<String, dynamic>.from(item),
             ),
           )
           .toList(),
@@ -388,7 +388,7 @@ class OrderTrackingData {
           .whereType<Map>()
           .map(
             (item) => TrackingStatusStep.fromMap(
-              Map<String, dynamic>.from(item as Map<dynamic, dynamic>),
+              Map<String, dynamic>.from(item),
             ),
           )
           .toList(),

@@ -370,7 +370,7 @@ class _AccreditationsCard extends StatelessWidget {
             ],
           ),
         ),
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemCount: items.length,
       ),
     );

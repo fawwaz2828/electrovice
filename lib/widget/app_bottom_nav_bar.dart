@@ -55,7 +55,7 @@ class CustomerNavBar extends StatelessWidget {
         Get.offNamed(AppRoutes.orderTracking);
         break;
       case AppNavItem.profile:
-        Get.offNamed(AppRoutes.profile_page);
+        Get.offNamed(AppRoutes.profilePage);
         break;
       default:
         break;

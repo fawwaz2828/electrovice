@@ -45,7 +45,7 @@ class TechnicianProfileData {
           .whereType<Map>()
           .map(
             (item) => TechnicianJobRecord.fromMap(
-              Map<String, dynamic>.from(item as Map<dynamic, dynamic>),
+              Map<String, dynamic>.from(item),
             ),
           )
           .toList(),

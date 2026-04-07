@@ -96,7 +96,7 @@ class _ActiveJobPlaceholderCard extends StatelessWidget {
 
 class _TechnicianHomePageState extends State<TechnicianHomePage> {
   final TechnicianController _controller = Get.find<TechnicianController>();
-  bool _isOnline = true;
+  final bool _isOnline = true;
   _FilterTab _selectedFilter = _FilterTab.distance;
 
   @override

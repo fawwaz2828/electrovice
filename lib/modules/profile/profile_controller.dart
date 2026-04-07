@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/profile_model.dart';
-import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 
 class ProfileController extends GetxController {

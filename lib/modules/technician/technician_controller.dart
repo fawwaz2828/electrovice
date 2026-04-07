@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import '../../models/technician_model.dart';
-import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 
 class TechnicianController extends GetxController {

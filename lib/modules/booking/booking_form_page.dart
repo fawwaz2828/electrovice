@@ -330,7 +330,7 @@ class _ScheduleCard extends StatelessWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: dateItems.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (_, index) {
                 final isSelected = index == 0;
                 return Container(
@@ -360,7 +360,7 @@ class _ScheduleCard extends StatelessWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: timeItems.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (_, index) {
                 final isSelected = index == 0;
                 return Container(

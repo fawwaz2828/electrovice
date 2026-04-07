@@ -20,12 +20,12 @@ import '../modules/technician/verification_page.dart';
 import '../modules/technician/active_job_page.dart';
 import '../modules/technician/technician_list_page.dart';
 import '../modules/technician/job_summary_page.dart';
-import '../modules/technician/technician_edit_profile_page.dart';
+import '../modules/technician/mapbox_location_picker_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
-  static const String profile_page = '/profile';
+  static const String profilePage = '/profile';
   static const String technicianProfile = '/technician/profile';
   static const String technicianHome = '/technician/home';
   static const String jobDetail = '/technician/job-detail';
@@ -41,7 +41,7 @@ class AppRoutes {
   static const String technicianList = '/customer/technician-list';
   static const String jobSummary = '/technician/job-summary';
   static const technicianProfileEdit = '/technician/profile/edit';
-  static const String technicianEditProfile = '/technician/edit-profile';
+  static const mapboxLocationPicker = '/mapbox-location-picker';
 
   static final routes = [
     GetPage(
@@ -66,7 +66,7 @@ class AppRoutes {
       }),
     ),
     GetPage(
-      name: profile_page,
+      name: profilePage,
       page: () => const ProfilePage(),
       binding: BindingsBuilder(() {
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
@@ -166,15 +166,12 @@ class AppRoutes {
       }),
     ),
     GetPage(
-      name: jobSummary,
-      page: () => const JobSummaryPage(),
-      binding: BindingsBuilder(() {
-        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
-      }),
+      name: AppRoutes.mapboxLocationPicker,
+      page: () => const MapboxLocationPickerPage(),
     ),
     GetPage(
-      name: technicianEditProfile,
-      page: () => const TechnicianEditProfilePage(),
+      name: jobSummary,
+      page: () => const JobSummaryPage(),
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),

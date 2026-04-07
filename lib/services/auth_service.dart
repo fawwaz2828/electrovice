@@ -49,6 +49,25 @@ class AuthService {
     }
 
     await _firestore.collection('users').doc(user.uid).set(userData);
+
+    // Buat dokumen awal di technicians_online agar profile edit bisa langsung dipakai
+    if (role == 'technician') {
+      await _firestore.collection('technicians_online').doc(user.uid).set({
+        'uid': user.uid,
+        'name': name,
+        'specialty': '',
+        'category': 'electronic',
+        'isAvailable': false,
+        'workshopAddress': '',
+        'accreditations': [],
+        'serviceEstimates': [],
+        'serviceRadius': 10.0,
+        'rating': 0.0,
+        'totalJobs': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
     return user;
     }
 
@@ -109,6 +128,24 @@ class AuthService {
             }
 
             await _firestore.collection('users').doc(user.uid).set(userData);
+
+            // Buat dokumen awal di technicians_online
+            if (role == 'technician') {
+              await _firestore.collection('technicians_online').doc(user.uid).set({
+                'uid': user.uid,
+                'name': user.displayName ?? 'User',
+                'specialty': '',
+                'category': 'electronic',
+                'isAvailable': false,
+                'workshopAddress': '',
+                'accreditations': [],
+                'serviceEstimates': [],
+                'serviceRadius': 10.0,
+                'rating': 0.0,
+                'totalJobs': 0,
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+            }
         }
         return {'user': user, 'isNew': isNew};
     }
