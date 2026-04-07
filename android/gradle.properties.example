@@ -1,0 +1,7 @@
+org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=4G -XX:ReservedCodeCacheSize=512m -XX:+HeapDumpOnOutOfMemoryError
+android.useAndroidX=true
+
+# Mapbox SDK download token (sk.* secret key)
+# Ambil dari: https://account.mapbox.com → Tokens → Secret token dengan scope DOWNLOADS:READ
+# Salin file ini ke android/gradle.properties dan isi token di bawah:
+MAPBOX_DOWNLOADS_TOKEN=GANTI_DENGAN_SK_TOKEN_KAMU

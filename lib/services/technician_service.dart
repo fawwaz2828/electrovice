@@ -138,6 +138,9 @@ class TechnicianOnlineModel {
   final double distanceKm;
   final List<String> accreditations;
   final List<ServiceEstimate> serviceEstimates;
+  // Koordinat workshop — null jika belum pernah di-set
+  final double? lat;
+  final double? lng;
 
   const TechnicianOnlineModel({
     required this.uid,
@@ -153,6 +156,8 @@ class TechnicianOnlineModel {
     required this.accreditations,
     required this.serviceEstimates,
     this.photoUrl,
+    this.lat,
+    this.lng,
   });
 
   factory TechnicianOnlineModel.fromMap(
@@ -171,6 +176,18 @@ class TechnicianOnlineModel {
                 Map<String, dynamic>.from(e)))
             .toList();
 
+    // Baca koordinat dari GeoFirePoint ('location.geopoint')
+    double? lat;
+    double? lng;
+    final locationData = map['location'];
+    if (locationData is Map) {
+      final geopoint = locationData['geopoint'];
+      if (geopoint is GeoPoint) {
+        lat = geopoint.latitude;
+        lng = geopoint.longitude;
+      }
+    }
+
     return TechnicianOnlineModel(
       uid: map['uid'] as String? ?? '',
       name: map['name'] as String? ?? '',
@@ -185,6 +202,8 @@ class TechnicianOnlineModel {
       distanceKm: distanceKm,
       accreditations: accreditations,
       serviceEstimates: estimates,
+      lat: lat,
+      lng: lng,
     );
   }
 

@@ -47,3 +47,11 @@ app.*.map.json
 # Environment secrets
 .env
 android/secrets.properties
+
+# Mapbox tokens (JANGAN COMMIT — simpan lokal saja)
+android/gradle.properties
+lib/config/mapbox_config.dart
+
+# Firebase config (JANGAN COMMIT)
+google-services.json
+android/app/google-services.json

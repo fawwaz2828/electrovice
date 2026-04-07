@@ -26,11 +26,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Mapbox token — taruh di dalam <application>, bukan di dalam <activity> -->
-        <meta-data
-            android:name="com.mapbox.token"
-            android:value="" />
-
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

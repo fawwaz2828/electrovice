@@ -85,6 +85,11 @@ class _TechnicianProfileEditPageState
                   'maxPrice': e.maxPrice,
                 })
             .toList();
+        // Restore koordinat yang sudah disimpan sebelumnya
+        if (techOnline.lat != null && techOnline.lng != null) {
+          _lat = techOnline.lat;
+          _lng = techOnline.lng;
+        }
       }
 
       _isFetching = false;
