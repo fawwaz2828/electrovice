@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/profile_model.dart';
-import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 
 class ProfileController extends GetxController {
@@ -15,6 +14,7 @@ class ProfileController extends GetxController {
   }
 
   Future<void> reloadProfile() async {
+    // Tunggu hingga Firebase Auth siap (max 3 detik)
     int retry = 0;
     while (_authService.currentUser == null && retry < 6) {
       await Future.delayed(const Duration(milliseconds: 500));
@@ -28,23 +28,21 @@ class ProfileController extends GetxController {
       final userModel = await _authService.getUserModel(user.uid);
       if (userModel == null) return;
 
-      // Update seluruh profile sekaligus — tidak ada .sample() sama sekali
-      final current = profile.value ?? ProfileData.sample();
-      profile.value = current.copyWith(
+      profile.value = ProfileData(
         fullName: userModel.name,
         emailAddress: userModel.email,
-        // phone bisa ditambah nanti kalau ProfileData sudah ada field-nya
+        mobileNumber: userModel.phone ?? '',
+        isMobileVerified: false,
+        avatarUrl: userModel.photoUrl,
+        // primaryNodes & securityOptions bukan data Firestore — statis
+        primaryNodes: const [],
+        securityOptions: const [
+          SecurityOption(key: 'change_access_key', title: 'Change Password'),
+          SecurityOption(key: 'privacy_management', title: 'Privacy Management'),
+        ],
       );
     } catch (e) {
       debugPrint('ProfileController: gagal load - $e');
     }
-  }
-
-  void setProfile(ProfileData data) {
-    profile.value = data;
-  }
-
-  void loadFromMap(Map<String, dynamic> map) {
-    profile.value = ProfileData.fromMap(map);
   }
 }

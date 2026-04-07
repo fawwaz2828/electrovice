@@ -163,6 +163,18 @@ class AuthService {
         // disconnect() tidak perlu — cukup signOut
     }
 
+    Future<void> updateUserProfile(
+      String uid, {
+      required String name,
+      required String phone,
+    }) async {
+      await _firestore.collection('users').doc(uid).update({
+        'name': name,
+        'phone': phone,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
     Future<String?> getUserRole(String uid) async {
         final doc = await _firestore.collection('users').doc(uid).get();
         return doc.data()?['role'];

@@ -21,6 +21,7 @@ import '../modules/technician/active_job_page.dart';
 import '../modules/technician/technician_list_page.dart';
 import '../modules/technician/job_summary_page.dart';
 import '../modules/technician/mapbox_location_picker_page.dart';
+import '../modules/profile/profile_edit_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -41,6 +42,7 @@ class AppRoutes {
   static const String technicianList = '/customer/technician-list';
   static const String jobSummary = '/technician/job-summary';
   static const technicianProfileEdit = '/technician/profile/edit';
+  static const profileEdit = '/profile/edit';
   static const mapboxLocationPicker = '/mapbox-location-picker';
 
   static final routes = [
@@ -120,6 +122,13 @@ class AppRoutes {
     GetPage(
       name: technicianList,
       page: () => const TechnicianListPage(),
+    ),
+    GetPage(
+      name: profileEdit,
+      page: () => const ProfileEditPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
+      }),
     ),
 
     // ── Technician ───────────────────────────────────────────────

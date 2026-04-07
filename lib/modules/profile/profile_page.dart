@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../config/routes.dart';
 import '../../models/profile_model.dart';
+import '../../services/auth_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'profile_controller.dart';
 
@@ -133,7 +134,9 @@ class ProfilePage extends GetView<ProfileController> {
           ),
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: () {
+            Get.toNamed(AppRoutes.profileEdit);
+          },
           icon: const Icon(
             Icons.settings_outlined,
             color: Colors.black,
@@ -211,11 +214,10 @@ class ProfilePage extends GetView<ProfileController> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              Get.back(); // tutup dialog dulu
+              await AuthService().logout();
               Get.offAllNamed(AppRoutes.login);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Logged out successfully')),
-              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFE11D48),
