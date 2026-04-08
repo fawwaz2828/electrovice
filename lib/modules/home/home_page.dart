@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:geolocator/geolocator.dart' hide Position;
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
+    if (dart.library.html) '../../config/mapbox_web_stub.dart';
 import '../../config/routes.dart';
 import '../../services/technician_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
@@ -113,15 +116,99 @@ class HomePage extends GetView<HomeController> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  HERO CTA CARD  (matches Figma: dark map bg, Explore Map btn)
+//  HERO CTA CARD  (live Mapbox map + gradient overlay)
 // ═══════════════════════════════════════════════════════════════
-class _HeroCTACard extends StatelessWidget {
+class _HeroCTACard extends StatefulWidget {
+  @override
+  State<_HeroCTACard> createState() => _HeroCTACardState();
+}
+
+class _HeroCTACardState extends State<_HeroCTACard> {
+  MapboxMap? _mapboxMap;
+
+  // Default: Makassar
+  double _lat = -5.1477;
+  double _lng = 119.4327;
+  bool _locationReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLocation();
+  }
+
+  Future<void> _fetchLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+        if (perm == LocationPermission.denied) return;
+      }
+      if (perm == LocationPermission.deniedForever) return;
+
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _lat = pos.latitude;
+        _lng = pos.longitude;
+        _locationReady = true;
+      });
+
+      await _mapboxMap?.flyTo(
+        CameraOptions(
+          center: Point(coordinates: Position(_lng, _lat)),
+          zoom: 13.5,
+        ),
+        MapAnimationOptions(duration: 1000),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _onMapCreated(MapboxMap mapboxMap) async {
+    _mapboxMap = mapboxMap;
+
+    // Disable all touch interactions — purely decorative
+    await mapboxMap.gestures.updateSettings(
+      GesturesSettings(
+        scrollEnabled: false,
+        rotateEnabled: false,
+        pitchEnabled: false,
+        pinchToZoomEnabled: false,
+        doubleTapToZoomInEnabled: false,
+        doubleTouchToZoomOutEnabled: false,
+        quickZoomEnabled: false,
+      ),
+    );
+
+    // Show user location puck
+    await mapboxMap.location.updateSettings(
+      LocationComponentSettings(enabled: true, pulsingEnabled: true),
+    );
+
+    // Fly to user location if already fetched before map was ready
+    if (_locationReady) {
+      await mapboxMap.flyTo(
+        CameraOptions(
+          center: Point(coordinates: Position(_lng, _lat)),
+          zoom: 13.5,
+        ),
+        MapAnimationOptions(duration: 0),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.technicianList),
       child: Container(
-        height: 165,
+        height: 175,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: const Color(0xFF0D1117),
@@ -135,19 +222,25 @@ class _HeroCTACard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Map-like grid pattern overlay
+            // ── Live Mapbox map ──────────────────────────────────
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
-              child: CustomPaint(
-                painter: _MapGridPainter(),
-                child: const SizedBox.expand(),
+              child: SizedBox.expand(
+                child: MapWidget(
+                  key: const ValueKey('home_hero_map'),
+                  styleUri: MapboxStyles.OUTDOORS,
+                  cameraOptions: CameraOptions(
+                    center: Point(
+                      coordinates: Position(_lng, _lat),
+                    ),
+                    zoom: 13.0,
+                  ),
+                  onMapCreated: _onMapCreated,
+                ),
               ),
             ),
-            // Location pin icon center
-            const Center(
-              child: _LocationPinIcon(),
-            ),
-            // Gradient overlay left side
+
+            // ── Gradient overlay (left-heavy, matches Figma) ─────
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -155,15 +248,17 @@ class _HeroCTACard extends StatelessWidget {
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    Color(0xE50D1117),
-                    Color(0x880D1117),
+                    Color(0xEE0D1117),
+                    Color(0xAA0D1117),
+                    Color(0x440D1117),
                     Colors.transparent,
                   ],
-                  stops: [0.0, 0.55, 1.0],
+                  stops: [0.0, 0.4, 0.65, 1.0],
                 ),
               ),
             ),
-            // Content
+
+            // ── Text content (bottom-left) ───────────────────────
             Padding(
               padding: const EdgeInsets.all(22),
               child: Column(
@@ -184,7 +279,7 @@ class _HeroCTACard extends StatelessWidget {
                     '12 active specialists\navailable now',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF94A3B8),
+                      color: Color(0xFFCBD5E1),
                       fontWeight: FontWeight.w500,
                       height: 1.4,
                     ),
@@ -200,11 +295,8 @@ class _HeroCTACard extends StatelessWidget {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.explore_rounded,
-                          size: 14,
-                          color: Color(0xFF0D1117),
-                        ),
+                        Icon(Icons.explore_rounded,
+                            size: 14, color: Color(0xFF0D1117)),
                         SizedBox(width: 6),
                         Text(
                           'Explore Map',
@@ -225,54 +317,6 @@ class _HeroCTACard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _LocationPinIcon extends StatelessWidget {
-  const _LocationPinIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: const Alignment(0.5, 0),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 8,
-            ),
-          ],
-        ),
-        child: const Icon(Icons.location_on_rounded,
-            color: Color(0xFF0061FF), size: 20),
-      ),
-    );
-  }
-}
-
-class _MapGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.04)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    const step = 28.0;
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ═══════════════════════════════════════════════════════════════
