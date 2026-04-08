@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart' hide Position;
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
+    if (dart.library.html) '../../config/mapbox_web_stub.dart';
 
 class MapboxLocationPickerPage extends StatefulWidget {
   const MapboxLocationPickerPage({super.key});
