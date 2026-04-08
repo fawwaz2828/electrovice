@@ -44,7 +44,21 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+<<<<<<< HEAD
 # Secret config — never commit
 lib/config/mapbox_config.dart
 google-services.json
 GoogleService-Info.plist
+=======
+# Environment secrets
+.env
+android/secrets.properties
+
+# Mapbox tokens (JANGAN COMMIT — simpan lokal saja)
+android/gradle.properties
+lib/config/mapbox_config.dart
+
+# Firebase config (JANGAN COMMIT)
+google-services.json
+android/app/google-services.json
+>>>>>>> dae9d15cf15c55ab604805186a74174626fe70cc
