@@ -1,8 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Status flow: confirmed → on_progress → done | cancelled
-/// (pending_payment dipakai untuk non-cash, skip dulu untuk MVP cash-only)
+/// Status flow: pending → confirmed → on_progress → done | cancelled
+/// pending   : booking baru dibuat, menunggu teknisi accept
+/// confirmed : teknisi accept, kode verifikasi sudah digenerate
+/// on_progress: kode diverifikasi, pengerjaan dimulai
+/// done      : pekerjaan selesai
+/// cancelled : dibatalkan (oleh customer atau teknisi decline)
 class BookingStatus {
+  static const pending = 'pending';
   static const confirmed = 'confirmed';
   static const onProgress = 'on_progress';
   static const done = 'done';
@@ -29,10 +34,13 @@ class BookingDocument {
   final DateTime scheduledAt;
   final String paymentMethod;
   final int estimatedPrice; // dalam Rupiah, 0 = diskusi di lokasi
-  final String? verificationCode; // 6 digit
+  final String userAddress; // alamat customer
+  final String? verificationCode; // 6 digit (null saat pending)
   final DateTime? codeExpiryAt;
   final DateTime? codeVerifiedAt;
   final String status;
+  final double? latitude;  // koordinat GPS customer (nullable)
+  final double? longitude;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -48,6 +56,7 @@ class BookingDocument {
     required this.scheduledAt,
     required this.paymentMethod,
     required this.estimatedPrice,
+    required this.userAddress,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -55,6 +64,8 @@ class BookingDocument {
     this.verificationCode,
     this.codeExpiryAt,
     this.codeVerifiedAt,
+    this.latitude,
+    this.longitude,
   });
 
   factory BookingDocument.fromFirestore(DocumentSnapshot doc) {
@@ -72,10 +83,13 @@ class BookingDocument {
       scheduledAt: (data['scheduledAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       paymentMethod: data['paymentMethod'] as String? ?? PaymentMethod.cash,
       estimatedPrice: (data['estimatedPrice'] as num?)?.toInt() ?? 0,
+      userAddress: data['userAddress'] as String? ?? '',
       verificationCode: data['verificationCode'] as String?,
       codeExpiryAt: (data['codeExpiryAt'] as Timestamp?)?.toDate(),
       codeVerifiedAt: (data['codeVerifiedAt'] as Timestamp?)?.toDate(),
-      status: data['status'] as String? ?? BookingStatus.confirmed,
+      status: data['status'] as String? ?? BookingStatus.pending,
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -95,17 +109,22 @@ class BookingDocument {
       'scheduledAt': Timestamp.fromDate(scheduledAt),
       'paymentMethod': paymentMethod,
       'estimatedPrice': estimatedPrice,
+      'userAddress': userAddress,
       'verificationCode': verificationCode,
       'codeExpiryAt': codeExpiryAt != null ? Timestamp.fromDate(codeExpiryAt!) : null,
       'codeVerifiedAt': codeVerifiedAt != null ? Timestamp.fromDate(codeVerifiedAt!) : null,
       'status': status,
+      'latitude': latitude,
+      'longitude': longitude,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 
   bool get isActive =>
-      status == BookingStatus.confirmed || status == BookingStatus.onProgress;
+      status == BookingStatus.pending ||
+      status == BookingStatus.confirmed ||
+      status == BookingStatus.onProgress;
 
   bool get isCodeExpired =>
       codeExpiryAt != null && DateTime.now().isAfter(codeExpiryAt!);

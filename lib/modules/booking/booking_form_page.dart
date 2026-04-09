@@ -14,6 +14,7 @@ class BookingFormPage extends StatefulWidget {
 class _BookingFormPageState extends State<BookingFormPage> {
   late final BookingController _ctrl;
   final _descCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
   String _selectedDamage = 'other';
 
   static const Color _bg = Color(0xFFF7F8FC);
@@ -28,6 +29,7 @@ class _BookingFormPageState extends State<BookingFormPage> {
   @override
   void dispose() {
     _descCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
@@ -37,8 +39,14 @@ class _BookingFormPageState extends State<BookingFormPage> {
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+    if (_addressCtrl.text.trim().isEmpty) {
+      Get.snackbar('Oops', 'Masukkan alamat lengkap kamu',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     _ctrl.setDescription(_descCtrl.text.trim());
     _ctrl.setDamageType(_selectedDamage);
+    _ctrl.setUserAddress(_addressCtrl.text.trim());
     Get.toNamed(AppRoutes.checkout);
   }
 
@@ -91,8 +99,14 @@ class _BookingFormPageState extends State<BookingFormPage> {
                     _NotesCard(controller: _descCtrl),
                     const SizedBox(height: 20),
 
-                    // ── 3. Jadwal ────────────────────────────────────────
-                    const _StepHeader(title: '3. JADWAL SERVIS'),
+                    // ── 3. Alamat ─────────────────────────────────────────
+                    const _StepHeader(title: '3. ALAMAT LENGKAP', trailing: 'Wajib'),
+                    const SizedBox(height: 12),
+                    _AddressCard(controller: _addressCtrl, ctrl: _ctrl),
+                    const SizedBox(height: 20),
+
+                    // ── 4. Jadwal ────────────────────────────────────────
+                    const _StepHeader(title: '4. JADWAL SERVIS'),
                     const SizedBox(height: 12),
                     _ScheduleCard(ctrl: _ctrl),
                     const SizedBox(height: 16),
@@ -358,6 +372,123 @@ class _NotesCard extends StatelessWidget {
               contentPadding: const EdgeInsets.all(14),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Address Card ───────────────────────────────────────────────────────────
+class _AddressCard extends StatelessWidget {
+  final TextEditingController controller;
+  final BookingController ctrl;
+  const _AddressCard({required this.controller, required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF6B7487)),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'ALAMAT PENJEMPUTAN',
+                  style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF5D6780)),
+                ),
+              ),
+              // Tombol deteksi GPS
+              Obx(() => GestureDetector(
+                onTap: ctrl.isDetectingLocation.value ? null : ctrl.detectGpsLocation,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: ctrl.latitude.value != null
+                        ? const Color(0xFFECFDF5)
+                        : const Color(0xFFEEF4FF),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: ctrl.latitude.value != null
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFF3654FF),
+                      width: 1,
+                    ),
+                  ),
+                  child: ctrl.isDetectingLocation.value
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              ctrl.latitude.value != null
+                                  ? Icons.check_circle_rounded
+                                  : Icons.my_location_rounded,
+                              size: 14,
+                              color: ctrl.latitude.value != null
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFF3654FF),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              ctrl.latitude.value != null ? 'GPS ✓' : 'GPS',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: ctrl.latitude.value != null
+                                    ? const Color(0xFF10B981)
+                                    : const Color(0xFF3654FF),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              )),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: controller,
+            maxLines: 3,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Contoh: Jl. Sudirman No. 12, RT 03/RW 05, Kel. Menteng, Jakarta Pusat',
+              hintStyle: const TextStyle(color: Color(0xFFB7C0D2)),
+              filled: true,
+              fillColor: const Color(0xFFF5F7FB),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.all(14),
+            ),
+          ),
+          Obx(() {
+            if (ctrl.latitude.value == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.gps_fixed_rounded, size: 13, color: Color(0xFF10B981)),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Koordinat GPS tersimpan: ${ctrl.latitude.value!.toStringAsFixed(5)}, ${ctrl.longitude.value!.toStringAsFixed(5)}',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF10B981)),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

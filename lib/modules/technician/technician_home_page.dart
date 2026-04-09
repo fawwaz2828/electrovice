@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../../config/routes.dart';
+import '../../models/booking_document.dart';
 import 'technician_controller.dart';
-
-import '../technician/technician_controller.dart';
 
 class TechnicianHomePage extends StatefulWidget {
   const TechnicianHomePage({super.key});
@@ -13,20 +12,33 @@ class TechnicianHomePage extends StatefulWidget {
   State<TechnicianHomePage> createState() => _TechnicianHomePageState();
 }
 
-class _ActiveJobPlaceholderCard extends StatelessWidget {
+class _ActiveJobCard extends StatelessWidget {
   final String title;
-  const _ActiveJobPlaceholderCard({required this.title});
+  final String customerName;
+  final String status;
+  final VoidCallback onTap;
+  const _ActiveJobCard({
+    required this.title,
+    required this.customerName,
+    required this.status,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isConfirmed = status == BookingStatus.confirmed;
+    final bgColor = isConfirmed ? const Color(0xFF1E293B) : const Color(0xFF0061FF);
+    final statusLabel = isConfirmed ? 'MENUJU LOKASI' : 'SEDANG DIKERJAKAN';
+    final buttonLabel = isConfirmed ? 'INPUT KODE VERIFIKASI' : 'LIHAT PEKERJAAN';
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0061FF),
+        color: bgColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0061FF).withValues(alpha: 0.3),
+            color: bgColor.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -37,10 +49,14 @@ class _ActiveJobPlaceholderCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.bolt_rounded, color: Colors.white, size: 20),
+              Icon(
+                isConfirmed ? Icons.directions_walk_rounded : Icons.bolt_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               const Text(
-                'ACTIVE JOB',
+                'PEKERJAAN AKTIF',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
@@ -49,12 +65,20 @@ class _ActiveJobPlaceholderCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const Text(
-                'IN PROGRESS',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white70,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ],
@@ -69,22 +93,30 @@ class _ActiveJobPlaceholderCard extends StatelessWidget {
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
+          Text(
+            'Customer: $customerName',
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => Get.toNamed(AppRoutes.verification),
+              onPressed: onTap,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF0061FF),
+                foregroundColor: bgColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 0,
               ),
-              child: const Text(
-                'VIEW WORK ORDER',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+              child: Text(
+                buttonLabel,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -98,6 +130,20 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
   final TechnicianController _controller = Get.find<TechnicianController>();
   bool _isOnline = true;
   _FilterTab _selectedFilter = _FilterTab.distance;
+
+  String _damageLabel(String type) => switch (type) {
+        'screen' => 'Kerusakan Layar',
+        'battery' => 'Masalah Baterai',
+        'hardware' => 'Kerusakan Hardware',
+        'water' => 'Water Damage',
+        'camera' => 'Masalah Kamera',
+        _ => 'Perbaikan Umum',
+      };
+
+  String _formatSchedule(DateTime dt) {
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+    return '${dt.day} ${months[dt.month - 1]}, ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -136,76 +182,132 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
 
               const SizedBox(height: 28),
 
-              Obx(() => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_controller.currentJob.value != null) ...[
-                    const Text(
-                      'Current Assignment',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
+              Obx(() {
+                final activeOrder = _controller.activeOrder.value;
+                final pendingOrders = _controller.incomingOrders
+                    .where((o) => o.status == BookingStatus.pending)
+                    .toList();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Current Assignment (confirmed atau on_progress) ────────
+                    if (activeOrder != null) ...[
+                      const Text(
+                        'Pekerjaan Aktif',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _ActiveJobPlaceholderCard(
-                      title: _controller.currentJob.value!.title,
-                    ),
-                  ] else ...[
-                    // ── Incoming Requests ─────────────────────────────────────
-                    Row(
-                      children: [
+                      const SizedBox(height: 16),
+                      _ActiveJobCard(
+                        title: _damageLabel(activeOrder.damageType),
+                        customerName: activeOrder.userName,
+                        status: activeOrder.status,
+                        onTap: () {
+                          _controller.selectOrder(activeOrder);
+                          // Confirmed → belum verif kode → ke verification
+                          // OnProgress → sudah verif → ke active job
+                          if (activeOrder.status == BookingStatus.confirmed) {
+                            Get.toNamed(AppRoutes.verification);
+                          } else {
+                            Get.toNamed(AppRoutes.activeJob);
+                          }
+                        },
+                      ),
+                      // Tetap tampilkan incoming requests di bawah jika ada
+                      if (pendingOrders.isNotEmpty) ...[
+                        const SizedBox(height: 28),
                         const Text(
-                          'Incoming Requests',
+                          'Permintaan Masuk',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        const Spacer(),
-                        _FilterChip(
-                          label: 'DISTANCE',
-                          selected: _selectedFilter == _FilterTab.distance,
-                          onTap: () => setState(
-                              () => _selectedFilter = _FilterTab.distance),
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'URGENCY',
-                          selected: _selectedFilter == _FilterTab.urgency,
-                          onTap: () => setState(
-                              () => _selectedFilter = _FilterTab.urgency),
-                        ),
+                        const SizedBox(height: 16),
+                        ...pendingOrders.map((order) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _RequestCard(
+                                category: order.category.toUpperCase(),
+                                categoryColor: const Color(0xFF0061FF),
+                                icon: Icons.build_rounded,
+                                distance: _formatSchedule(order.scheduledAt),
+                                title: _damageLabel(order.damageType),
+                                description: order.description.isEmpty
+                                    ? 'Tidak ada deskripsi tambahan'
+                                    : order.description,
+                                onTap: () {
+                                  _controller.selectOrder(order);
+                                  Get.toNamed(AppRoutes.jobDetail);
+                                },
+                              ),
+                            )),
                       ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ── Request Cards ─────────────────────────────────────────
-                    ..._controller.incomingRequests.map((job) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _RequestCard(
-                            category: job.title.contains('MacBook')
-                                ? 'HARDWARE REPAIR'
-                                : 'NETWORK SETUP',
-                            categoryColor: job.title.contains('MacBook')
-                                ? const Color(0xFF0061FF)
-                                : const Color(0xFF059669),
-                            icon: job.title.contains('MacBook')
-                                ? Icons.laptop_rounded
-                                : Icons.router_rounded,
-                            distance: job.completedDateLabel,
-                            title: job.title,
-                            description: job.title.contains('MacBook')
-                                ? 'The client reports a cracked retina display with vertical flickering lines.'
-                                : 'Small office requiring configuration of a 3-node mesh system.',
+                    ] else ...[
+                      // ── Incoming Requests (hanya pending) ────────────────────
+                      Row(
+                        children: [
+                          const Text(
+                            'Permintaan Masuk',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0F172A),
+                            ),
                           ),
-                        )),
+                          const Spacer(),
+                          _FilterChip(
+                            label: 'TERBARU',
+                            selected: _selectedFilter == _FilterTab.distance,
+                            onTap: () => setState(
+                                () => _selectedFilter = _FilterTab.distance),
+                          ),
+                          const SizedBox(width: 8),
+                          _FilterChip(
+                            label: 'URGENSI',
+                            selected: _selectedFilter == _FilterTab.urgency,
+                            onTap: () => setState(
+                                () => _selectedFilter = _FilterTab.urgency),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (pendingOrders.isEmpty)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: Text(
+                              'Belum ada permintaan masuk',
+                              style: TextStyle(color: Color(0xFF94A3B8)),
+                            ),
+                          ),
+                        )
+                      else
+                        ...pendingOrders.map((order) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _RequestCard(
+                                category: order.category.toUpperCase(),
+                                categoryColor: const Color(0xFF0061FF),
+                                icon: Icons.build_rounded,
+                                distance: _formatSchedule(order.scheduledAt),
+                                title: _damageLabel(order.damageType),
+                                description: order.description.isEmpty
+                                    ? 'Tidak ada deskripsi tambahan'
+                                    : order.description,
+                                onTap: () {
+                                  _controller.selectOrder(order);
+                                  Get.toNamed(AppRoutes.jobDetail);
+                                },
+                              ),
+                            )),
+                    ],
                   ],
-                ],
-              )), // Closes inner Column and Obx
+                );
+              }), // Closes Obx
 
               const SizedBox(height: 120),
             ],
@@ -325,7 +427,7 @@ class _EarningsCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            '\$482.50',
+            'Rp 482.500',
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.w900,
@@ -511,6 +613,7 @@ class _RequestCard extends StatelessWidget {
   final String distance;
   final String title;
   final String description;
+  final VoidCallback? onTap;
 
   const _RequestCard({
     required this.category,
@@ -519,6 +622,7 @@ class _RequestCard extends StatelessWidget {
     required this.distance,
     required this.title,
     required this.description,
+    this.onTap,
   });
 
   @override
@@ -618,7 +722,7 @@ class _RequestCard extends StatelessWidget {
 
           // Button
           GestureDetector(
-            onTap: () => Get.toNamed(AppRoutes.jobDetail),
+            onTap: onTap,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(

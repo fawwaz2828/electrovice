@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
 import '../../services/auth_service.dart';
@@ -18,7 +19,13 @@ class BookingController extends GetxController {
   // ── Form state (BookingFormPage) ──────────────────────────────
   final RxString description = ''.obs;
   final RxString damageType = 'other'.obs;
+  final RxString userAddress = ''.obs;
   final Rx<DateTime> scheduledAt = DateTime.now().add(const Duration(hours: 2)).obs;
+
+  // ── GPS koordinat customer ────────────────────────────────────
+  final RxnDouble latitude = RxnDouble();
+  final RxnDouble longitude = RxnDouble();
+  final RxBool isDetectingLocation = false.obs;
 
   // ── Checkout state ────────────────────────────────────────────
   final RxString paymentMethod = PaymentMethod.cash.obs;
@@ -138,9 +145,50 @@ class BookingController extends GetxController {
 
   void setDescription(String value) => description.value = value;
   void setDamageType(String value) => damageType.value = value;
+  void setUserAddress(String value) => userAddress.value = value;
   void setScheduledAt(DateTime value) => scheduledAt.value = value;
 
-  bool get isFormValid => description.value.trim().isNotEmpty;
+  bool get isFormValid =>
+      description.value.trim().isNotEmpty && userAddress.value.trim().isNotEmpty;
+
+  /// Deteksi lokasi GPS customer — simpan lat/lng, tidak menggantikan teks alamat.
+  Future<void> detectGpsLocation() async {
+    isDetectingLocation.value = true;
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        Get.snackbar('GPS Mati', 'Aktifkan layanan lokasi di pengaturan perangkat',
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) {
+        Get.snackbar('Izin Ditolak',
+            'Aktifkan izin lokasi di Pengaturan > Aplikasi > Electrovice',
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+      latitude.value = pos.latitude;
+      longitude.value = pos.longitude;
+      Get.snackbar('Lokasi Terdeteksi', 'Koordinat GPS berhasil disimpan',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2));
+    } catch (e) {
+      debugPrint('GPS error: $e');
+      Get.snackbar('Gagal', 'Tidak bisa mendapatkan lokasi GPS',
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isDetectingLocation.value = false;
+    }
+  }
 
   // ── Checkout Page ─────────────────────────────────────────────
 
@@ -213,7 +261,10 @@ class BookingController extends GetxController {
         damageType: damageType.value,
         scheduledAt: scheduledAt.value,
         estimatedPrice: estimatedPrice,
+        userAddress: userAddress.value.trim(),
         paymentMethod: paymentMethod.value,
+        latitude: latitude.value,
+        longitude: longitude.value,
       );
 
       debugPrint('Booking created: $bookingId');
@@ -235,47 +286,63 @@ class BookingController extends GetxController {
     final booking = activeBooking.value;
     if (booking == null) return _emptyTracking();
 
+    final isPending = booking.status == BookingStatus.pending;
+    final isConfirmed = booking.status == BookingStatus.confirmed;
+    final isOnProgress = booking.status == BookingStatus.onProgress;
+    final isDone = booking.status == BookingStatus.done;
+
     final steps = [
       TrackingStatusStep(
         step: OrderStatusStep.waiting,
+        title: 'Menunggu Konfirmasi Teknisi',
+        subtitle: 'Teknisi sedang mempertimbangkan pesanan',
+        isComplete: !isPending,
+        isCurrent: isPending,
+      ),
+      TrackingStatusStep(
+        step: OrderStatusStep.waiting,
         title: 'Booking Dikonfirmasi',
-        subtitle: 'Menunggu teknisi menuju lokasi',
-        isComplete: true,
-        isCurrent: booking.status == BookingStatus.confirmed,
+        subtitle: 'Teknisi dalam perjalanan ke lokasi',
+        isComplete: isOnProgress || isDone,
+        isCurrent: isConfirmed,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.verification,
         title: 'Verifikasi Kode',
         subtitle: 'Tunjukkan kode ke teknisi saat tiba',
-        isComplete: booking.status == BookingStatus.onProgress ||
-            booking.status == BookingStatus.done,
-        isCurrent: booking.status == BookingStatus.confirmed,
+        isComplete: isOnProgress || isDone,
+        isCurrent: isConfirmed,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.inProgress,
         title: 'Pengerjaan Berlangsung',
         subtitle: '',
-        isComplete: booking.status == BookingStatus.done,
-        isCurrent: booking.status == BookingStatus.onProgress,
+        isComplete: isDone,
+        isCurrent: isOnProgress,
       ),
-      const TrackingStatusStep(
+      TrackingStatusStep(
         step: OrderStatusStep.completed,
         title: 'Selesai',
         subtitle: '',
-        isComplete: false,
-        isCurrent: false,
+        isComplete: isDone,
+        isCurrent: isDone,
       ),
     ];
+
+    // Kode hanya tampil setelah teknisi accept (status confirmed ke atas)
+    final secCode = isPending ? '------' : (booking.verificationCode ?? '------');
 
     return OrderTrackingData(
       mapTitle: 'STATUS PESANAN',
       currentStatusTitle: _statusLabel(booking.status),
       statusSteps: steps,
-      securityCode: booking.verificationCode ?? '------',
+      securityCode: secCode,
       technicianName: booking.technicianName,
       technicianRole: booking.category.toUpperCase(),
       partnerLabel: 'ELECTROVICE VERIFIED',
       technicianAvatarUrl: booking.technicianPhotoUrl,
+      customerLat: booking.latitude,
+      customerLng: booking.longitude,
     );
   }
 
@@ -288,6 +355,8 @@ class BookingController extends GetxController {
       technicianName: '-',
       technicianRole: '-',
       partnerLabel: 'ELECTROVICE',
+      customerLat: null,
+      customerLng: null,
     );
   }
 
@@ -326,7 +395,8 @@ class BookingController extends GetxController {
       };
 
   String _statusLabel(String status) => switch (status) {
-        BookingStatus.confirmed => 'Menunggu Teknisi',
+        BookingStatus.pending => 'Menunggu Konfirmasi',
+        BookingStatus.confirmed => 'Teknisi Menuju Lokasi',
         BookingStatus.onProgress => 'Sedang Dikerjakan',
         BookingStatus.done => 'Selesai',
         BookingStatus.cancelled => 'Dibatalkan',

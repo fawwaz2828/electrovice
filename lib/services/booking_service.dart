@@ -8,6 +8,8 @@ class BookingService {
   // ── Create ─────────────────────────────────────────────────────
   /// Buat booking baru (cash only untuk MVP).
   /// Status langsung `confirmed` + generate kode 6 digit.
+  /// Buat booking baru → status langsung `pending` (menunggu teknisi accept).
+  /// Kode verifikasi belum digenerate di sini — dibuat saat teknisi accept.
   Future<String> createBooking({
     required String userId,
     required String userName,
@@ -19,10 +21,12 @@ class BookingService {
     required String damageType,
     required DateTime scheduledAt,
     required int estimatedPrice,
+    String userAddress = '',
     String paymentMethod = PaymentMethod.cash,
+    double? latitude,
+    double? longitude,
   }) async {
     final ref = _db.collection('bookings').doc();
-    final code = _generateCode();
     final now = DateTime.now();
 
     final booking = BookingDocument(
@@ -38,9 +42,12 @@ class BookingService {
       scheduledAt: scheduledAt,
       paymentMethod: paymentMethod,
       estimatedPrice: estimatedPrice,
-      verificationCode: code,
-      codeExpiryAt: now.add(const Duration(hours: 1)),
-      status: BookingStatus.confirmed,
+      userAddress: userAddress,
+      verificationCode: null,   // belum digenerate
+      codeExpiryAt: null,
+      status: BookingStatus.pending,
+      latitude: latitude,
+      longitude: longitude,
       createdAt: now,
       updatedAt: now,
     );
@@ -49,14 +56,35 @@ class BookingService {
     return ref.id;
   }
 
+  /// Teknisi accept order → status `confirmed` + generate kode verifikasi.
+  Future<void> acceptBooking(String bookingId) async {
+    final code = _generateCode();
+    final expiry = DateTime.now().add(const Duration(hours: 2));
+    await _db.collection('bookings').doc(bookingId).update({
+      'status': BookingStatus.confirmed,
+      'verificationCode': code,
+      'codeExpiryAt': Timestamp.fromDate(expiry),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Teknisi decline order → status `cancelled`.
+  Future<void> declineBooking(String bookingId) async {
+    await _db.collection('bookings').doc(bookingId).update({
+      'status': BookingStatus.cancelled,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   // ── Streams ────────────────────────────────────────────────────
 
-  /// Stream booking aktif customer (status: confirmed / on_progress).
+  /// Stream booking aktif customer (status: pending / confirmed / on_progress).
   Stream<BookingDocument?> streamActiveBooking(String userId) {
     return _db
         .collection('bookings')
         .where('userId', isEqualTo: userId)
         .where('status', whereIn: [
+          BookingStatus.pending,
           BookingStatus.confirmed,
           BookingStatus.onProgress,
         ])
@@ -78,12 +106,13 @@ class BookingService {
             snap.docs.map(BookingDocument.fromFirestore).toList());
   }
 
-  /// Stream incoming orders untuk teknisi (status: confirmed / on_progress).
+  /// Stream incoming orders untuk teknisi (status: pending / confirmed / on_progress).
   Stream<List<BookingDocument>> streamTechnicianOrders(String technicianId) {
     return _db
         .collection('bookings')
         .where('technicianId', isEqualTo: technicianId)
         .where('status', whereIn: [
+          BookingStatus.pending,
           BookingStatus.confirmed,
           BookingStatus.onProgress,
         ])

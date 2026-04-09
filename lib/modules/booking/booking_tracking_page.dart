@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
+import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
@@ -36,11 +38,19 @@ class BookingTrackingPage extends GetView<BookingController> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                _LiveMapCard(title: tracking.mapTitle),
+                _LiveMapCard(
+                  title: tracking.mapTitle,
+                  lat: tracking.customerLat,
+                  lng: tracking.customerLng,
+                ),
                 const SizedBox(height: 14),
                 _StatusCard(tracking: tracking),
                 const SizedBox(height: 14),
-                _SecurityCodeCard(code: tracking.securityCode),
+                _SecurityCodeCard(
+                  code: tracking.securityCode,
+                  isPending: controller.activeBooking.value?.status ==
+                      BookingStatus.pending,
+                ),
                 const SizedBox(height: 14),
                 _TechnicianContactCard(
                   name: tracking.technicianName,
@@ -58,10 +68,61 @@ class BookingTrackingPage extends GetView<BookingController> {
 
 }
 
-class _LiveMapCard extends StatelessWidget {
-  const _LiveMapCard({required this.title});
+class _LiveMapCard extends StatefulWidget {
+  const _LiveMapCard({required this.title, this.lat, this.lng});
 
   final String title;
+  final double? lat;
+  final double? lng;
+
+  @override
+  State<_LiveMapCard> createState() => _LiveMapCardState();
+}
+
+class _LiveMapCardState extends State<_LiveMapCard> {
+  mapbox.MapboxMap? _map;
+  mapbox.CircleAnnotationManager? _circleManager;
+
+  Future<void> _onMapCreated(mapbox.MapboxMap map) async {
+    _map = map;
+    _circleManager = await map.annotations.createCircleAnnotationManager();
+    if (widget.lat != null && widget.lng != null) {
+      await _moveCameraAndPin(widget.lat!, widget.lng!);
+    }
+  }
+
+  @override
+  void didUpdateWidget(_LiveMapCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Koordinat berubah (misal dari Obx rebuild) — update peta
+    if (widget.lat != oldWidget.lat || widget.lng != oldWidget.lng) {
+      if (widget.lat != null && widget.lng != null) {
+        _moveCameraAndPin(widget.lat!, widget.lng!);
+      }
+    }
+  }
+
+  Future<void> _moveCameraAndPin(double lat, double lng) async {
+    if (_map == null) return;
+    await _map!.flyTo(
+      mapbox.CameraOptions(
+        center: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+        zoom: 15.0,
+      ),
+      mapbox.MapAnimationOptions(duration: 800),
+    );
+    // Gunakan CircleAnnotation — tidak butuh icon asset eksternal
+    await _circleManager?.deleteAll();
+    await _circleManager?.create(
+      mapbox.CircleAnnotationOptions(
+        geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+        circleRadius: 10.0,
+        circleColor: 0xFF3654FF,
+        circleStrokeWidth: 3.0,
+        circleStrokeColor: 0xFFFFFFFF,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,25 +140,46 @@ class _LiveMapCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               boxShadow: const [BoxShadow(color: Color(0x11000000), blurRadius: 10)],
             ),
-            child: Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+            child: Text(widget.title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
           ),
           const SizedBox(height: 10),
-          Container(
-            height: 205,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF9BC46B), Color(0xFF64B8E8)],
-              ),
-            ),
-            child: const Center(
-              child: CircleAvatar(
-                radius: 13,
-                backgroundColor: Color(0xFF3654FF),
-                child: CircleAvatar(radius: 9, backgroundColor: Colors.white),
-              ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SizedBox(
+              height: 205,
+              child: widget.lat != null && widget.lng != null
+                  ? mapbox.MapWidget(
+                      key: const ValueKey('customer_location_map'),
+                      onMapCreated: _onMapCreated,
+                      cameraOptions: mapbox.CameraOptions(
+                        center: mapbox.Point(
+                          coordinates: mapbox.Position(widget.lng!, widget.lat!),
+                        ),
+                        zoom: 15.0,
+                      ),
+                    )
+                  : Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFCDD8F0), Color(0xFFB5D4E8)],
+                        ),
+                      ),
+                      child: const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.location_off_outlined, size: 32, color: Color(0xFF94A3B8)),
+                            SizedBox(height: 8),
+                            Text(
+                              'Lokasi GPS belum diaktifkan',
+                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
             ),
           ),
         ],
@@ -196,13 +278,13 @@ class _StatusStepTile extends StatelessWidget {
 }
 
 class _SecurityCodeCard extends StatelessWidget {
-  const _SecurityCodeCard({required this.code});
+  const _SecurityCodeCard({required this.code, this.isPending = false});
 
   final String code;
+  final bool isPending;
 
   @override
   Widget build(BuildContext context) {
-    final digits = code.split('');
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -210,41 +292,70 @@ class _SecurityCodeCard extends StatelessWidget {
       child: Column(
         children: [
           const Text(
-            'SECURITY VERIFICATION CODE',
+            'KODE VERIFIKASI',
             style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.6),
           ),
           const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(digits.length, (index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Container(
-                  width: 36,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF2F5FB),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
+          if (isPending) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.hourglass_top_rounded, color: Color(0xFFF59E0B), size: 20),
+                  SizedBox(width: 10),
+                  Flexible(
                     child: Text(
-                      digits[index],
-                      style: const TextStyle(
-                        color: Color(0xFF3654FF),
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
+                      'Kode akan muncul setelah teknisi mengkonfirmasi pesanan',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF92400E),
+                        fontSize: 13,
+                        height: 1.4,
                       ),
                     ),
                   ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Provide this code to the technician upon arrival.',
-            style: TextStyle(color: Color(0xFF737B8C)),
-          ),
+                ],
+              ),
+            ),
+          ] else ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(code.length, (index) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Container(
+                    width: 36,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F5FB),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        code[index],
+                        style: const TextStyle(
+                          color: Color(0xFF3654FF),
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Berikan kode ini kepada teknisi saat tiba di lokasi.',
+              style: TextStyle(color: Color(0xFF737B8C)),
+            ),
+          ],
         ],
       ),
     );

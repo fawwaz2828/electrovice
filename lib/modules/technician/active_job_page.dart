@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
+import '../../models/booking_document.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../technician/technician_controller.dart';
 
@@ -12,6 +13,17 @@ class ActiveJobPage extends StatefulWidget {
 }
 
 class _ActiveJobPageState extends State<ActiveJobPage> {
+  bool _isCompleting = false;
+
+  String _damageLabel(String type) => switch (type) {
+        'screen' => 'Kerusakan Layar',
+        'battery' => 'Masalah Baterai',
+        'hardware' => 'Kerusakan Hardware',
+        'water' => 'Water Damage',
+        'camera' => 'Masalah Kamera',
+        _ => 'Perbaikan Umum',
+      };
+
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<TechnicianController>();
@@ -26,32 +38,40 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
+          child: Obx(() {
+            final order = controller.activeOrder.value;
+            return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
 
               // ── Main Work Order Card ───────────────────────────────
-              const _WorkOrderHeader(),
+              _WorkOrderHeader(
+                bookingId: order?.bookingId.substring(0, 8).toUpperCase() ?? '--------',
+                issueTitle: _damageLabel(order?.damageType ?? ''),
+                customerName: order?.userName ?? '-',
+                userAddress: order?.userAddress ?? 'Alamat tidak tersedia',
+                status: order?.status ?? BookingStatus.onProgress,
+              ),
 
               const SizedBox(height: 24),
 
               // ── Actions Grid ────────────────────────────────────────
-              const Row(
+              Row(
                 children: [
                   Expanded(
                     child: _ActionCard(
                       icon: Icons.phone_in_talk_rounded,
                       label: 'CALL CLIENT',
-                      sublabel: 'M. Thompson',
+                      sublabel: order?.userName ?? '-',
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _ActionCard(
                       icon: Icons.chat_bubble_rounded,
                       label: 'LIVE CHAT',
-                      sublabel: '3 Active',
+                      sublabel: order?.userName ?? '-',
                     ),
                   ),
                 ],
@@ -66,10 +86,20 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
 
               // ── Main Action Button ──────────────────────────────────
               ElevatedButton(
-                onPressed: () {
-                  controller.completeJob();
-                  Get.offAllNamed(AppRoutes.jobSummary);
-                },
+                onPressed: _isCompleting || order == null
+                    ? null
+                    : () async {
+                        setState(() => _isCompleting = true);
+                        try {
+                          await controller.completeJob();
+                          Get.offAllNamed(AppRoutes.jobSummary);
+                        } catch (e) {
+                          Get.snackbar('Gagal', e.toString(),
+                              snackPosition: SnackPosition.BOTTOM);
+                        } finally {
+                          if (mounted) setState(() => _isCompleting = false);
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
@@ -79,27 +109,28 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                   ),
                   elevation: 0,
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_circle_outline_rounded, size: 22),
-                    SizedBox(width: 12),
-                    Text(
-                      'Complete Repair',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                child: _isCompleting
+                    ? const SizedBox(
+                        width: 24, height: 24,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_outline_rounded, size: 22),
+                          SizedBox(width: 12),
+                          Text(
+                            'Complete Repair',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
               const SizedBox(height: 12),
               const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'By clicking complete, you confirm all safety checks are performed and a diagnostic report will be sent to the customer.',
+                    'Dengan menekan tombol ini, Anda mengkonfirmasi pekerjaan telah selesai.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,
@@ -112,7 +143,8 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
 
               const SizedBox(height: 140),
             ],
-          ),
+          ); // end Column
+          }), // end Obx
         ),
       ),
     );
@@ -120,7 +152,20 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
 }
 
 class _WorkOrderHeader extends StatelessWidget {
-  const _WorkOrderHeader();
+  final String bookingId;
+  final String issueTitle;
+  final String customerName;
+  final String userAddress;
+  final String status;
+
+  const _WorkOrderHeader({
+    required this.bookingId,
+    required this.issueTitle,
+    required this.customerName,
+    required this.userAddress,
+    required this.status,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -135,9 +180,9 @@ class _WorkOrderHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'WORK ORDER #88291',
-                style: TextStyle(
+              Text(
+                'WORK ORDER #$bookingId',
+                style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF94A3B8),
@@ -179,9 +224,9 @@ class _WorkOrderHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'MacBook Pro -\nScreen Damage',
-            style: TextStyle(
+          Text(
+            issueTitle,
+            style: const TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w900,
               color: Color(0xFF111111),
@@ -196,7 +241,7 @@ class _WorkOrderHeader extends StatelessWidget {
           // Nested Cards
           const _TimeElapsedCard(),
           const SizedBox(height: 12),
-          const _LocationCard(),
+          _LocationCard(address: userAddress),
 
           const SizedBox(height: 24),
           const _TaskProgressSection(),
@@ -258,7 +303,8 @@ class _TimeElapsedCard extends StatelessWidget {
 }
 
 class _LocationCard extends StatelessWidget {
-  const _LocationCard();
+  final String address;
+  const _LocationCard({required this.address});
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -281,8 +327,8 @@ class _LocationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '241 Oak Ridge, Ste 402\nNorth Hills, CA 91343',
+          Text(
+            address,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,

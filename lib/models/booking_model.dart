@@ -369,6 +369,8 @@ class OrderTrackingData {
     required this.technicianRole,
     required this.partnerLabel,
     this.technicianAvatarUrl,
+    this.customerLat,
+    this.customerLng,
   });
 
   final String mapTitle;
@@ -379,6 +381,8 @@ class OrderTrackingData {
   final String technicianRole;
   final String partnerLabel;
   final String? technicianAvatarUrl;
+  final double? customerLat;
+  final double? customerLng;
 
   factory OrderTrackingData.fromMap(Map<String, dynamic> map) {
     return OrderTrackingData(

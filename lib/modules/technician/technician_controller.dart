@@ -81,10 +81,18 @@ class TechnicianController extends GetxController {
           (orders) {
             incomingOrders.assignAll(orders);
 
-            // Update legacy incomingRequests (hanya yang confirmed, belum on_progress)
+            // Sync selectedOrder dari stream agar tidak stale setelah re-login
+            if (selectedOrder.value != null) {
+              final updated = orders
+                  .where((o) => o.bookingId == selectedOrder.value!.bookingId)
+                  .firstOrNull;
+              if (updated != null) selectedOrder.value = updated;
+            }
+
+            // incomingRequests hanya yang masih pending (belum diaccept teknisi)
             incomingRequests.assignAll(
               orders
-                  .where((o) => o.status == BookingStatus.confirmed)
+                  .where((o) => o.status == BookingStatus.pending)
                   .map((o) => TechnicianJobRecord(
                         title: _damageLabel(o.damageType),
                         clientName: o.userName,
@@ -95,13 +103,23 @@ class TechnicianController extends GetxController {
                   .toList(),
             );
 
-            // Update active order (on_progress)
+            // activeOrder = confirmed (sudah accept, belum verif) ATAU on_progress
+            // confirmed: teknisi sudah terima, menuju lokasi, belum input kode
+            // on_progress: kode sudah diverifikasi, sedang dikerjakan
             final active = orders
-                .where((o) => o.status == BookingStatus.onProgress)
+                .where((o) =>
+                    o.status == BookingStatus.confirmed ||
+                    o.status == BookingStatus.onProgress)
                 .firstOrNull;
             activeOrder.value = active;
 
-            // Update legacy currentJob
+            // Auto-set selectedOrder ke confirmed order jika belum dipilih
+            // Berguna setelah re-login agar verification page bisa lanjut
+            if (active != null && selectedOrder.value == null) {
+              selectedOrder.value = active;
+            }
+
+            // currentJob untuk "Current Assignment" di home page
             currentJob.value = active == null
                 ? null
                 : TechnicianJobRecord(
@@ -128,10 +146,30 @@ class TechnicianController extends GetxController {
     selectedOrder.value = order;
   }
 
-  /// Dipanggil dari JobDetailPage — pilih order pertama (confirmed) untuk diverifikasi
+  /// Teknisi accept order → status pending → confirmed + generate kode verifikasi
+  Future<void> acceptOrder() async {
+    final order = selectedOrder.value;
+    if (order == null) throw Exception('Tidak ada order yang dipilih');
+    // Jika sudah confirmed, langsung lanjut ke verifikasi tanpa memanggil Firestore lagi
+    if (order.status == BookingStatus.confirmed) return;
+    if (order.status != BookingStatus.pending) {
+      throw Exception('Status order tidak valid: ${order.status}');
+    }
+    await _bookingService.acceptBooking(order.bookingId);
+  }
+
+  /// Teknisi decline order → status cancelled
+  Future<void> declineOrder() async {
+    final order = selectedOrder.value;
+    if (order == null) throw Exception('Tidak ada order yang dipilih');
+    await _bookingService.declineBooking(order.bookingId);
+    selectedOrder.value = null;
+  }
+
+  /// Dipanggil dari JobDetailPage (legacy) — pilih order pertama (pending) untuk diverifikasi
   void acceptJob(TechnicianJobRecord _) {
     final order = incomingOrders
-        .where((o) => o.status == BookingStatus.confirmed)
+        .where((o) => o.status == BookingStatus.pending)
         .firstOrNull;
     if (order != null) selectedOrder.value = order;
   }
