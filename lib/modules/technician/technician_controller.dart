@@ -1,44 +1,57 @@
+import 'dart:async';
 import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import '../../models/technician_model.dart';
-import '../../models/user_model.dart';
+import '../../models/booking_document.dart';
 import '../../services/auth_service.dart';
+import '../../services/booking_service.dart';
 
 class TechnicianController extends GetxController {
-  final Rxn<TechnicianProfileData> profile = Rxn<TechnicianProfileData>();
   final AuthService _authService = AuthService();
+  final BookingService _bookingService = BookingService();
 
+  final Rxn<TechnicianProfileData> profile = Rxn<TechnicianProfileData>();
   final RxBool isOnline = true.obs;
+
+  // ── Booking state (Firestore) ─────────────────────────────────
+
+  /// Semua incoming orders (confirmed + on_progress)
+  final RxList<BookingDocument> incomingOrders = <BookingDocument>[].obs;
+  final RxBool isLoadingOrders = true.obs;
+
+  /// Booking yang sedang aktif dikerjakan (on_progress)
+  final Rxn<BookingDocument> activeOrder = Rxn<BookingDocument>();
+
+  /// Booking yang sedang dibuka detail / verifikasi
+  final Rxn<BookingDocument> selectedOrder = Rxn<BookingDocument>();
+
+  // ── Legacy Rx untuk backward compat dengan home page UI ───────
+  /// currentJob dipakai oleh TechnicianHomePage via .value
   final Rxn<TechnicianJobRecord> currentJob = Rxn<TechnicianJobRecord>();
-  final RxList<TechnicianJobRecord> incomingRequests =
-      <TechnicianJobRecord>[].obs;
+  /// incomingRequests RxList dipakai oleh TechnicianHomePage via .map()
+  final RxList<TechnicianJobRecord> incomingRequests = <TechnicianJobRecord>[].obs;
+
+  StreamSubscription? _ordersSub;
 
   @override
   void onInit() {
     super.onInit();
     _loadUserData();
-    _loadMockRequests();
   }
 
-  void _loadMockRequests() {
-    incomingRequests.assignAll([
-      const TechnicianJobRecord(
-        title: 'MacBook Pro Screen Replacement',
-        clientName: 'Sarah Jenkins',
-        amount: 180.0,
-        rating: 0,
-        completedDateLabel: 'URGENT: 2.4km away',
-      ),
-      const TechnicianJobRecord(
-        title: 'Mesh Wi-Fi Configuration',
-        clientName: 'TechCorp Office',
-        amount: 75.0,
-        rating: 0,
-        completedDateLabel: '0.8km away',
-      ),
-    ]);
+  @override
+  void onClose() {
+    _ordersSub?.cancel();
+    super.onClose();
   }
 
   Future<void> _loadUserData() async {
+    int retry = 0;
+    while (_authService.currentUser == null && retry < 6) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      retry++;
+    }
+
     final user = _authService.currentUser;
     if (user == null) return;
 
@@ -57,55 +70,107 @@ class TechnicianController extends GetxController {
       avatarUrl: tp?.photoUrl ?? userModel.photoUrl,
       serviceHistory: const [],
     );
+
+    _listenToOrders(user.uid);
   }
 
-  // Dipanggil setelah balik dari edit page
-  Future<void> refreshProfile() async {
-    await _loadUserData();
+  void _listenToOrders(String technicianId) {
+    _ordersSub = _bookingService
+        .streamTechnicianOrders(technicianId)
+        .listen(
+          (orders) {
+            incomingOrders.assignAll(orders);
+
+            // Update legacy incomingRequests (hanya yang confirmed, belum on_progress)
+            incomingRequests.assignAll(
+              orders
+                  .where((o) => o.status == BookingStatus.confirmed)
+                  .map((o) => TechnicianJobRecord(
+                        title: _damageLabel(o.damageType),
+                        clientName: o.userName,
+                        amount: o.estimatedPrice.toDouble(),
+                        rating: 0,
+                        completedDateLabel: _formatDate(o.scheduledAt),
+                      ))
+                  .toList(),
+            );
+
+            // Update active order (on_progress)
+            final active = orders
+                .where((o) => o.status == BookingStatus.onProgress)
+                .firstOrNull;
+            activeOrder.value = active;
+
+            // Update legacy currentJob
+            currentJob.value = active == null
+                ? null
+                : TechnicianJobRecord(
+                    title: _damageLabel(active.damageType),
+                    clientName: active.userName,
+                    amount: active.estimatedPrice.toDouble(),
+                    rating: 0,
+                    completedDateLabel: _formatDate(active.scheduledAt),
+                  );
+
+            isLoadingOrders.value = false;
+          },
+          onError: (e) {
+            debugPrint('TechnicianController orders stream error: $e');
+            isLoadingOrders.value = false;
+          },
+        );
   }
 
-  void acceptJob(TechnicianJobRecord job) {
-    currentJob.value = job;
+  // ── Actions ───────────────────────────────────────────────────
+
+  /// Set order yang akan diverifikasi
+  void selectOrder(BookingDocument order) {
+    selectedOrder.value = order;
   }
 
-  void verifyJob() {}
-
-  void completeJob() {
-    if (currentJob.value != null) {
-      final completed = currentJob.value!;
-      final newHistory =
-          List<TechnicianJobRecord>.from(profile.value!.serviceHistory);
-      newHistory.insert(
-        0,
-        TechnicianJobRecord(
-          title: completed.title,
-          clientName: completed.clientName,
-          amount: completed.amount,
-          rating: 5.0,
-          completedDateLabel: 'Completed: Just now',
-        ),
-      );
-
-      profile.value = TechnicianProfileData(
-        fullName: profile.value!.fullName,
-        specialty: profile.value!.specialty,
-        yearsExperience: profile.value!.yearsExperience,
-        successRate: profile.value!.successRate,
-        rating: profile.value!.rating,
-        completedWindowLabel: profile.value!.completedWindowLabel,
-        avatarUrl: profile.value!.avatarUrl,
-        serviceHistory: newHistory,
-      );
-
-      currentJob.value = null;
-    }
+  /// Dipanggil dari JobDetailPage — pilih order pertama (confirmed) untuk diverifikasi
+  void acceptJob(TechnicianJobRecord _) {
+    final order = incomingOrders
+        .where((o) => o.status == BookingStatus.confirmed)
+        .firstOrNull;
+    if (order != null) selectedOrder.value = order;
   }
 
-  void setProfile(TechnicianProfileData data) {
-    profile.value = data;
+  /// Verifikasi kode 6 digit
+  Future<void> verifyCode(String enteredCode) async {
+    final order = selectedOrder.value ?? activeOrder.value;
+    if (order == null) throw Exception('Tidak ada order yang dipilih');
+    await _bookingService.verifyCode(order.bookingId, enteredCode);
   }
 
-  void loadFromMap(Map<String, dynamic> map) {
-    profile.value = TechnicianProfileData.fromMap(map);
+  /// Tandai pekerjaan selesai
+  Future<void> completeJob() async {
+    final order = activeOrder.value;
+    if (order == null) throw Exception('Tidak ada order aktif');
+    await _bookingService.markAsDone(order.bookingId);
+  }
+
+  /// Dipanggil setelah balik dari edit page
+  Future<void> refreshProfile() async => _loadUserData();
+
+  void setProfile(TechnicianProfileData data) => profile.value = data;
+
+  // ── Helpers ───────────────────────────────────────────────────
+
+  String _damageLabel(String type) => switch (type) {
+        'screen' => 'Kerusakan Layar',
+        'battery' => 'Masalah Baterai',
+        'hardware' => 'Kerusakan Hardware',
+        'water' => 'Water Damage',
+        'camera' => 'Masalah Kamera',
+        _ => 'Perbaikan Umum',
+      };
+
+  String _formatDate(DateTime dt) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+    ];
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 }

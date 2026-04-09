@@ -2,165 +2,231 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../config/routes.dart';
-import '../../models/booking_model.dart';
 import 'booking_controller.dart';
 
-class BookingFormPage extends GetView<BookingController> {
+class BookingFormPage extends StatefulWidget {
   const BookingFormPage({super.key});
 
+  @override
+  State<BookingFormPage> createState() => _BookingFormPageState();
+}
+
+class _BookingFormPageState extends State<BookingFormPage> {
+  late final BookingController _ctrl;
+  final _descCtrl = TextEditingController();
+  String _selectedDamage = 'other';
+
   static const Color _bg = Color(0xFFF7F8FC);
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.find<BookingController>();
+    _selectedDamage = _ctrl.damageType.value;
+  }
+
+  @override
+  void dispose() {
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onConfirm() {
+    if (_descCtrl.text.trim().isEmpty) {
+      Get.snackbar('Oops', 'Deskripsikan keluhan perangkat kamu dulu',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    _ctrl.setDescription(_descCtrl.text.trim());
+    _ctrl.setDamageType(_selectedDamage);
+    Get.toNamed(AppRoutes.checkout);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
       body: SafeArea(
-        child: Obx(() {
-          final CustomerOrderDraft draft = controller.orderDraftData;
+        child: Column(
+          children: [
+            // Top bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  ),
+                  const Text(
+                    'Buat Pesanan',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ),
 
-          return Column(
-            children: [
-              const _BookingTopBar(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Technician Info Card ─────────────────────────────
+                    _TechnicianHeaderCard(ctrl: _ctrl),
+                    const SizedBox(height: 20),
+
+                    // ── 1. Damage Type ───────────────────────────────────
+                    const _StepHeader(title: '1. JENIS KERUSAKAN', trailing: 'Wajib'),
+                    const SizedBox(height: 12),
+                    _DamageGrid(
+                      selected: _selectedDamage,
+                      onSelect: (type) => setState(() => _selectedDamage = type),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── 2. Deskripsi ─────────────────────────────────────
+                    const _StepHeader(title: '2. DESKRIPSI KELUHAN'),
+                    const SizedBox(height: 12),
+                    _NotesCard(controller: _descCtrl),
+                    const SizedBox(height: 20),
+
+                    // ── 3. Jadwal ────────────────────────────────────────
+                    const _StepHeader(title: '3. JADWAL SERVIS'),
+                    const SizedBox(height: 12),
+                    _ScheduleCard(ctrl: _ctrl),
+                    const SizedBox(height: 16),
+
+                    // ── Harga estimasi ───────────────────────────────────
+                    _PriceEstimateCard(ctrl: _ctrl),
+                    const SizedBox(height: 16),
+
+                    // ── Security notice ──────────────────────────────────
+                    const _SecurityNoticeCard(),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Bottom CTA ───────────────────────────────────────────────
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              child: SafeArea(
+                top: false,
+                child: FilledButton(
+                  onPressed: _onConfirm,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(56),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _DeviceCard(draft: draft),
-                      const SizedBox(height: 20),
-                      const _StepHeader(title: '1. SELECT DAMAGE TYPE', trailing: 'Required'),
-                      const SizedBox(height: 12),
-                      _DamageGrid(selected: draft.selectedDamage),
-                      const SizedBox(height: 16),
-                      const _NotesCard(),
-                      const SizedBox(height: 20),
-                      const _StepHeader(title: '2. SCHEDULE SERVICE'),
-                      const SizedBox(height: 12),
-                      const _ScheduleCard(),
-                      const SizedBox(height: 16),
-                      _OrderSummaryCard(draft: draft),
-                      const SizedBox(height: 16),
-                      const _SecurityNoticeCard(),
+                      Text('KONFIRMASI & PESAN',
+                          style: TextStyle(fontWeight: FontWeight.w800)),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded),
                     ],
                   ),
                 ),
               ),
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-                child: SafeArea(
-                  top: false,
-                  child: FilledButton(
-                    onPressed: () => Get.toNamed(AppRoutes.checkout),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(56),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('CONFIRM & BOOK', style: TextStyle(fontWeight: FontWeight.w800)),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_rounded),
-                      ],
-                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Technician Header Card ─────────────────────────────────────────────────
+class _TechnicianHeaderCard extends StatelessWidget {
+  final BookingController ctrl;
+  const _TechnicianHeaderCard({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final t = ctrl.selectedTechnician.value;
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCE7FB),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: t?.photoUrl != null && t!.photoUrl!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(t.photoUrl!, fit: BoxFit.cover),
+                    )
+                  : const Icon(Icons.person_rounded, size: 28),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t?.name ?? '-',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w800),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    t?.specialty.isEmpty ?? true
+                        ? (t?.category ?? '-').toUpperCase()
+                        : t!.specialty,
+                    style: const TextStyle(
+                        color: Color(0xFF727B8B), fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            if (t != null && t.rating > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star_rounded,
+                        color: Color(0xFFF59E0B), size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      t.rating.toStringAsFixed(1),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 13),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          );
-        }),
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
 
-class _BookingTopBar extends StatelessWidget {
-  const _BookingTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Get.back(),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          ),
-          const Text('Create Order', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
-}
-
-class _DeviceCard extends StatelessWidget {
-  const _DeviceCard({required this.draft});
-
-  final CustomerOrderDraft draft;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Row(
-        children: [
-          Container(
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              color: const Color(0xFFDCE7FB),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.smartphone_rounded, size: 30),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(draft.deviceName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                Text(draft.serialNumber, style: const TextStyle(color: Color(0xFF727B8B))),
-                const SizedBox(height: 6),
-                if (draft.isUnderWarranty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0F3F9),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'Under Warranty',
-                      style: TextStyle(
-                        color: Color(0xFF7A8599),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
+// ── Step Header ────────────────────────────────────────────────────────────
 class _StepHeader extends StatelessWidget {
-  const _StepHeader({required this.title, this.trailing});
-
   final String title;
   final String? trailing;
+  const _StepHeader({required this.title, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -169,33 +235,37 @@ class _StepHeader extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w800,
             color: Color(0xFF5D6780),
-            letterSpacing: 1.2,
+            letterSpacing: 1.0,
           ),
         ),
         const Spacer(),
-        if (trailing != null) Text(trailing!, style: const TextStyle(fontWeight: FontWeight.w700)),
+        if (trailing != null)
+          Text(trailing!,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700, color: Color(0xFF3654FF))),
       ],
     );
   }
 }
 
+// ── Damage Grid ────────────────────────────────────────────────────────────
 class _DamageGrid extends StatelessWidget {
-  const _DamageGrid({required this.selected});
-
-  final DamageType selected;
+  final String selected;
+  final ValueChanged<String> onSelect;
+  const _DamageGrid({required this.selected, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
-    final items = <(DamageType, IconData, String)>[
-      (DamageType.screen, Icons.screenshot_monitor_outlined, 'Screen'),
-      (DamageType.battery, Icons.battery_4_bar_rounded, 'Battery'),
-      (DamageType.hardware, Icons.memory_rounded, 'Hardware'),
-      (DamageType.water, Icons.water_drop_outlined, 'Water'),
-      (DamageType.camera, Icons.camera_alt_outlined, 'Camera'),
-      (DamageType.other, Icons.more_horiz_rounded, 'Other'),
+    const items = <(String, IconData, String)>[
+      ('screen', Icons.screenshot_monitor_outlined, 'Layar'),
+      ('battery', Icons.battery_4_bar_rounded, 'Baterai'),
+      ('hardware', Icons.memory_rounded, 'Hardware'),
+      ('water', Icons.water_drop_outlined, 'Air'),
+      ('camera', Icons.camera_alt_outlined, 'Kamera'),
+      ('other', Icons.more_horiz_rounded, 'Lainnya'),
     ];
 
     return GridView.builder(
@@ -203,33 +273,39 @@ class _DamageGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+        crossAxisCount: 3,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        childAspectRatio: 1.55,
+        childAspectRatio: 1.4,
       ),
       itemBuilder: (_, index) {
         final item = items[index];
         final isSelected = item.$1 == selected;
-        return Container(
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.black : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: isSelected ? Colors.black : const Color(0xFFE5E9F2)),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(item.$2, color: isSelected ? Colors.white : Colors.black),
-              const SizedBox(height: 8),
-              Text(
-                item.$3,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
-                  fontWeight: FontWeight.w700,
+        return GestureDetector(
+          onTap: () => onSelect(item.$1),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.black : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: isSelected ? Colors.black : const Color(0xFFE5E9F2)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(item.$2,
+                    color: isSelected ? Colors.white : Colors.black),
+                const SizedBox(height: 6),
+                Text(
+                  item.$3,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -237,54 +313,50 @@ class _DamageGrid extends StatelessWidget {
   }
 }
 
+// ── Notes Card ─────────────────────────────────────────────────────────────
 class _NotesCard extends StatelessWidget {
-  const _NotesCard();
+  final TextEditingController controller;
+  const _NotesCard({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(18)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.description_outlined, size: 18, color: Color(0xFF6B7487)),
+              Icon(Icons.description_outlined,
+                  size: 18, color: Color(0xFF6B7487)),
               SizedBox(width: 8),
               Text(
-                'ADDITIONAL NOTES',
-                style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF5D6780)),
+                'DESKRIPSI KELUHAN',
+                style: TextStyle(
+                    fontWeight: FontWeight.w800, color: Color(0xFF5D6780)),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            height: 108,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F7FB),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Text(
-              'Describe the issue in detail..',
-              style: TextStyle(color: Color(0xFFB7C0D2)),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _SmallIconButton(icon: Icons.camera_alt_outlined),
-              const SizedBox(width: 8),
-              _SmallIconButton(icon: Icons.attach_file_rounded),
-              const Spacer(),
-              const Text(
-                'Autosaved 14:42',
-                style: TextStyle(color: Color(0xFF99A2B5), fontSize: 12),
+          const SizedBox(height: 12),
+          TextField(
+            controller: controller,
+            maxLines: 4,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText:
+                  'Contoh: Layar HP retak setelah jatuh, ada garis hitam di kiri...',
+              hintStyle: const TextStyle(color: Color(0xFFB7C0D2)),
+              filled: true,
+              fillColor: const Color(0xFFF5F7FB),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
               ),
-            ],
+              contentPadding: const EdgeInsets.all(14),
+            ),
           ),
         ],
       ),
@@ -292,150 +364,143 @@ class _NotesCard extends StatelessWidget {
   }
 }
 
-class _SmallIconButton extends StatelessWidget {
-  const _SmallIconButton({required this.icon});
-
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F3F8),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Icon(icon, size: 18, color: const Color(0xFF657084)),
-    );
-  }
-}
-
+// ── Schedule Card ──────────────────────────────────────────────────────────
 class _ScheduleCard extends StatelessWidget {
-  const _ScheduleCard();
+  final BookingController ctrl;
+  const _ScheduleCard({required this.ctrl});
 
   @override
   Widget build(BuildContext context) {
-    const dateItems = ['OCT\n24\nThu', 'OCT\n25\nFri', 'OCT\n26\nSat', 'OCT\n27\nSun'];
-    const timeItems = ['09:00 AM', '11:30 AM', '02:00 PM', '04:30 PM'];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
-      child: Column(
-        children: [
-          SizedBox(
-            height: 70,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: dateItems.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, index) {
-                final isSelected = index == 0;
-                return Container(
-                  width: 58,
-                  decoration: BoxDecoration(
-                    color: isSelected ? Colors.black : const Color(0xFFF7F8FC),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      dateItems[index],
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
+    return Obx(() {
+      final date = ctrl.scheduledAt.value;
+      return GestureDetector(
+        onTap: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: date,
+            firstDate: DateTime.now(),
+            lastDate: DateTime.now().add(const Duration(days: 30)),
+          );
+          if (picked != null) {
+            ctrl.setScheduledAt(DateTime(
+              picked.year,
+              picked.month,
+              picked.day,
+              date.hour,
+              date.minute,
+            ));
+          }
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
           ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 42,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: timeItems.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, index) {
-                final isSelected = index == 0;
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFDCE5FF) : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFD8DEEB)),
-                  ),
-                  child: Center(
-                    child: Text(
-                      timeItems[index],
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OrderSummaryCard extends StatelessWidget {
-  const _OrderSummaryCard({required this.draft});
-
-  final CustomerOrderDraft draft;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'ORDER SUMMARY',
-            style: TextStyle(color: Color(0xFF5D6780), fontWeight: FontWeight.w800, letterSpacing: 1.2),
-          ),
-          const SizedBox(height: 16),
-          _row('Service Fee (Visit)', draft.serviceFee),
-          const SizedBox(height: 12),
-          _row('Parts (Est. Screen Replacement)', draft.partsEstimate),
-          const SizedBox(height: 12),
-          _row('Taxes & Logistics', draft.taxesAndLogistics),
-          const SizedBox(height: 18),
-          Row(
+          child: Row(
             children: [
-              const Text('Total Estimate', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              const Spacer(),
-              Text(
-                '\$${draft.totalEstimate.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF3654FF)),
+              const Icon(Icons.calendar_today_rounded,
+                  color: Color(0xFF3654FF)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Jadwal Kunjungan',
+                        style: TextStyle(
+                            color: Color(0xFF5D6780),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${date.day} ${_monthName(date.month)} ${date.year}',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
               ),
+              const Icon(Icons.chevron_right_rounded,
+                  color: Color(0xFF94A3B8)),
             ],
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 
-  Widget _row(String label, double amount) {
-    return Row(
-      children: [
-        Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF5F6778)))),
-        Text('\$${amount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w700)),
-      ],
-    );
+  String _monthName(int month) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+    ];
+    return months[month - 1];
   }
 }
 
+// ── Price Estimate Card ────────────────────────────────────────────────────
+class _PriceEstimateCard extends StatelessWidget {
+  final BookingController ctrl;
+  const _PriceEstimateCard({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final estimates = ctrl.selectedTechnician.value?.serviceEstimates ?? [];
+      if (estimates.isEmpty) return const SizedBox.shrink();
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'ESTIMASI BIAYA',
+              style: TextStyle(
+                color: Color(0xFF5D6780),
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...estimates.map((e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(e.service,
+                            style:
+                                const TextStyle(color: Color(0xFF5F6778))),
+                      ),
+                      Text(
+                        e.priceLabel,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                )),
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text(
+                '* Harga final ditentukan setelah diagnosa',
+                style: TextStyle(color: Color(0xFF99A2B5), fontSize: 11),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+// ── Security Notice ────────────────────────────────────────────────────────
 class _SecurityNoticeCard extends StatelessWidget {
   const _SecurityNoticeCard();
 
@@ -456,7 +521,7 @@ class _SecurityNoticeCard extends StatelessWidget {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'A 6-digit security code will be generated upon confirmation. Provide this only when the technician arrives to verify the service.',
+              'Kode verifikasi 6 digit akan digenerate setelah konfirmasi. Tunjukkan kode ini hanya kepada teknisi saat tiba di lokasi.',
               style: TextStyle(color: Color(0xFF365081), height: 1.5),
             ),
           ),

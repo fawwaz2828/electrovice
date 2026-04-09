@@ -76,49 +76,42 @@ class AppRoutes {
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
       }),
     ),
+    // Titik awal booking flow — selalu buat controller baru agar args terbaca
     GetPage(
       name: technicianDetail,
       page: () => const BookingTechnicianDetailPage(),
       binding: BindingsBuilder(() {
-        if (!Get.isRegistered<BookingController>()) {
-          Get.put(BookingController());
-        }
+        Get.delete<BookingController>(force: true);
+        Get.put(BookingController());
       }),
     ),
+    // Halaman berikutnya dalam flow — reuse controller yang sama
     GetPage(
       name: createOrder,
       page: () => const BookingFormPage(),
       binding: BindingsBuilder(() {
-        if (!Get.isRegistered<BookingController>()) {
-          Get.put(BookingController());
-        }
+        if (!Get.isRegistered<BookingController>()) Get.put(BookingController());
       }),
     ),
     GetPage(
       name: checkout,
       page: () => const CheckoutPage(),
       binding: BindingsBuilder(() {
-        if (!Get.isRegistered<BookingController>()) {
-          Get.put(BookingController());
-        }
+        if (!Get.isRegistered<BookingController>()) Get.put(BookingController());
       }),
     ),
     GetPage(
       name: orderTracking,
       page: () => const BookingTrackingPage(),
       binding: BindingsBuilder(() {
-        if (!Get.isRegistered<BookingController>()) {
-          Get.put(BookingController());
-        }
+        if (!Get.isRegistered<BookingController>()) Get.put(BookingController());
       }),
     ),
     GetPage(
       name: orderHistory,
       page: () => const BookingHistoryPage(),
       binding: BindingsBuilder(() {
-        if (!Get.isRegistered<BookingController>()) {
-          Get.put(BookingController());
-        }
+        if (!Get.isRegistered<BookingController>()) Get.put(BookingController());
       }),
     ),
     GetPage(

@@ -1,224 +1,358 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-
+import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
+import '../../services/auth_service.dart';
+import '../../services/booking_service.dart';
+import '../../services/technician_service.dart' show TechnicianOnlineModel;
+import '../../config/routes.dart';
 
 class BookingController extends GetxController {
-  final Rxn<CustomerTechnicianDetail> technician = Rxn<CustomerTechnicianDetail>();
-  final Rxn<CustomerOrderDraft> orderDraft = Rxn<CustomerOrderDraft>();
-  final Rxn<CheckoutSummary> checkout = Rxn<CheckoutSummary>();
-  final Rxn<OrderTrackingData> tracking = Rxn<OrderTrackingData>();
-  final RxList<OrderHistoryRecord> orderHistory = <OrderHistoryRecord>[].obs;
+  final BookingService _bookingService = BookingService();
+  final AuthService _authService = AuthService();
 
-  CustomerTechnicianDetail get technicianData => technician.value ?? _sampleTechnician();
-  CustomerOrderDraft get orderDraftData => orderDraft.value ?? _sampleOrderDraft();
-  CheckoutSummary get checkoutData => checkout.value ?? _sampleCheckout();
-  OrderTrackingData get trackingData => tracking.value ?? _sampleTracking();
-  List<OrderHistoryRecord> get orderHistoryData =>
-      orderHistory.isEmpty ? _sampleHistory() : orderHistory;
+  // ── Technician yang dipilih customer ──────────────────────────
+  final Rxn<TechnicianOnlineModel> selectedTechnician = Rxn();
+
+  // ── Form state (BookingFormPage) ──────────────────────────────
+  final RxString description = ''.obs;
+  final RxString damageType = 'other'.obs;
+  final Rx<DateTime> scheduledAt = DateTime.now().add(const Duration(hours: 2)).obs;
+
+  // ── Checkout state ────────────────────────────────────────────
+  final RxString paymentMethod = PaymentMethod.cash.obs;
+  final RxBool isSubmitting = false.obs;
+
+  // ── Active booking (tracking page) ───────────────────────────
+  final Rxn<BookingDocument> activeBooking = Rxn();
+  StreamSubscription? _activeSub;
+
+  // ── Booking history ───────────────────────────────────────────
+  final RxList<BookingDocument> bookingHistory = <BookingDocument>[].obs;
+  final RxBool isLoadingHistory = true.obs;
+  StreamSubscription? _historySub;
 
   @override
   void onInit() {
     super.onInit();
-    technician.value = _sampleTechnician();
-    orderDraft.value = _sampleOrderDraft();
-    checkout.value = _sampleCheckout();
-    tracking.value = _sampleTracking();
-    orderHistory.assignAll(_sampleHistory());
+    _loadTechnicianFromArguments();
+    _initUserStreams();
   }
 
-  void loadTechnicianFromMap(Map<String, dynamic> map) {
-    technician.value = CustomerTechnicianDetail.fromMap(map);
+  @override
+  void onClose() {
+    _activeSub?.cancel();
+    _historySub?.cancel();
+    super.onClose();
   }
 
-  void loadOrderDraftFromMap(Map<String, dynamic> map) {
-    orderDraft.value = CustomerOrderDraft.fromMap(map);
+  // ── Init ──────────────────────────────────────────────────────
+
+  void _loadTechnicianFromArguments() {
+    final args = Get.arguments;
+    if (args is TechnicianOnlineModel) {
+      selectedTechnician.value = args;
+    }
   }
 
-  void loadCheckoutFromMap(Map<String, dynamic> map) {
-    checkout.value = CheckoutSummary.fromMap(map);
-  }
+  Future<void> _initUserStreams() async {
+    int retry = 0;
+    while (_authService.currentUser == null && retry < 6) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      retry++;
+    }
 
-  void loadTrackingFromMap(Map<String, dynamic> map) {
-    tracking.value = OrderTrackingData.fromMap(map);
-  }
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
 
-  void loadHistoryFromList(List<Map<String, dynamic>> items) {
-    orderHistory.assignAll(
-      items.map(OrderHistoryRecord.fromMap),
+    // Listen to active booking
+    _activeSub = _bookingService.streamActiveBooking(uid).listen(
+      (doc) => activeBooking.value = doc,
+      onError: (e) => debugPrint('BookingController active stream error: $e'),
+    );
+
+    // Listen to history
+    _historySub = _bookingService.streamCustomerHistory(uid).listen(
+      (docs) {
+        bookingHistory.assignAll(docs);
+        isLoadingHistory.value = false;
+      },
+      onError: (e) {
+        debugPrint('BookingController history stream error: $e');
+        isLoadingHistory.value = false;
+      },
     );
   }
 
-  CustomerTechnicianDetail _sampleTechnician() {
-    return const CustomerTechnicianDetail(
-      id: 'tech_marcus_chen',
-      name: 'Marcus Chen',
-      specialty: 'LAPTOP & MICRO-SOLDERING\nSPECIALIST',
-      yearsExperience: 12,
-      successRate: 99,
-      rating: 4.9,
-      accreditations: [
-        'Apple Certified',
-        'ISO 9001',
-        'Compliance',
-      ],
+  // ── Technician Detail Page ────────────────────────────────────
+
+  /// Map TechnicianOnlineModel → CustomerTechnicianDetail untuk UI page.
+  CustomerTechnicianDetail get technicianData {
+    final t = selectedTechnician.value;
+    if (t == null) return _emptyTechnician();
+
+    return CustomerTechnicianDetail(
+      id: t.uid,
+      name: t.name,
+      specialty: t.specialty.isEmpty ? t.category.toUpperCase() : t.specialty,
+      yearsExperience: t.yearsExperience,
+      successRate: 100,
+      rating: t.rating,
+      avatarUrl: t.photoUrl,
+      accreditations: t.accreditations,
       guaranteeText:
-          'Verification via a unique 6-digit session code is required at the time of repair for your data safety.',
-      estimates: [
-        ServiceEstimate(
-          title: 'LCD Screen Replacement',
-          priceLabel: '\$120 - \$180',
-        ),
-        ServiceEstimate(
-          title: 'Logic Board Micro-Soldering',
-          priceLabel: '\$85 - \$150',
-        ),
-        ServiceEstimate(
-          title: 'Data Recovery Service',
-          priceLabel: 'From \$200',
-        ),
-      ],
-      workshopName: 'Workshop Hub',
-      workshopAddress: '88 Techcentre Ave, Suite 402, Neo-District, 50212',
-      reviews: [
-        CustomerReview(
-          author: 'Jonathan Vance',
-          comment:
-              'Marcus fixed my Macbook logic board in 2 hours when everyone else said it was trash.',
-          rating: 5,
-        ),
-        CustomerReview(
-          author: 'Sarah G.',
-          comment:
-              'Very professional workshop and the pricing was exactly as estimated.',
-          rating: 5,
-        ),
-      ],
+          'Setiap pengerjaan dilindungi sistem kode verifikasi 6 digit unik sebagai bukti kehadiran teknisi.',
+      estimates: t.serviceEstimates
+          .map((e) => ServiceEstimate(
+                title: e.service,
+                priceLabel: e.priceLabel,
+              ))
+          .toList(),
+      workshopName: 'Workshop ${t.name}',
+      workshopAddress: t.workshopAddress.isEmpty
+          ? 'Alamat belum diisi'
+          : t.workshopAddress,
+      reviews: const [],
     );
   }
 
-  CustomerOrderDraft _sampleOrderDraft() {
-    return const CustomerOrderDraft(
-      deviceName: 'iPhone 15 Pro Max',
-      serialNumber: 'SN: 7892-XT-9921',
-      selectedDamage: DamageType.screen,
-      additionalNotes: 'Display flickers after impact and touch response lags.',
-      scheduleDateLabel: 'OCT 24 Thu',
-      scheduleTimeLabel: '09:00 AM',
-      serviceFee: 45.0,
-      partsEstimate: 189.0,
-      taxesAndLogistics: 12.4,
-      securityCode: '842915',
-      isUnderWarranty: true,
+  CustomerTechnicianDetail _emptyTechnician() {
+    return const CustomerTechnicianDetail(
+      id: '',
+      name: '-',
+      specialty: '-',
+      yearsExperience: 0,
+      successRate: 0,
+      rating: 0,
+      accreditations: [],
+      guaranteeText: '',
+      estimates: [],
+      workshopName: '',
+      workshopAddress: '',
+      reviews: [],
     );
   }
 
-  CheckoutSummary _sampleCheckout() {
-    return const CheckoutSummary(
-      currentRepairTitle: 'MacBook Pro Screen\nRepair',
-      scheduledForLabel: 'Scheduled for Oct 24, 10:00 AM',
-      paymentMethod: PaymentMethodType.card,
-      paymentOptions: [
-        PaymentOption(
-          type: PaymentMethodType.card,
-          title: 'Credit or Debit Card',
-          subtitle: 'Visa, Mastercard, JCB',
-        ),
-        PaymentOption(
-          type: PaymentMethodType.googlePay,
-          title: 'Google Pay',
-          subtitle: 'Fast and secure payment',
-        ),
+  // ── Form Page ─────────────────────────────────────────────────
+
+  void setDescription(String value) => description.value = value;
+  void setDamageType(String value) => damageType.value = value;
+  void setScheduledAt(DateTime value) => scheduledAt.value = value;
+
+  bool get isFormValid => description.value.trim().isNotEmpty;
+
+  // ── Checkout Page ─────────────────────────────────────────────
+
+  void setPaymentMethod(String method) => paymentMethod.value = method;
+
+  /// Map ke CheckoutSummary untuk UI checkout page.
+  CheckoutSummary get checkoutData {
+    final t = selectedTechnician.value;
+    final estimates = t?.serviceEstimates ?? [];
+    final minPrice = estimates.isNotEmpty ? estimates.first.minPrice : 0;
+
+    return CheckoutSummary(
+      currentRepairTitle: _damageTypeLabel(damageType.value),
+      scheduledForLabel:
+          'Jadwal: ${_formatDate(scheduledAt.value)}',
+      paymentMethod: _mapPaymentType(paymentMethod.value),
+      paymentOptions: const [
         PaymentOption(
           type: PaymentMethodType.wallet,
-          title: 'Digital Wallet',
-          subtitle: 'OVO, Dana, GoPay',
+          title: 'Bayar Tunai',
+          subtitle: 'Bayar langsung ke teknisi di lokasi',
         ),
       ],
-      serviceFee: 45.0,
-      partsLabel: 'Parts (Retina Display Panel)',
-      partsFee: 189.0,
-      taxFee: 12.45,
+      serviceFee: minPrice.toDouble(),
+      partsLabel: 'Estimasi biaya (bisa berubah)',
+      partsFee: 0,
+      taxFee: 0,
     );
   }
 
-  OrderTrackingData _sampleTracking() {
-    return const OrderTrackingData(
-      mapTitle: 'LIVE LOCATION',
-      currentStatusTitle: 'Waiting for Technician',
-      statusSteps: [
-        TrackingStatusStep(
-          step: OrderStatusStep.waiting,
-          title: 'Waiting for Technician',
-          subtitle: 'Matching your request with the best engineer',
-          isComplete: true,
-          isCurrent: true,
-        ),
-        TrackingStatusStep(
-          step: OrderStatusStep.onTheWay,
-          title: 'Technician on the Way',
-          subtitle: 'Eta 15-20 minutes',
-          isComplete: false,
-          isCurrent: false,
-        ),
-        TrackingStatusStep(
-          step: OrderStatusStep.verification,
-          title: '6-Digit Code Verification',
-          subtitle: '',
-          isComplete: false,
-          isCurrent: false,
-        ),
-        TrackingStatusStep(
-          step: OrderStatusStep.inProgress,
-          title: 'Repair in Progress',
-          subtitle: '',
-          isComplete: false,
-          isCurrent: false,
-        ),
-        TrackingStatusStep(
-          step: OrderStatusStep.completed,
-          title: 'Completed',
-          subtitle: '',
-          isComplete: false,
-          isCurrent: false,
-        ),
-      ],
-      securityCode: '842915',
-      technicianName: 'Marcus Chen',
-      technicianRole: 'HVAC SENIOR SPECIALIST',
-      partnerLabel: 'PLATINUM PARTNER',
-    );
+  // ── Submit Booking ────────────────────────────────────────────
+
+  Future<void> submitBooking() async {
+    if (!isFormValid) {
+      Get.snackbar('Oops', 'Deskripsi keluhan tidak boleh kosong',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    final user = _authService.currentUser;
+    if (user == null) {
+      Get.snackbar('Error', 'Sesi habis, silakan login ulang',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    final tech = selectedTechnician.value;
+    if (tech == null) {
+      Get.snackbar('Error', 'Data teknisi tidak ditemukan',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    isSubmitting.value = true;
+
+    try {
+      final userModel = await _authService.getUserModel(user.uid);
+      final estimatedPrice = tech.serviceEstimates.isNotEmpty
+          ? tech.serviceEstimates.first.minPrice
+          : 0;
+
+      final bookingId = await _bookingService.createBooking(
+        userId: user.uid,
+        userName: userModel?.name ?? user.email ?? 'Customer',
+        technicianId: tech.uid,
+        technicianName: tech.name,
+        technicianPhotoUrl: tech.photoUrl,
+        category: tech.category,
+        description: description.value.trim(),
+        damageType: damageType.value,
+        scheduledAt: scheduledAt.value,
+        estimatedPrice: estimatedPrice,
+        paymentMethod: paymentMethod.value,
+      );
+
+      debugPrint('Booking created: $bookingId');
+
+      // Navigate ke tracking page (replace checkout dari stack)
+      Get.offNamed(AppRoutes.orderTracking);
+    } catch (e) {
+      Get.snackbar('Gagal membuat booking', e.toString(),
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isSubmitting.value = false;
+    }
   }
 
-  List<OrderHistoryRecord> _sampleHistory() {
-    return const [
-      OrderHistoryRecord(
-        title: 'MacBook Pro Screen\nRepair',
-        subtitle: 'Marcus Chen',
-        dateLabel: 'Oct 12, 2023',
-        amountLabel: '\$189.00',
-        status: OrderHistoryStatus.success,
+  // ── Tracking Page ─────────────────────────────────────────────
+
+  /// Map BookingDocument → OrderTrackingData untuk UI tracking page.
+  OrderTrackingData get trackingData {
+    final booking = activeBooking.value;
+    if (booking == null) return _emptyTracking();
+
+    final steps = [
+      TrackingStatusStep(
+        step: OrderStatusStep.waiting,
+        title: 'Booking Dikonfirmasi',
+        subtitle: 'Menunggu teknisi menuju lokasi',
+        isComplete: true,
+        isCurrent: booking.status == BookingStatus.confirmed,
       ),
-      OrderHistoryRecord(
-        title: 'iPhone 14 Battery Swap',
-        subtitle: 'Canceled by Technician',
-        dateLabel: 'Sep 28, 2023',
-        amountLabel: 'No Charge',
-        status: OrderHistoryStatus.canceled,
+      TrackingStatusStep(
+        step: OrderStatusStep.verification,
+        title: 'Verifikasi Kode',
+        subtitle: 'Tunjukkan kode ke teknisi saat tiba',
+        isComplete: booking.status == BookingStatus.onProgress ||
+            booking.status == BookingStatus.done,
+        isCurrent: booking.status == BookingStatus.confirmed,
       ),
-      OrderHistoryRecord(
-        title: 'AC Unit\nMaintenance',
-        subtitle: 'Security code mismatch',
-        dateLabel: 'Sep 15, 2023',
-        amountLabel: 'Retry Verification',
-        status: OrderHistoryStatus.verificationFailed,
+      TrackingStatusStep(
+        step: OrderStatusStep.inProgress,
+        title: 'Pengerjaan Berlangsung',
+        subtitle: '',
+        isComplete: booking.status == BookingStatus.done,
+        isCurrent: booking.status == BookingStatus.onProgress,
       ),
-      OrderHistoryRecord(
-        title: 'Samsung TV Backlight',
-        subtitle: 'Sarah Jenkins',
-        dateLabel: 'Aug 22, 2023',
-        amountLabel: '\$120.00',
-        status: OrderHistoryStatus.success,
+      const TrackingStatusStep(
+        step: OrderStatusStep.completed,
+        title: 'Selesai',
+        subtitle: '',
+        isComplete: false,
+        isCurrent: false,
       ),
     ];
+
+    return OrderTrackingData(
+      mapTitle: 'STATUS PESANAN',
+      currentStatusTitle: _statusLabel(booking.status),
+      statusSteps: steps,
+      securityCode: booking.verificationCode ?? '------',
+      technicianName: booking.technicianName,
+      technicianRole: booking.category.toUpperCase(),
+      partnerLabel: 'ELECTROVICE VERIFIED',
+      technicianAvatarUrl: booking.technicianPhotoUrl,
+    );
   }
+
+  OrderTrackingData _emptyTracking() {
+    return const OrderTrackingData(
+      mapTitle: 'STATUS PESANAN',
+      currentStatusTitle: 'Memuat data...',
+      statusSteps: [],
+      securityCode: '------',
+      technicianName: '-',
+      technicianRole: '-',
+      partnerLabel: 'ELECTROVICE',
+    );
+  }
+
+  // ── History Page ──────────────────────────────────────────────
+
+  /// Map BookingDocument → OrderHistoryRecord untuk UI history page.
+  List<OrderHistoryRecord> get orderHistoryData {
+    return bookingHistory.map((b) {
+      final statusUi = switch (b.status) {
+        BookingStatus.done => OrderHistoryStatus.success,
+        BookingStatus.cancelled => OrderHistoryStatus.canceled,
+        _ => OrderHistoryStatus.success,
+      };
+
+      return OrderHistoryRecord(
+        title: _damageTypeLabel(b.damageType),
+        subtitle: b.technicianName,
+        dateLabel: _formatDate(b.createdAt),
+        amountLabel: b.estimatedPrice > 0
+            ? 'Rp ${_formatPrice(b.estimatedPrice)}'
+            : 'Tunai',
+        status: statusUi,
+      );
+    }).toList();
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────
+
+  String _damageTypeLabel(String type) => switch (type) {
+        'screen' => 'Kerusakan Layar',
+        'battery' => 'Masalah Baterai',
+        'hardware' => 'Kerusakan Hardware',
+        'water' => 'Water Damage',
+        'camera' => 'Masalah Kamera',
+        _ => 'Perbaikan Umum',
+      };
+
+  String _statusLabel(String status) => switch (status) {
+        BookingStatus.confirmed => 'Menunggu Teknisi',
+        BookingStatus.onProgress => 'Sedang Dikerjakan',
+        BookingStatus.done => 'Selesai',
+        BookingStatus.cancelled => 'Dibatalkan',
+        _ => status,
+      };
+
+  String _formatDate(DateTime dt) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+    ];
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+
+  String _formatPrice(int price) {
+    final str = price.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
+      buf.write(str[i]);
+    }
+    return buf.toString();
+  }
+
+  PaymentMethodType _mapPaymentType(String method) => switch (method) {
+        PaymentMethod.cash => PaymentMethodType.wallet,
+        _ => PaymentMethodType.wallet,
+      };
 }

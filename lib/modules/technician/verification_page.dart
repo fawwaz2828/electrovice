@@ -13,11 +13,54 @@ class VerificationPage extends StatefulWidget {
 
 class _VerificationPageState extends State<VerificationPage> {
   final List<String> _pin = List.filled(6, '');
+  bool _isVerifying = false;
+  final _hiddenCtrl = TextEditingController();
+  final _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _hiddenCtrl.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onVerify() async {
+    final code = _pin.join();
+    if (code.length < 6 || code.contains('')) {
+      Get.snackbar('Oops', 'Masukkan 6 digit kode verifikasi',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    setState(() => _isVerifying = true);
+
+    try {
+      await Get.find<TechnicianController>().verifyCode(code);
+      Get.offNamed(AppRoutes.activeJob);
+    } catch (e) {
+      Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      setState(() => _isVerifying = false);
+    }
+  }
+
+  void _onKeyTap(String digit) {
+    setState(() {
+      final idx = _pin.indexOf('');
+      if (idx != -1) _pin[idx] = digit;
+    });
+  }
+
+  void _onDelete() {
+    setState(() {
+      final idx = _pin.lastIndexWhere((c) => c != '');
+      if (idx != -1) _pin[idx] = '';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<TechnicianController>();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       extendBody: true,
@@ -82,31 +125,42 @@ class _VerificationPageState extends State<VerificationPage> {
               ),
               const SizedBox(height: 38),
 
-              // PIN Inputs
+              // PIN Display
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(6, (index) => _PinBox(value: _pin[index])),
               ),
 
-              const SizedBox(height: 44),
+              const SizedBox(height: 32),
+
+              // Numpad
+              _Numpad(onTap: _onKeyTap, onDelete: _onDelete),
+
+              const SizedBox(height: 24),
 
               // Verify Button
               ElevatedButton(
-                onPressed: () {
-                  controller.verifyJob();
-                  Get.offNamed(AppRoutes.activeJob);
-                },
+                onPressed: _isVerifying ? null : _onVerify,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 60),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Verify & Start Service',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-                ),
+                child: _isVerifying
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
+                    : const Text(
+                        'Verifikasi & Mulai Servis',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w800),
+                      ),
               ),
 
               const SizedBox(height: 48),
@@ -295,6 +349,50 @@ class _PinBox extends StatelessWidget {
           color: value.isEmpty ? const Color(0xFFCBD5E1) : const Color(0xFF111111),
         ),
       ),
+    );
+  }
+}
+
+class _Numpad extends StatelessWidget {
+  final ValueChanged<String> onTap;
+  final VoidCallback onDelete;
+  const _Numpad({required this.onTap, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: keys.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 2.2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+      ),
+      itemBuilder: (_, i) {
+        final key = keys[i];
+        if (key.isEmpty) return const SizedBox.shrink();
+        return GestureDetector(
+          onTap: key == '⌫' ? onDelete : () => onTap(key),
+          child: Container(
+            decoration: BoxDecoration(
+              color: key == '⌫' ? const Color(0xFFFFE4E4) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              key,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: key == '⌫' ? const Color(0xFFE11D48) : const Color(0xFF0F172A),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

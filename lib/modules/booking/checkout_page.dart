@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../config/routes.dart';
 import '../../models/booking_model.dart';
 import 'booking_controller.dart';
 
@@ -54,8 +53,10 @@ class CheckoutPage extends GetView<BookingController> {
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
                 child: SafeArea(
                   top: false,
-                  child: FilledButton(
-                    onPressed: () => Get.toNamed(AppRoutes.orderTracking),
+                  child: Obx(() => FilledButton(
+                    onPressed: controller.isSubmitting.value
+                        ? null
+                        : () => controller.submitBooking(),
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
@@ -64,15 +65,25 @@ class CheckoutPage extends GetView<BookingController> {
                         borderRadius: BorderRadius.circular(28),
                       ),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('Pay Now', style: TextStyle(fontWeight: FontWeight.w800)),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_rounded),
-                      ],
-                    ),
-                  ),
+                    child: controller.isSubmitting.value
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('Konfirmasi Pesanan',
+                                  style: TextStyle(fontWeight: FontWeight.w800)),
+                              SizedBox(width: 8),
+                              Icon(Icons.check_circle_outline_rounded),
+                            ],
+                          ),
+                  )),
                 ),
               ),
             ],
