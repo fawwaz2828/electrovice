@@ -44,6 +44,21 @@ class PointAnnotationOptions {
 class MapContentGestureContext {
   Point get point => Point(coordinates: Position(0, 0));
 }
+
+class GesturesSettings {
+  GesturesSettings({
+    bool? scrollEnabled,
+    bool? rotateEnabled,
+    bool? pitchEnabled,
+    bool? pinchToZoomEnabled,
+    bool? doubleTapToZoomInEnabled,
+    bool? doubleTouchToZoomOutEnabled,
+    bool? quickZoomEnabled,
+    bool? simultaneousRotateAndPinchToZoomEnabled,
+    bool? pinchScrollEnabled,
+  });
+}
+
 abstract class MapboxStyles {
   static const String MAPBOX_STREETS = '';
 }

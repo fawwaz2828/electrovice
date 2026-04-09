@@ -63,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 12),
               Image.asset(
                 'assets/images/ELECTROVICE_LOGO_HD.png',
-                height: 48,
+                height: 30,
                 fit: BoxFit.contain,
               ),
 
@@ -101,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
-                        color: Color(0xFF1E40AF),
+                        color: Color.fromARGB(255, 0, 0, 0),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -139,7 +139,7 @@ class _LoginPageState extends State<LoginPage> {
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.8,
-                            color: Color(0xFF1E40AF),
+                            color: Color.fromARGB(255, 0, 0, 0),
                           ),
                         ),
                         GestureDetector(
@@ -149,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF1E40AF),
+                              color: Color.fromARGB(255, 0, 0, 0),
                             ),
                           ),
                         ),

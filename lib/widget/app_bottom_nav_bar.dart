@@ -83,11 +83,13 @@ class AppBottomNavEntry {
   const AppBottomNavEntry({
     required this.item,
     required this.icon,
+    required this.activeIcon,
     required this.label,
   });
 
   final AppNavItem item;
   final IconData icon;
+  final IconData activeIcon;
   final String label;
 }
 
@@ -106,25 +108,30 @@ class AppBottomNavBar extends StatelessWidget {
   static const Color _background = Colors.black;
   static const Color _inactive = Color(0xFF9CA3AF);
   static const Color _active = Color(0xFF0061FF);
+
   static const List<AppBottomNavEntry> _defaultItems = [
     AppBottomNavEntry(
       item: AppNavItem.home,
-      icon: Icons.home_rounded,
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home_rounded,
       label: 'HOME',
     ),
     AppBottomNavEntry(
       item: AppNavItem.history,
       icon: Icons.history_rounded,
+      activeIcon: Icons.history_rounded,
       label: 'HISTORY',
     ),
     AppBottomNavEntry(
       item: AppNavItem.order,
-      icon: Icons.receipt_long_rounded,
+      icon: Icons.receipt_long_outlined,
+      activeIcon: Icons.receipt_long_rounded,
       label: 'ORDER',
     ),
     AppBottomNavEntry(
       item: AppNavItem.profile,
-      icon: Icons.person_rounded,
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
       label: 'PROFILE',
     ),
   ];
@@ -132,17 +139,20 @@ class AppBottomNavBar extends StatelessWidget {
   static const List<AppBottomNavEntry> technicianItems = [
     AppBottomNavEntry(
       item: AppNavItem.home,
-      icon: Icons.home_rounded,
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home_rounded,
       label: 'HOME',
     ),
     AppBottomNavEntry(
       item: AppNavItem.active,
-      icon: Icons.build_rounded,
+      icon: Icons.build_outlined,
+      activeIcon: Icons.build_rounded,
       label: 'ACTIVE',
     ),
     AppBottomNavEntry(
       item: AppNavItem.profile,
-      icon: Icons.person_rounded,
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
       label: 'PROFILE',
     ),
   ];
@@ -167,23 +177,57 @@ class AppBottomNavBar extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: items
-                  .map(
-                    (entry) => _NavBarItem(
-                      entry: entry,
-                      selected: entry.item == selectedItem,
-                      onTap: () => onItemSelected(entry.item),
-                    ),
-                  )
-                  .toList(),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final itemWidth = constraints.maxWidth / items.length;
+                final selectedIndex =
+                    items.indexWhere((e) => e.item == selectedItem);
+                return SizedBox(
+                  height: 56,
+                  child: Stack(
+                    children: [
+                      // ── Liquid sliding pill ──────────────────────
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 420),
+                        curve: Curves.easeInOutCubic,
+                        left: selectedIndex * itemWidth + 6,
+                        top: 4,
+                        bottom: 4,
+                        width: itemWidth - 12,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _active.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: _active.withValues(alpha: 0.25),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // ── Nav items ────────────────────────────────
+                      Row(
+                        children: items.map((entry) {
+                          return SizedBox(
+                            width: itemWidth,
+                            child: _NavBarItem(
+                              entry: entry,
+                              selected: entry.item == selectedItem,
+                              onTap: () => onItemSelected(entry.item),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -192,7 +236,7 @@ class AppBottomNavBar extends StatelessWidget {
   }
 }
 
-class _NavBarItem extends StatelessWidget {
+class _NavBarItem extends StatefulWidget {
   const _NavBarItem({
     required this.entry,
     required this.selected,
@@ -204,54 +248,105 @@ class _NavBarItem extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_NavBarItem> createState() => _NavBarItemState();
+}
+
+class _NavBarItemState extends State<_NavBarItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _scaleAnim = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 0.85)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 1,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 0.85, end: 1.12)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 2,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.12, end: 1.0)
+            .chain(CurveTween(curve: Curves.elasticOut)),
+        weight: 4,
+      ),
+    ]).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    if (!widget.selected) {
+      _controller.forward(from: 0);
+    }
+    widget.onTap();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final bool selected = widget.selected;
     final Color color =
         selected ? AppBottomNavBar._active : AppBottomNavBar._inactive;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleTap,
       behavior: HitTestBehavior.opaque,
-      child: AnimatedScale(
-        scale: selected ? 1.05 : 1.0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutBack,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOutCubic,
-          padding: EdgeInsets.symmetric(
-            horizontal: selected ? 18 : 10,
-            vertical: 10,
-          ),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppBottomNavBar._active.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(28),
-          border: selected
-              ? Border.all(
-                  color: AppBottomNavBar._active.withValues(alpha: 0.2),
-                  width: 1,
-                )
-              : null,
+      child: AnimatedBuilder(
+        animation: _scaleAnim,
+        builder: (context, child) => Transform.scale(
+          scale: _scaleAnim.value,
+          child: child,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(entry.icon, color: color, size: 22),
-            const SizedBox(height: 5),
-            Text(
-              entry.label,
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.6,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, anim) => ScaleTransition(
+                  scale: CurvedAnimation(
+                    parent: anim,
+                    curve: Curves.easeOutBack,
+                  ),
+                  child: FadeTransition(opacity: anim, child: child),
+                ),
+                child: Icon(
+                  selected ? widget.entry.activeIcon : widget.entry.icon,
+                  color: color,
+                  size: 22,
+                  key: ValueKey(selected),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 5),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 250),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  letterSpacing: 0.6,
+                ),
+                child: Text(widget.entry.label),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-   );
+    );
   }
 }

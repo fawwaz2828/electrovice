@@ -30,7 +30,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 4),
               Image.asset(
                 'assets/images/ELECTROVICE_LOGO_HD.png',
-                height: 48,
+                height: 30,
                 fit: BoxFit.contain,
               ),
 

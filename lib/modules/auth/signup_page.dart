@@ -65,7 +65,7 @@ class _SignupPageState extends State<SignupPage> {
               const SizedBox(height: 12),
               Image.asset(
                 'assets/images/ELECTROVICE_LOGO_HD.png',
-                height: 48,
+                height: 30,
                 fit: BoxFit.contain,
               ),
 
@@ -91,7 +91,7 @@ class _SignupPageState extends State<SignupPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('FULL NAME', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color(0xFF1E40AF))),
+                    const Text('FULL NAME', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color.fromARGB(255, 0, 0, 0))),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _nameController,
@@ -106,7 +106,7 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    const Text('EMAIL ADDRESS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color(0xFF1E40AF))),
+                    const Text('EMAIL ADDRESS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color.fromARGB(255, 0, 0, 0))),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _emailController,
@@ -122,7 +122,7 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    const Text('PASSWORD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color(0xFF1E40AF))),
+                    const Text('PASSWORD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Color.fromARGB(255, 0, 0, 0))),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _passwordController,

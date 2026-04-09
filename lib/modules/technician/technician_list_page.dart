@@ -218,7 +218,7 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
         height: 60,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(50),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),

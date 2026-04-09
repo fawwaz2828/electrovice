@@ -25,8 +25,11 @@ class ProfilePage extends GetView<ProfileController> {
       bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.profile),
       body: SafeArea(
         child: Obx(() {
-          final ProfileData data =
-              controller.profile.value ?? ProfileData.sample();
+          if (controller.profile.value == null) {
+            return const _ProfileSkeleton();
+          }
+
+          final ProfileData data = controller.profile.value!;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
@@ -644,6 +647,132 @@ class _SecurityTile extends StatelessWidget {
         color: Color(0xFF6F7788),
       ),
       onTap: () {},
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PROFILE SKELETON
+// ═══════════════════════════════════════════════════════════════
+class _ProfileSkeleton extends StatefulWidget {
+  const _ProfileSkeleton();
+
+  @override
+  State<_ProfileSkeleton> createState() => _ProfileSkeletonState();
+}
+
+class _ProfileSkeletonState extends State<_ProfileSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, child) {
+        final c = Color.lerp(
+          const Color(0xFFE2E8F0),
+          const Color(0xFFF8FAFC),
+          _anim.value,
+        )!;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top bar
+              _box(c, w: 80, h: 22, r: 8),
+              const SizedBox(height: 30),
+              // Avatar
+              Center(child: _box(c, w: 138, h: 138, r: 18)),
+              const SizedBox(height: 18),
+              // Name
+              Center(child: _box(c, w: 180, h: 28, r: 8)),
+              const SizedBox(height: 38),
+              // Section title
+              _box(c, w: 160, h: 14, r: 6),
+              const SizedBox(height: 16),
+              // Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _box(c, w: 80, h: 11, r: 4),
+                    const SizedBox(height: 10),
+                    _box(c, w: double.infinity, h: 48, r: 6),
+                    const SizedBox(height: 22),
+                    _box(c, w: 100, h: 11, r: 4),
+                    const SizedBox(height: 10),
+                    _box(c, w: double.infinity, h: 48, r: 6),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+              _box(c, w: 130, h: 14, r: 6),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _box(c, w: 100, h: 11, r: 4),
+                    const SizedBox(height: 10),
+                    _box(c, w: double.infinity, h: 48, r: 6),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+              _box(c, w: 140, h: 14, r: 6),
+              const SizedBox(height: 16),
+              _box(c, w: double.infinity, h: 70, r: 14),
+              const SizedBox(height: 12),
+              _box(c, w: double.infinity, h: 70, r: 14),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _box(Color c,
+      {required double w, required double h, double r = 8}) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: c,
+        borderRadius: BorderRadius.circular(r),
+      ),
     );
   }
 }

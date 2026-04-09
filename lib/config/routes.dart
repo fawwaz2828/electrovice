@@ -23,6 +23,7 @@ import '../modules/technician/technician_list_page.dart';
 import '../modules/technician/job_summary_page.dart';
 import '../modules/technician/mapbox_location_picker_page.dart';
 import '../modules/profile/profile_edit_page.dart';
+import '../modules/chat/chat_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -45,6 +46,7 @@ class AppRoutes {
   static const technicianProfileEdit = '/technician/profile/edit';
   static const profileEdit = '/profile/edit';
   static const mapboxLocationPicker = '/mapbox-location-picker';
+  static const chat = '/chat';
 
   static final routes = [
     GetPage(
@@ -179,6 +181,10 @@ class AppRoutes {
     GetPage(
       name: AppRoutes.mapboxLocationPicker,
       page: () => const MapboxLocationPickerPage(),
+    ),
+    GetPage(
+      name: chat,
+      page: () => const ChatPage(),
     ),
     GetPage(
       name: jobSummary,
