@@ -219,12 +219,25 @@ class _JobDetailPageState extends State<JobDetailPage> {
                     Row(
                       children: [
                         Expanded(
-                          child: _ActionButton(
-                            icon: Icons.chat_bubble_outline_rounded,
-                            label: 'MESSAGE',
-                            color: const Color(0xFFF5F6FA),
-                            textColor: const Color(0xFF111111),
-                          ),
+                          child: Obx(() {
+                            final o = controller.selectedOrder.value;
+                            return _ActionButton(
+                              icon: Icons.chat_bubble_outline_rounded,
+                              label: 'MESSAGE',
+                              color: const Color(0xFFF5F6FA),
+                              textColor: const Color(0xFF111111),
+                              onTap: o == null
+                                  ? null
+                                  : () => Get.toNamed(
+                                        AppRoutes.chat,
+                                        arguments: {
+                                          'chatId': o.bookingId,
+                                          'otherPartyName': o.userName,
+                                          'bookingDoc': o,
+                                        },
+                                      ),
+                            );
+                          }),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -534,11 +547,14 @@ class _ActionButton extends StatelessWidget {
   final String label;
   final Color color;
   final Color textColor;
-  const _ActionButton({required this.icon, required this.label, required this.color, required this.textColor});
+  final VoidCallback? onTap;
+  const _ActionButton({required this.icon, required this.label, required this.color, required this.textColor, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: color,
@@ -560,6 +576,7 @@ class _ActionButton extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

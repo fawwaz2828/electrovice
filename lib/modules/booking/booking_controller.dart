@@ -22,6 +22,20 @@ class BookingController extends GetxController {
   final RxString userAddress = ''.obs;
   final Rx<DateTime> scheduledAt = DateTime.now().add(const Duration(hours: 2)).obs;
 
+  // ── Slot jadwal ───────────────────────────────────────────────
+  /// Jam mulai kerja teknisi (default 08:00)
+  static const int _workStart = 8;
+  /// Jam selesai kerja teknisi (default 17:00)
+  static const int _workEnd = 17;
+  /// Durasi tiap slot dalam jam (1 slot = 2 jam kerja)
+  static const int _slotDuration = 2;
+
+  /// Semua slot untuk tanggal yang dipilih (generated from workStart..workEnd)
+  final RxList<DateTime> allDaySlots = <DateTime>[].obs;
+  /// Jam yang sudah terisi (ada booking aktif)
+  final RxList<int> occupiedHours = <int>[].obs;
+  final RxBool isLoadingSlots = false.obs;
+
   // ── GPS koordinat customer ────────────────────────────────────
   final RxnDouble latitude = RxnDouble();
   final RxnDouble longitude = RxnDouble();
@@ -45,6 +59,8 @@ class BookingController extends GetxController {
     super.onInit();
     _loadTechnicianFromArguments();
     _initUserStreams();
+    // Load slot awal setelah controller siap
+    loadSlotsForDate(scheduledAt.value);
   }
 
   @override
@@ -146,7 +162,64 @@ class BookingController extends GetxController {
   void setDescription(String value) => description.value = value;
   void setDamageType(String value) => damageType.value = value;
   void setUserAddress(String value) => userAddress.value = value;
+
+  /// Set tanggal saja — pertahankan jam yang sudah dipilih jika slotnya masih tersedia.
+  void setScheduledDate(DateTime date) {
+    final currentHour = scheduledAt.value.hour;
+    scheduledAt.value = DateTime(date.year, date.month, date.day, currentHour);
+    loadSlotsForDate(date);
+  }
+
+  /// Set jam slot — pertahankan tanggal yang sudah dipilih.
   void setScheduledAt(DateTime value) => scheduledAt.value = value;
+
+  /// Load semua slot hari itu dan tandai mana yang sudah terisi.
+  Future<void> loadSlotsForDate(DateTime date) async {
+    final tech = selectedTechnician.value;
+    isLoadingSlots.value = true;
+
+    // Generate semua slot: 08:00, 10:00, 12:00, 14:00, 16:00
+    final slots = <DateTime>[];
+    for (int h = _workStart; h + _slotDuration <= _workEnd; h += _slotDuration) {
+      slots.add(DateTime(date.year, date.month, date.day, h));
+    }
+    allDaySlots.assignAll(slots);
+
+    if (tech == null) {
+      occupiedHours.clear();
+      isLoadingSlots.value = false;
+      return;
+    }
+
+    try {
+      final occupied = await _bookingService.fetchOccupiedHours(tech.uid, date);
+      occupiedHours.assignAll(occupied);
+
+      // Jika slot yang sedang dipilih sudah terisi atau sudah lewat, pilih slot pertama yang tersedia
+      final now = DateTime.now();
+      final currentSlot = DateTime(date.year, date.month, date.day, scheduledAt.value.hour);
+      final isCurrentOccupied = occupied.contains(currentSlot.hour);
+      final isCurrentPast = currentSlot.isBefore(now);
+
+      if (isCurrentOccupied || isCurrentPast) {
+        final firstFree = slots.where((s) =>
+            !occupied.contains(s.hour) && !s.isBefore(now)).firstOrNull;
+        if (firstFree != null) {
+          scheduledAt.value = firstFree;
+        }
+      }
+    } catch (e) {
+      debugPrint('loadSlotsForDate error: $e');
+    } finally {
+      isLoadingSlots.value = false;
+    }
+  }
+
+  /// Cek apakah sebuah slot tersedia (tidak terisi & tidak lewat waktu).
+  bool isSlotAvailable(DateTime slot) {
+    if (slot.isBefore(DateTime.now())) return false;
+    return !occupiedHours.contains(slot.hour);
+  }
 
   bool get isFormValid =>
       description.value.trim().isNotEmpty && userAddress.value.trim().isNotEmpty;
@@ -203,7 +276,7 @@ class BookingController extends GetxController {
     return CheckoutSummary(
       currentRepairTitle: _damageTypeLabel(damageType.value),
       scheduledForLabel:
-          'Jadwal: ${_formatDate(scheduledAt.value)}',
+          'Jadwal: ${_formatDateTime(scheduledAt.value)}',
       paymentMethod: _mapPaymentType(paymentMethod.value),
       paymentOptions: const [
         PaymentOption(
@@ -409,6 +482,11 @@ class BookingController extends GetxController {
       'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+
+  String _formatDateTime(DateTime dt) {
+    final hour = dt.hour.toString().padLeft(2, '0');
+    return '${_formatDate(dt)}, $hour.00';
   }
 
   String _formatPrice(int price) {

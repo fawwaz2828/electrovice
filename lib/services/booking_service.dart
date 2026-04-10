@@ -173,6 +173,37 @@ class BookingService {
     });
   }
 
+  /// Ambil jam-jam yang sudah terisi untuk teknisi di tanggal tertentu.
+  /// Menggunakan index yang sudah ada (technicianId + status whereIn).
+  /// Filter tanggal dilakukan client-side untuk menghindari index baru.
+  Future<List<int>> fetchOccupiedHours(
+    String technicianId,
+    DateTime date,
+  ) async {
+    final snap = await _db
+        .collection('bookings')
+        .where('technicianId', isEqualTo: technicianId)
+        .where('status', whereIn: [
+          BookingStatus.pending,
+          BookingStatus.confirmed,
+          BookingStatus.onProgress,
+        ])
+        .get();
+
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return snap.docs
+        .where((d) {
+          final ts = d['scheduledAt'];
+          if (ts == null) return false;
+          final dt = (ts as Timestamp).toDate();
+          return dt.isAfter(startOfDay) && dt.isBefore(endOfDay);
+        })
+        .map((d) => ((d['scheduledAt'] as Timestamp).toDate()).hour)
+        .toList();
+  }
+
   // ── Helper ─────────────────────────────────────────────────────
   String _generateCode() {
     final rand = Random.secure();

@@ -72,6 +72,16 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                       icon: Icons.chat_bubble_rounded,
                       label: 'LIVE CHAT',
                       sublabel: order?.userName ?? '-',
+                      onTap: order == null
+                          ? null
+                          : () => Get.toNamed(
+                                AppRoutes.chat,
+                                arguments: {
+                                  'chatId': order.bookingId,
+                                  'otherPartyName': order.userName,
+                                  'bookingDoc': order,
+                                },
+                              ),
                     ),
                   ),
                 ],
@@ -418,15 +428,19 @@ class _ActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String sublabel;
+  final VoidCallback? onTap;
   const _ActionCard({
     required this.icon,
     required this.label,
     required this.sublabel,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -470,6 +484,7 @@ class _ActionCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

@@ -57,6 +57,7 @@ class BookingTrackingPage extends GetView<BookingController> {
                   role: tracking.technicianRole,
                   partnerLabel: tracking.partnerLabel,
                   imageUrl: tracking.technicianAvatarUrl,
+                  bookingDoc: controller.activeBooking.value,
                 ),
               ],
             ),
@@ -368,12 +369,14 @@ class _TechnicianContactCard extends StatelessWidget {
     required this.role,
     required this.partnerLabel,
     this.imageUrl,
+    this.bookingDoc,
   });
 
   final String name;
   final String role;
   final String partnerLabel;
   final String? imageUrl;
+  final BookingDocument? bookingDoc;
 
   @override
   Widget build(BuildContext context) {
@@ -418,7 +421,17 @@ class _TechnicianContactCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () {},
+                  onPressed: bookingDoc == null
+                      ? null
+                      : () => Get.toNamed(
+                            '/chat',
+                            arguments: {
+                              'chatId': bookingDoc!.bookingId,
+                              'otherPartyName': bookingDoc!.technicianName,
+                              'otherPartyPhotoUrl': bookingDoc!.technicianPhotoUrl,
+                              'bookingDoc': bookingDoc,
+                            },
+                          ),
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.black,
                     foregroundColor: Colors.white,

@@ -500,73 +500,228 @@ class _ScheduleCard extends StatelessWidget {
   final BookingController ctrl;
   const _ScheduleCard({required this.ctrl});
 
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+  ];
+
+  String _monthName(int m) => _months[m - 1];
+
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final date = ctrl.scheduledAt.value;
-      return GestureDetector(
-        onTap: () async {
-          final picked = await showDatePicker(
-            context: context,
-            initialDate: date,
-            firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 30)),
-          );
-          if (picked != null) {
-            ctrl.setScheduledAt(DateTime(
-              picked.year,
-              picked.month,
-              picked.day,
-              date.hour,
-              date.minute,
-            ));
-          }
-        },
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.calendar_today_rounded,
-                  color: Color(0xFF3654FF)),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Jadwal Kunjungan',
-                        style: TextStyle(
-                            color: Color(0xFF5D6780),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12)),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${date.day} ${_monthName(date.month)} ${date.year}',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w800),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Baris tanggal ─────────────────────────────────────
+          Obx(() {
+            final date = ctrl.scheduledAt.value;
+            return GestureDetector(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: date,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 30)),
+                  builder: (ctx, child) => Theme(
+                    data: Theme.of(ctx).copyWith(
+                      colorScheme: const ColorScheme.light(
+                        primary: Color(0xFF3654FF),
+                      ),
                     ),
-                  ],
+                    child: child!,
+                  ),
+                );
+                if (picked != null) ctrl.setScheduledDate(picked);
+              },
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today_rounded,
+                      color: Color(0xFF3654FF), size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'TANGGAL KUNJUNGAN',
+                          style: TextStyle(
+                            color: Color(0xFF5D6780),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${date.day} ${_monthName(date.month)} ${date.year}',
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEF4FF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Ubah',
+                      style: TextStyle(
+                        color: Color(0xFF3654FF),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: Color(0xFFEFF1F7)),
+          const SizedBox(height: 14),
+
+          // ── Label jam ─────────────────────────────────────────
+          Row(
+            children: [
+              const Icon(Icons.access_time_rounded,
+                  color: Color(0xFF5D6780), size: 16),
+              const SizedBox(width: 6),
+              const Text(
+                'PILIH JAM SERVIS',
+                style: TextStyle(
+                  color: Color(0xFF5D6780),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  letterSpacing: 0.8,
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded,
-                  color: Color(0xFF94A3B8)),
+              const Spacer(),
+              Obx(() => ctrl.isLoadingSlots.value
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const SizedBox.shrink()),
             ],
           ),
-        ),
-      );
-    });
-  }
+          const SizedBox(height: 10),
 
-  String _monthName(int month) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
-    ];
-    return months[month - 1];
+          // ── Chips jam ─────────────────────────────────────────
+          Obx(() {
+            final slots = ctrl.allDaySlots;
+            final selected = ctrl.scheduledAt.value;
+
+            if (slots.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Tidak ada slot tersedia',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                ),
+              );
+            }
+
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: slots.map((slot) {
+                final isAvailable = ctrl.isSlotAvailable(slot);
+                final isSelected = slot.hour == selected.hour &&
+                    slot.day == selected.day &&
+                    slot.month == selected.month &&
+                    slot.year == selected.year;
+                final hourStr =
+                    '${slot.hour.toString().padLeft(2, '0')}.00';
+                final endHour = slot.hour + 2;
+                final rangeStr =
+                    '$hourStr – ${endHour.toString().padLeft(2, '0')}.00';
+
+                Color bg;
+                Color textColor;
+                Color borderColor;
+
+                if (!isAvailable) {
+                  bg = const Color(0xFFF5F5F5);
+                  textColor = const Color(0xFFBDBDBD);
+                  borderColor = const Color(0xFFEEEEEE);
+                } else if (isSelected) {
+                  bg = Colors.black;
+                  textColor = Colors.white;
+                  borderColor = Colors.black;
+                } else {
+                  bg = Colors.white;
+                  textColor = Colors.black;
+                  borderColor = const Color(0xFFD1D9E6);
+                }
+
+                return GestureDetector(
+                  onTap: !isAvailable
+                      ? null
+                      : () => ctrl.setScheduledAt(DateTime(
+                            selected.year,
+                            selected.month,
+                            selected.day,
+                            slot.hour,
+                          )),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          rangeStr,
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                        if (!isAvailable)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              'Penuh',
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          }),
+
+          const SizedBox(height: 6),
+          const Text(
+            '* Jam kerja 08.00 – 17.00 • Tiap slot 2 jam',
+            style: TextStyle(color: Color(0xFF99A2B5), fontSize: 11),
+          ),
+        ],
+      ),
+    );
   }
 }
 
