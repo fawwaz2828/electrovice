@@ -25,6 +25,7 @@ import '../modules/technician/mapbox_location_picker_page.dart';
 import '../modules/profile/profile_edit_page.dart';
 import '../modules/chat/chat_page.dart';
 import '../modules/chat/chat_controller.dart';
+import '../modules/booking/review_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -48,6 +49,7 @@ class AppRoutes {
   static const profileEdit = '/profile/edit';
   static const mapboxLocationPicker = '/mapbox-location-picker';
   static const chat = '/chat';
+  static const review = '/review';
 
   static final routes = [
     GetPage(
@@ -182,6 +184,10 @@ class AppRoutes {
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),
+    ),
+    GetPage(
+      name: review,
+      page: () => const ReviewPage(),
     ),
     GetPage(
       name: chat,

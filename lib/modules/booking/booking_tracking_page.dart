@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
+import '../../config/routes.dart';
 import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
 import '../../widget/app_bottom_nav_bar.dart';
@@ -59,6 +60,16 @@ class BookingTrackingPage extends GetView<BookingController> {
                   imageUrl: tracking.technicianAvatarUrl,
                   bookingDoc: controller.activeBooking.value,
                 ),
+                // ── Review prompt saat done ────────────────────
+                if (controller.activeBooking.value?.status ==
+                        BookingStatus.done &&
+                    controller.activeBooking.value?.customerRating == null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _ReviewBanner(
+                      booking: controller.activeBooking.value!,
+                    ),
+                  ),
               ],
             ),
           );
@@ -453,6 +464,54 @@ class _TechnicianContactCard extends StatelessWidget {
                 child: const Icon(Icons.call_outlined),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Review Banner ──────────────────────────────────────────────────────────
+class _ReviewBanner extends StatelessWidget {
+  final BookingDocument booking;
+  const _ReviewBanner({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDDE7FB),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 22),
+              const SizedBox(width: 8),
+              const Text(
+                'Pekerjaan Selesai!',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Bagaimana pengalamanmu? Berikan ulasan untuk teknisi.',
+            style: TextStyle(color: Color(0xFF67728B), height: 1.4),
+          ),
+          const SizedBox(height: 14),
+          FilledButton(
+            onPressed: () => Get.toNamed(AppRoutes.review, arguments: booking),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('BERI ULASAN',
+                style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),

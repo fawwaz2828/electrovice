@@ -41,6 +41,10 @@ class BookingController extends GetxController {
   final RxnDouble longitude = RxnDouble();
   final RxBool isDetectingLocation = false.obs;
 
+  // ── Technician reviews (untuk detail page) ───────────────────
+  final RxList<Map<String, dynamic>> technicianReviews = <Map<String, dynamic>>[].obs;
+  final RxBool isLoadingReviews = false.obs;
+
   // ── Checkout state ────────────────────────────────────────────
   final RxString paymentMethod = PaymentMethod.cash.obs;
   final RxBool isSubmitting = false.obs;
@@ -76,6 +80,24 @@ class BookingController extends GetxController {
     final args = Get.arguments;
     if (args is TechnicianOnlineModel) {
       selectedTechnician.value = args;
+      _loadTechnicianReviews(args.uid);
+    }
+  }
+
+  Future<void> _loadTechnicianReviews(String techId) async {
+    isLoadingReviews.value = true;
+    try {
+      final docs = await _bookingService.fetchTechnicianReviews(techId);
+      technicianReviews.assignAll(docs.map((b) => {
+        'reviewerName': b.userName,
+        'rating': b.customerRating ?? 0,
+        'comment': b.customerReview ?? '',
+        'date': _formatDate(b.updatedAt),
+      }).toList());
+    } catch (e) {
+      debugPrint('loadTechnicianReviews error: $e');
+    } finally {
+      isLoadingReviews.value = false;
     }
   }
 
@@ -91,7 +113,23 @@ class BookingController extends GetxController {
 
     // Listen to active booking
     _activeSub = _bookingService.streamActiveBooking(uid).listen(
-      (doc) => activeBooking.value = doc,
+      (doc) {
+        final prev = activeBooking.value;
+        activeBooking.value = doc;
+
+        // Auto-navigate ke review page saat status berubah ke done & belum dirating
+        if (doc != null &&
+            doc.status == BookingStatus.done &&
+            doc.customerRating == null &&
+            prev?.status != BookingStatus.done) {
+          // Delay kecil agar halaman tracking render dulu
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (Get.currentRoute == AppRoutes.orderTracking) {
+              Get.toNamed(AppRoutes.review, arguments: doc);
+            }
+          });
+        }
+      },
       onError: (e) => debugPrint('BookingController active stream error: $e'),
     );
 
@@ -136,7 +174,13 @@ class BookingController extends GetxController {
       workshopAddress: t.workshopAddress.isEmpty
           ? 'Alamat belum diisi'
           : t.workshopAddress,
-      reviews: const [],
+      reviews: technicianReviews
+          .map((r) => CustomerReview(
+                author: r['reviewerName'] as String? ?? '-',
+                comment: r['comment'] as String? ?? '',
+                rating: (r['rating'] as num?)?.toInt() ?? 0,
+              ))
+          .toList(),
     );
   }
 
@@ -374,29 +418,29 @@ class BookingController extends GetxController {
       ),
       TrackingStatusStep(
         step: OrderStatusStep.waiting,
-        title: 'Booking Dikonfirmasi',
-        subtitle: 'Teknisi dalam perjalanan ke lokasi',
+        title: 'Teknisi di Jalan',
+        subtitle: 'Teknisi sedang menuju lokasi kamu',
         isComplete: isOnProgress || isDone,
         isCurrent: isConfirmed,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.verification,
-        title: 'Verifikasi Kode',
+        title: 'Verifikasi Kode 6 Digit',
         subtitle: 'Tunjukkan kode ke teknisi saat tiba',
         isComplete: isOnProgress || isDone,
         isCurrent: isConfirmed,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.inProgress,
-        title: 'Pengerjaan Berlangsung',
-        subtitle: '',
+        title: 'Sedang Diperbaiki',
+        subtitle: 'Teknisi sedang mengerjakan perangkat',
         isComplete: isDone,
         isCurrent: isOnProgress,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.completed,
         title: 'Selesai',
-        subtitle: '',
+        subtitle: 'Pekerjaan telah selesai',
         isComplete: isDone,
         isCurrent: isDone,
       ),

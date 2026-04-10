@@ -87,6 +87,7 @@ class BookingService {
           BookingStatus.pending,
           BookingStatus.confirmed,
           BookingStatus.onProgress,
+          BookingStatus.done, // include done agar tracking page bisa tampil review banner
         ])
         .orderBy('createdAt', descending: true)
         .limit(1)
@@ -165,12 +166,67 @@ class BookingService {
     });
   }
 
+  /// Customer submit ulasan & rating (1–5 bintang).
+  /// Otomatis recalculate rata-rata rating teknisi.
+  Future<void> submitReview({
+    required String bookingId,
+    required String technicianId,
+    required int rating,
+    String review = '',
+  }) async {
+    // 1. Simpan rating ke booking doc
+    await _db.collection('bookings').doc(bookingId).update({
+      'customerRating': rating,
+      'customerReview': review,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    // 2. Recalculate rating rata-rata teknisi dari semua booking yang sudah dirating
+    final snap = await _db
+        .collection('bookings')
+        .where('technicianId', isEqualTo: technicianId)
+        .where('status', isEqualTo: BookingStatus.done)
+        .get();
+
+    final rated = snap.docs
+        .where((d) => d['customerRating'] != null)
+        .toList();
+
+    if (rated.isEmpty) return;
+
+    final avg = rated
+            .map((d) => (d['customerRating'] as num).toDouble())
+            .reduce((a, b) => a + b) /
+        rated.length;
+
+    await _db.collection('technicians').doc(technicianId).update({
+      'rating': double.parse(avg.toStringAsFixed(1)),
+      'totalRatings': rated.length,
+    });
+  }
+
   /// Cancel booking.
   Future<void> cancelBooking(String bookingId) async {
     await _db.collection('bookings').doc(bookingId).update({
       'status': BookingStatus.cancelled,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Ambil ulasan terbaru untuk teknisi (dari booking done yang sudah dirating).
+  Future<List<BookingDocument>> fetchTechnicianReviews(
+      String technicianId) async {
+    final snap = await _db
+        .collection('bookings')
+        .where('technicianId', isEqualTo: technicianId)
+        .where('status', isEqualTo: BookingStatus.done)
+        .orderBy('updatedAt', descending: true)
+        .limit(10)
+        .get();
+    return snap.docs
+        .map(BookingDocument.fromFirestore)
+        .where((b) => b.customerRating != null)
+        .toList();
   }
 
   /// Ambil jam-jam yang sudah terisi untuk teknisi di tanggal tertentu.

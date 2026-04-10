@@ -101,8 +101,8 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                     : () async {
                         setState(() => _isCompleting = true);
                         try {
-                          await controller.completeJob();
-                          Get.offAllNamed(AppRoutes.jobSummary);
+                          final order = await controller.completeJob();
+                          Get.offAllNamed(AppRoutes.jobSummary, arguments: order);
                         } catch (e) {
                           Get.snackbar('Gagal', e.toString(),
                               snackPosition: SnackPosition.BOTTOM);

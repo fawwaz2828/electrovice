@@ -41,6 +41,8 @@ class BookingDocument {
   final String status;
   final double? latitude;  // koordinat GPS customer (nullable)
   final double? longitude;
+  final int? customerRating;    // 1–5 bintang, null = belum review
+  final String? customerReview; // teks ulasan, boleh kosong
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -66,6 +68,8 @@ class BookingDocument {
     this.codeVerifiedAt,
     this.latitude,
     this.longitude,
+    this.customerRating,
+    this.customerReview,
   });
 
   factory BookingDocument.fromFirestore(DocumentSnapshot doc) {
@@ -90,6 +94,8 @@ class BookingDocument {
       status: data['status'] as String? ?? BookingStatus.pending,
       latitude: (data['latitude'] as num?)?.toDouble(),
       longitude: (data['longitude'] as num?)?.toDouble(),
+      customerRating: (data['customerRating'] as num?)?.toInt(),
+      customerReview: data['customerReview'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -116,6 +122,8 @@ class BookingDocument {
       'status': status,
       'latitude': latitude,
       'longitude': longitude,
+      'customerRating': customerRating,
+      'customerReview': customerReview,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };

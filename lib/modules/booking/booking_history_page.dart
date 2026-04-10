@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../config/routes.dart';
+import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
@@ -51,7 +53,15 @@ class BookingHistoryPage extends GetView<BookingController> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const _ReviewPromptCard(),
+                // Cari booking done yang belum dirating
+                Builder(builder: (_) {
+                  final unreviewed = controller.bookingHistory
+                      .where((b) =>
+                          b.status == BookingStatus.done &&
+                          b.customerRating == null)
+                      .firstOrNull;
+                  return _ReviewPromptCard(unreviewedBooking: unreviewed);
+                }),
               ],
             ),
           );
@@ -165,10 +175,12 @@ class _HistoryRecordCard extends StatelessWidget {
 }
 
 class _ReviewPromptCard extends StatelessWidget {
-  const _ReviewPromptCard();
+  final BookingDocument? unreviewedBooking;
+  const _ReviewPromptCard({this.unreviewedBooking});
 
   @override
   Widget build(BuildContext context) {
+    if (unreviewedBooking == null) return const SizedBox.shrink();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -179,17 +191,23 @@ class _ReviewPromptCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Help us improve', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          const Text('Bagaimana pengalamanmu?',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 6),
-          const Text(
-            'Rate your recent experience with our technicians.',
-            style: TextStyle(color: Color(0xFF67728B)),
+          Text(
+            'Beri ulasan untuk ${unreviewedBooking!.technicianName}.',
+            style: const TextStyle(color: Color(0xFF67728B)),
           ),
           const SizedBox(height: 14),
           FilledButton(
-            onPressed: () {},
-            style: FilledButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white),
-            child: const Text('Leave Review'),
+            onPressed: () => Get.toNamed(
+              AppRoutes.review,
+              arguments: unreviewedBooking,
+            ),
+            style: FilledButton.styleFrom(
+                backgroundColor: Colors.black, foregroundColor: Colors.white),
+            child: const Text('BERI ULASAN',
+                style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),

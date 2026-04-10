@@ -12,14 +12,61 @@ class TechnicianListPage extends StatefulWidget {
 
 class _TechnicianListPageState extends State<TechnicianListPage> {
   final TechnicianService _service = TechnicianService();
-  List<TechnicianOnlineModel> _technicians = [];
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  List<TechnicianOnlineModel> _all = [];
   bool _isLoading = true;
   String? _errorMessage;
+
+  // ── Filter state ──────────────────────────────────────────────
+  String _searchQuery = '';
+  String? _selectedCategory; // null = semua
+  double _minRating = 0;    // 0 = semua rating
+
+  static const _categoryFilters = [
+    {'label': 'Semua',    'value': null},
+    {'label': 'Handphone','value': 'electronic'},
+    {'label': 'Kendaraan','value': 'vehicle'},
+  ];
+
+  static const _ratingFilters = [
+    {'label': 'Semua',  'value': 0.0},
+    {'label': '★ 4.0+', 'value': 4.0},
+    {'label': '★ 4.5+', 'value': 4.5},
+  ];
+
+  List<TechnicianOnlineModel> get _filtered {
+    return _all.where((t) {
+      final q = _searchQuery.toLowerCase();
+      final matchQ = q.isEmpty ||
+          t.name.toLowerCase().contains(q) ||
+          t.specialty.toLowerCase().contains(q) ||
+          t.category.toLowerCase().contains(q);
+      final matchCat = _selectedCategory == null ||
+          t.category == _selectedCategory;
+      final matchRating = t.rating >= _minRating;
+      return matchQ && matchCat && matchRating;
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
+    // Baca kategori dari args (dikirim dari home page categories)
+    final args = Get.arguments;
+    if (args is Map && args['category'] != null) {
+      _selectedCategory = args['category'] as String;
+    }
+    _searchCtrl.addListener(() {
+      setState(() => _searchQuery = _searchCtrl.text);
+    });
     _loadTechnicians();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadTechnicians() async {
@@ -42,11 +89,11 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
       final technicians = await _service.getTechnicianList(
         lat: position.latitude,
         lng: position.longitude,
-        radiusKm: 10,
+        radiusKm: 50, // perluas radius supaya tidak kosong
       );
 
       setState(() {
-        _technicians = technicians;
+        _all = technicians;
         _isLoading = false;
       });
     } catch (e) {
@@ -114,25 +161,41 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
       );
     }
 
-    if (_technicians.isEmpty) {
-      return const Center(
+    final results = _filtered;
+
+    if (results.isEmpty) {
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_off_rounded,
+              const Icon(Icons.search_off_rounded,
                   size: 48, color: Color(0xFF94A3B8)),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
-                'Tidak ada teknisi tersedia\ndi area kamu saat ini.',
+                _searchQuery.isNotEmpty
+                    ? 'Tidak ada teknisi untuk\n"$_searchQuery"'
+                    : 'Tidak ada teknisi tersedia\ndi area kamu saat ini.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
                 ),
               ),
+              if (_searchQuery.isNotEmpty || _selectedCategory != null || _minRating > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _searchCtrl.clear();
+                      _selectedCategory = null;
+                      _minRating = 0;
+                    }),
+                    child: const Text('Reset Filter'),
+                  ),
+                ),
             ],
           ),
         ),
@@ -144,16 +207,14 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         physics: const BouncingScrollPhysics(),
-        itemCount: _technicians.length + 1,
+        itemCount: results.length + 1,
         itemBuilder: (context, index) {
-          if (index == _technicians.length) {
+          if (index == results.length) {
             return const SizedBox(height: 120);
           }
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: _TechnicianCard(
-              technician: _technicians[index],
-            ),
+            child: _TechnicianCard(technician: results[index]),
           );
         },
       ),
@@ -230,10 +291,11 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
         child: Row(
           children: [
             const SizedBox(width: 20),
-            const Expanded(
+            Expanded(
               child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search for hardware repair...',
+                controller: _searchCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'Cari teknisi atau jenis perbaikan...',
                   hintStyle: TextStyle(
                     color: Color(0xFF94A3B8),
                     fontSize: 14,
@@ -243,6 +305,15 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
                 ),
               ),
             ),
+            if (_searchQuery.isNotEmpty)
+              GestureDetector(
+                onTap: () => _searchCtrl.clear(),
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: Icon(Icons.close_rounded,
+                      color: Color(0xFF94A3B8), size: 20),
+                ),
+              ),
             Container(
               margin: const EdgeInsets.all(6),
               width: 48,
@@ -251,11 +322,8 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
                 color: Colors.black,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.search_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
+              child: const Icon(Icons.search_rounded,
+                  color: Colors.white, size: 20),
             ),
           ],
         ),
@@ -266,23 +334,31 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
   Widget _buildFilters() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       physics: const BouncingScrollPhysics(),
       child: Row(
-        children: const [
-          _FilterChip(
-            label: 'DISTANCE',
-            subLabel: '<10km',
-            isSelected: true,
-            color: Color(0xFFDAE6FF),
-            textColor: Color(0xFF0056FF),
-          ),
-          _FilterChip(label: 'RATING', subLabel: '★ 4.5+'),
-          _FilterChip(label: 'PRICE', subLabel: r'$20 - $100'),
-          _FilterChip(
-            label: 'Open Now',
-            icon: Icons.access_time_rounded,
-          ),
+        children: [
+          // ── Kategori chips ──────────────────────────────────
+          ..._categoryFilters.map((f) {
+            final val = f['value'];
+            final isSelected = _selectedCategory == val;
+            return _ActiveFilterChip(
+              label: f['label'] as String,
+              isSelected: isSelected,
+              onTap: () => setState(() => _selectedCategory = val),
+            );
+          }),
+          const SizedBox(width: 8),
+          // ── Rating chips ────────────────────────────────────
+          ..._ratingFilters.skip(1).map((f) {
+            final val = (f['value'] as double);
+            final isSelected = _minRating == val;
+            return _ActiveFilterChip(
+              label: f['label'] as String,
+              isSelected: isSelected,
+              onTap: () => setState(() => _minRating = isSelected ? 0 : val),
+            );
+          }),
         ],
       ),
     );
@@ -322,7 +398,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) {
-        final c = Colors.grey.withOpacity(_anim.value);
+        final c = Colors.grey.withValues(alpha: _anim.value);
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -621,64 +697,38 @@ class _TechnicianCard extends StatelessWidget {
   }
 }
 
-// ── Filter Chip (tidak berubah) ────────────────────────────────────
+// ── Active Filter Chip ─────────────────────────────────────────────
 
-class _FilterChip extends StatelessWidget {
+class _ActiveFilterChip extends StatelessWidget {
   final String label;
-  final String? subLabel;
-  final IconData? icon;
   final bool isSelected;
-  final Color? color;
-  final Color? textColor;
+  final VoidCallback onTap;
 
-  const _FilterChip({
+  const _ActiveFilterChip({
     required this.label,
-    this.subLabel,
-    this.icon,
-    this.isSelected = false,
-    this.color,
-    this.textColor,
+    required this.isSelected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: color ?? const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 16,
-                color: textColor ?? const Color(0xFF0F172A)),
-            const SizedBox(width: 8),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: textColor?.withValues(alpha: 0.6) ??
-                  const Color(0xFF64748B),
-              letterSpacing: 0.5,
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.black : const Color(0xFFE2E8F0),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? Colors.white : const Color(0xFF475569),
           ),
-          if (subLabel != null) ...[
-            const SizedBox(width: 6),
-            Text(
-              subLabel!,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: textColor ?? const Color(0xFF0F172A),
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

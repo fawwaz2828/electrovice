@@ -307,26 +307,12 @@ class _RepairCategories extends StatelessWidget {
   const _RepairCategories();
 
   static const _categories = [
-    {
-      'icon': Icons.laptop_rounded,
-      'label': 'KOMPUTER',
-      'category': 'electronic'
-    },
-    {
-      'icon': Icons.phone_android_rounded,
-      'label': 'HANDPHONE',
-      'category': 'electronic'
-    },
-    {
-      'icon': Icons.directions_car_rounded,
-      'label': 'KENDARAAN',
-      'category': 'vehicle'
-    },
-    {
-      'icon': Icons.kitchen_rounded,
-      'label': 'ELEKTRONIK',
-      'category': 'electronic'
-    },
+    {'icon': Icons.phone_android_rounded, 'label': 'HANDPHONE', 'category': 'electronic'},
+    {'icon': Icons.laptop_rounded,        'label': 'KOMPUTER',  'category': 'electronic'},
+    {'icon': Icons.tv_rounded,            'label': 'TV & AUDIO','category': 'electronic'},
+    {'icon': Icons.kitchen_rounded,       'label': 'ELEKTRONIK','category': 'electronic'},
+    {'icon': Icons.ac_unit_rounded,       'label': 'AC / KULKAS','category': 'electronic'},
+    {'icon': Icons.directions_car_rounded,'label': 'KENDARAAN', 'category': 'vehicle'},
   ];
 
   @override
@@ -370,16 +356,26 @@ class _RepairCategories extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: _categories.map((c) {
+          const SizedBox(height: 16),
+          // 2 baris × 3 kolom
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _categories.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 0,
+              childAspectRatio: 1.1,
+            ),
+            itemBuilder: (_, i) {
+              final c = _categories[i];
               return _CategoryItem(
                 icon: c['icon'] as IconData,
                 label: c['label'] as String,
                 category: c['category'] as String,
               );
-            }).toList(),
+            },
           ),
         ],
       ),

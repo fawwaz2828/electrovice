@@ -181,11 +181,12 @@ class TechnicianController extends GetxController {
     await _bookingService.verifyCode(order.bookingId, enteredCode);
   }
 
-  /// Tandai pekerjaan selesai
-  Future<void> completeJob() async {
+  /// Tandai pekerjaan selesai — return order untuk ditampilkan di JobSummaryPage
+  Future<BookingDocument> completeJob() async {
     final order = activeOrder.value;
     if (order == null) throw Exception('Tidak ada order aktif');
     await _bookingService.markAsDone(order.bookingId);
+    return order;
   }
 
   /// Dipanggil setelah balik dari edit page
