@@ -69,6 +69,7 @@ class TechnicianController extends GetxController {
       completedWindowLabel: 'LAST 30 DAYS',
       avatarUrl: tp?.photoUrl ?? userModel.photoUrl,
       serviceHistory: const [],
+      certifications: const [],
     );
 
     _listenToOrders(user.uid);

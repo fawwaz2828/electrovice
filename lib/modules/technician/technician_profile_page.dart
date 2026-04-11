@@ -11,14 +11,16 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
 
   static const Color _background = Color(0xFFF2F3F7);
   static const Color _ink = Color(0xFF0F172A);
+  static const Color _blue = Color(0xFF3254FF);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _background,
       extendBody: true,
-      bottomNavigationBar:
-          const TechnicianNavBar(selectedItem: AppNavItem.profile),
+      bottomNavigationBar: const TechnicianNavBar(
+        selectedItem: AppNavItem.profile,
+      ),
       body: SafeArea(
         child: Obx(() {
           if (controller.profile.value == null) {
@@ -59,7 +61,6 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
     );
   }
 
-  // ── Top Bar — settings icon sekarang navigasi ke edit page ──
   Widget _buildTopBar() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -75,7 +76,6 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
         GestureDetector(
           onTap: () {
             Get.toNamed(AppRoutes.technicianProfileEdit)?.then((_) {
-              // Reload data setelah balik dari edit
               Get.find<TechnicianController>().refreshProfile();
             });
           },
@@ -143,8 +143,7 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
       AlertDialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Log Out',
           style: TextStyle(fontWeight: FontWeight.w900, color: _ink),
@@ -152,7 +151,9 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
         content: const Text(
           'Are you sure you want to log out of the technician system?',
           style: TextStyle(
-              color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+            color: Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
+          ),
         ),
         actions: [
           TextButton(
@@ -160,7 +161,9 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
             child: const Text(
               'Cancel',
               style: TextStyle(
-                  color: Color(0xFF94A3B8), fontWeight: FontWeight.w700),
+                color: Color(0xFF94A3B8),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           ElevatedButton(
@@ -170,10 +173,13 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: const Text('Log Out',
-                style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text(
+              'Log Out',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
@@ -213,12 +219,23 @@ class _ProfileHeroCard extends StatelessWidget {
                 height: 120,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(30),
+                  image: data.avatarUrl != null && data.avatarUrl!.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(data.avatarUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: const Center(
-                  child: Icon(Icons.person_rounded,
-                      color: Color(0xFF94A3B8), size: 60),
-                ),
+                child: data.avatarUrl == null || data.avatarUrl!.isEmpty
+                    ? const Center(
+                        child: Icon(
+                          Icons.person_rounded,
+                          color: Color(0xFF94A3B8),
+                          size: 65,
+                        ),
+                      )
+                    : null,
               ),
               Positioned(
                 bottom: -8,
@@ -230,8 +247,11 @@ class _ProfileHeroCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
                   ),
-                  child: const Icon(Icons.verified_user_rounded,
-                      color: Colors.white, size: 16),
+                  child: const Icon(
+                    Icons.verified_user_rounded,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
               ),
             ],
@@ -248,8 +268,7 @@ class _ProfileHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFEEF2FF),
               borderRadius: BorderRadius.circular(12),
@@ -280,18 +299,23 @@ class _StatsGrid extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-            child: _StatBox(
-                value: '${data.yearsExperience}+', label: 'YEARS EXP.')),
+          child: _StatBox(
+            value: '${data.yearsExperience}+',
+            label: 'YEARS EXP.',
+          ),
+        ),
         const SizedBox(width: 12),
         Expanded(
-            child: _StatBox(
-                value: '${data.successRate}%', label: 'SUCCESS')),
+          child: _StatBox(value: '${data.successRate}%', label: 'SUCCESS'),
+        ),
         const SizedBox(width: 12),
         Expanded(
-            child: _StatBox(
-                value: data.rating.toStringAsFixed(1),
-                label: '★',
-                labelIsIcon: true)),
+          child: _StatBox(
+            value: data.rating.toStringAsFixed(1),
+            label: '★',
+            labelIsIcon: true,
+          ),
+        ),
       ],
     );
   }
@@ -301,8 +325,11 @@ class _StatBox extends StatelessWidget {
   final String value;
   final String label;
   final bool labelIsIcon;
-  const _StatBox(
-      {required this.value, required this.label, this.labelIsIcon = false});
+  const _StatBox({
+    required this.value,
+    required this.label,
+    this.labelIsIcon = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -321,22 +348,27 @@ class _StatBox extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF0F172A))),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0F172A),
+            ),
+          ),
           const SizedBox(height: 6),
           if (labelIsIcon)
-            const Icon(Icons.star_rounded,
-                color: Color(0xFF3254FF), size: 18)
+            const Icon(Icons.star_rounded, color: Color(0xFF3254FF), size: 18)
           else
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF64748B),
-                    letterSpacing: 0.5)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF64748B),
+                letterSpacing: 0.5,
+              ),
+            ),
         ],
       ),
     );
@@ -356,20 +388,76 @@ class _ServiceHistoryHeader extends StatelessWidget {
           children: [
             Icon(Icons.history_rounded, color: Color(0xFF0F172A), size: 20),
             SizedBox(width: 8),
-            Text('Service History',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A))),
+            Text(
+              'Service History',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+              ),
+            ),
           ],
         ),
-        Text(label,
-            style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF64748B),
-                letterSpacing: 0.5)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF64748B),
+            letterSpacing: 0.5,
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  const _SectionHeader({required this.title, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF0F172A), size: 20),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  final String text;
+  const _InfoCard({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Color(0xFF64748B),
+          fontWeight: FontWeight.w500,
+          height: 1.5,
+        ),
+      ),
     );
   }
 }
@@ -395,18 +483,24 @@ class _HistoryCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(job.title,
-                        style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                            height: 1.3)),
+                    Text(
+                      job.title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        height: 1.3,
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    Text('Client: ${job.clientName}',
-                        style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.w500)),
+                    Text(
+                      'Client: ${job.clientName}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -414,22 +508,31 @@ class _HistoryCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('\$${job.amount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A))),
+                  Text(
+                    '\$${job.amount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(job.rating.toStringAsFixed(1),
-                          style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A))),
+                      Text(
+                        job.rating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
                       const SizedBox(width: 4),
-                      const Icon(Icons.star_rounded,
-                          color: Color(0xFFF59E0B), size: 16),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Color(0xFFF59E0B),
+                        size: 16,
+                      ),
                     ],
                   ),
                 ],
@@ -442,11 +545,14 @@ class _HistoryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(job.completedDateLabel,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w500)),
+              Text(
+                job.completedDateLabel,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
@@ -456,11 +562,13 @@ class _HistoryCard extends StatelessWidget {
                   shadowColor: Colors.transparent,
                   minimumSize: const Size(120, 44),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: const Text('View Receipt',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 13)),
+                child: const Text(
+                  'View Receipt',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                ),
               ),
             ],
           ),
@@ -503,8 +611,7 @@ class _ProfileSkeletonState extends State<_ProfileSkeleton>
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, _) {
-        final Color shimmer =
-            Colors.grey.withOpacity(_animation.value);
+        final Color shimmer = Colors.grey.withOpacity(_animation.value);
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -560,8 +667,12 @@ class _ProfileSkeletonState extends State<_ProfileSkeleton>
     );
   }
 
-  Widget _box(Color color,
-      {double? width, required double height, double radius = 8}) {
+  Widget _box(
+    Color color, {
+    double? width,
+    required double height,
+    double radius = 8,
+  }) {
     return Container(
       width: width,
       height: height,

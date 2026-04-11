@@ -20,6 +20,7 @@ class BookingHistoryPage extends GetView<BookingController> {
       body: SafeArea(
         child: Obx(() {
           final items = controller.orderHistoryData;
+
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
@@ -116,7 +117,7 @@ class _HistoryRecordCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: badge.$1.withOpacity(0.12),
+                  color: badge.$1.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -210,6 +211,121 @@ class _ReviewPromptCard extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HISTORY SKELETON
+// ═══════════════════════════════════════════════════════════════
+class _HistorySkeleton extends StatefulWidget {
+  const _HistorySkeleton();
+
+  @override
+  State<_HistorySkeleton> createState() => _HistorySkeletonState();
+}
+
+class _HistorySkeletonState extends State<_HistorySkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, child) {
+        final c = Color.lerp(
+          const Color(0xFFE2E8F0),
+          const Color(0xFFF8FAFC),
+          _anim.value,
+        )!;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _box(c, w: 160, h: 28, r: 8),
+              const SizedBox(height: 14),
+              _box(c, w: 120, h: 14, r: 6),
+              const SizedBox(height: 14),
+              ...List.generate(3, (index) => _skeletonCard(c)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _skeletonCard(Color c) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _box(c, w: 42, h: 42, r: 12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _box(c, w: 130, h: 16, r: 6),
+                    const SizedBox(height: 6),
+                    _box(c, w: 90, h: 12, r: 5),
+                  ],
+                ),
+              ),
+              _box(c, w: 70, h: 28, r: 10),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _box(c, w: 100, h: 13, r: 5),
+              const Spacer(),
+              _box(c, w: 70, h: 13, r: 5),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _box(Color c,
+      {required double w, required double h, double r = 8}) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: c,
+        borderRadius: BorderRadius.circular(r),
       ),
     );
   }

@@ -8,6 +8,9 @@ class TechnicianProfileData {
     required this.completedWindowLabel,
     required this.serviceHistory,
     this.avatarUrl,
+    this.description,
+    required this.certifications,
+    this.address,
   });
 
   final String fullName;
@@ -17,10 +20,14 @@ class TechnicianProfileData {
   final double rating;
   final String completedWindowLabel;
   final String? avatarUrl;
+  final String? description;
+  final List<String> certifications;
+  final String? address;
   final List<TechnicianJobRecord> serviceHistory;
 
   factory TechnicianProfileData.fromMap(Map<String, dynamic> map) {
     final List<dynamic> history = map['serviceHistory'] as List<dynamic>? ?? [];
+    final List<dynamic> certs = map['certifications'] as List<dynamic>? ?? [];
 
     return TechnicianProfileData(
       fullName: map['fullName'] as String? ?? '',
@@ -31,11 +38,14 @@ class TechnicianProfileData {
       completedWindowLabel:
           map['completedWindowLabel'] as String? ?? 'LAST 30 DAYS',
       avatarUrl: map['avatarUrl'] as String?,
+      description: map['description'] as String?,
+      certifications: certs.cast<String>(),
+      address: map['address'] as String?,
       serviceHistory: history
           .whereType<Map>()
           .map(
             (item) => TechnicianJobRecord.fromMap(
-              Map<String, dynamic>.from(item as Map<dynamic, dynamic>),
+              Map<String, dynamic>.from(item),
             ),
           )
           .toList(),
@@ -50,6 +60,9 @@ class TechnicianProfileData {
     double? rating,
     String? completedWindowLabel,
     String? avatarUrl,
+    String? description,
+    List<String>? certifications,
+    String? address,
     List<TechnicianJobRecord>? serviceHistory,
   }) {
     return TechnicianProfileData(
@@ -60,6 +73,9 @@ class TechnicianProfileData {
       rating: rating ?? this.rating,
       completedWindowLabel: completedWindowLabel ?? this.completedWindowLabel,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      description: description ?? this.description,
+      certifications: certifications ?? this.certifications,
+      address: address ?? this.address,
       serviceHistory: serviceHistory ?? this.serviceHistory,
     );
   }
@@ -73,6 +89,9 @@ class TechnicianProfileData {
       'rating': rating,
       'completedWindowLabel': completedWindowLabel,
       'avatarUrl': avatarUrl,
+      'description': description,
+      'certifications': certifications,
+      'address': address,
       'serviceHistory': serviceHistory.map((item) => item.toMap()).toList(),
     };
   }
@@ -85,6 +104,13 @@ class TechnicianProfileData {
       successRate: 99,
       rating: 4.9,
       completedWindowLabel: 'LAST 30 DAYS',
+      description: 'Expert in micro-soldering and complex logic board repairs for laptops and high-end electronics. Certified Apple and Microsoft repair technician with over a decade of experience in Jakarta.',
+      certifications: [
+        'Apple Certified Support Professional (ACSP)',
+        'CompTIA A+ Certification',
+        'Microsoft Certified Solutions Associate'
+      ],
+      address: 'Jl. Sudirman No. 123, Jakarta Selatan',
       serviceHistory: [
         TechnicianJobRecord(
           title: 'Industrial HVAC\nCalibration',

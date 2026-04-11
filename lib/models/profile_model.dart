@@ -32,7 +32,7 @@ class ProfileData {
           .whereType<Map>()
           .map(
             (node) => ProfileNode.fromMap(
-              Map<String, dynamic>.from(node as Map<dynamic, dynamic>),
+              Map<String, dynamic>.from(node),
             ),
           )
           .toList(),
@@ -40,7 +40,7 @@ class ProfileData {
           .whereType<Map>()
           .map(
             (option) => SecurityOption.fromMap(
-              Map<String, dynamic>.from(option as Map<dynamic, dynamic>),
+              Map<String, dynamic>.from(option),
             ),
           )
           .toList(),

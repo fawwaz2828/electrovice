@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 import '../../config/routes.dart';
+<<<<<<< HEAD
 import '../../models/booking_document.dart';
+=======
+>>>>>>> origin/main
 import '../../models/booking_model.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
@@ -432,6 +435,7 @@ class _TechnicianContactCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
+<<<<<<< HEAD
                   onPressed: bookingDoc == null
                       ? null
                       : () => Get.toNamed(
@@ -443,6 +447,9 @@ class _TechnicianContactCard extends StatelessWidget {
                               'bookingDoc': bookingDoc,
                             },
                           ),
+=======
+                  onPressed: () => Get.toNamed(AppRoutes.chat),
+>>>>>>> origin/main
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.black,
                     foregroundColor: Colors.white,

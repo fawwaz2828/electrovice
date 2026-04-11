@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:geolocator/geolocator.dart' hide Position;
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
+    if (dart.library.html) '../../config/mapbox_web_stub.dart';
 import '../../config/routes.dart';
 import '../../services/technician_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
@@ -31,56 +34,33 @@ class HomePage extends GetView<HomeController> {
                     horizontal: 20.0,
                     vertical: 16.0,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/ELECTROVICE_LOGO_HD.png',
-                            height: 36,
-                            fit: BoxFit.contain,
-                          ),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.06),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.notifications_none_rounded,
-                              color: Color(0xFF1E293B),
-                              size: 20,
-                            ),
-                          ),
-                        ],
+                      Image.asset(
+                        'assets/images/ELECTROVICE_LOGO_HD.png',
+                        height: 32,
+                        fit: BoxFit.contain,
                       ),
-                      const SizedBox(height: 16),
-                      Obx(() => Text(
-                            'Hi, ${controller.userName.value.isEmpty ? 'there' : controller.userName.value}! 👋',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF1E293B),
-                              height: 1.1,
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
                             ),
-                          )),
-                      const Text(
-                        'Butuh bantuan perbaikan hari ini?',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.notifications_none_rounded,
+                          color: Color(0xFF1E293B),
+                          size: 20,
                         ),
                       ),
                     ],
@@ -93,7 +73,7 @@ class HomePage extends GetView<HomeController> {
                   child: _HeroCTACard(),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 // ── Search Bar ───────────────────────────────────────────
                 Padding(
@@ -101,7 +81,15 @@ class HomePage extends GetView<HomeController> {
                   child: _SearchBar(),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // ── Current Repair Card ──────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: const _CurrentRepairCard(),
+                ),
+
+                const SizedBox(height: 22),
 
                 // ── Repair Categories ────────────────────────────────────
                 Padding(
@@ -109,12 +97,12 @@ class HomePage extends GetView<HomeController> {
                   child: const _RepairCategories(),
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
-                // ── Nearby Technicians ───────────────────────────────────
+                // ── Featured Specialists ─────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: _NearbyTechniciansSection(),
+                  child: _FeaturedSpecialistsSection(),
                 ),
 
                 const SizedBox(height: 110),
@@ -128,25 +116,105 @@ class HomePage extends GetView<HomeController> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  HERO CTA CARD
+//  HERO CTA CARD  (live Mapbox map + gradient overlay)
 // ═══════════════════════════════════════════════════════════════
-class _HeroCTACard extends StatelessWidget {
+class _HeroCTACard extends StatefulWidget {
+  @override
+  State<_HeroCTACard> createState() => _HeroCTACardState();
+}
+
+class _HeroCTACardState extends State<_HeroCTACard> {
+  MapboxMap? _mapboxMap;
+
+  // Default: Makassar
+  double _lat = -5.1477;
+  double _lng = 119.4327;
+  bool _locationReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLocation();
+  }
+
+  Future<void> _fetchLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+        if (perm == LocationPermission.denied) return;
+      }
+      if (perm == LocationPermission.deniedForever) return;
+
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _lat = pos.latitude;
+        _lng = pos.longitude;
+        _locationReady = true;
+      });
+
+      await _mapboxMap?.flyTo(
+        CameraOptions(
+          center: Point(coordinates: Position(_lng, _lat)),
+          zoom: 13.5,
+        ),
+        MapAnimationOptions(duration: 1000),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _onMapCreated(MapboxMap mapboxMap) async {
+    _mapboxMap = mapboxMap;
+
+    // Disable all touch interactions — purely decorative
+    await mapboxMap.gestures.updateSettings(
+      GesturesSettings(
+        scrollEnabled: false,
+        rotateEnabled: false,
+        pitchEnabled: false,
+        pinchToZoomEnabled: false,
+        doubleTapToZoomInEnabled: false,
+        doubleTouchToZoomOutEnabled: false,
+        quickZoomEnabled: false,
+      ),
+    );
+
+    // Show user location puck
+    await mapboxMap.location.updateSettings(
+      LocationComponentSettings(enabled: true, pulsingEnabled: true),
+    );
+
+    // Fly to user location if already fetched before map was ready
+    if (_locationReady) {
+      await mapboxMap.flyTo(
+        CameraOptions(
+          center: Point(coordinates: Position(_lng, _lat)),
+          zoom: 13.5,
+        ),
+        MapAnimationOptions(duration: 0),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.technicianList),
       child: Container(
-        height: 160,
+        height: 175,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
-          ),
+          color: const Color(0xFF0D1117),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0061FF).withValues(alpha: 0.25),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -154,83 +222,92 @@ class _HeroCTACard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Decorative circle
-            Positioned(
-              right: -20,
-              top: -20,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.05),
+            // ── Live Mapbox map ──────────────────────────────────
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: SizedBox.expand(
+                child: MapWidget(
+                  key: const ValueKey('home_hero_map'),
+                  styleUri: MapboxStyles.OUTDOORS,
+                  cameraOptions: CameraOptions(
+                    center: Point(
+                      coordinates: Position(_lng, _lat),
+                    ),
+                    zoom: 13.0,
+                  ),
+                  onMapCreated: _onMapCreated,
                 ),
               ),
             ),
-            Positioned(
-              right: 20,
-              bottom: -30,
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.04),
+
+            // ── Gradient overlay (left-heavy, matches Figma) ─────
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color(0xEE0D1117),
+                    Color(0xAA0D1117),
+                    Color(0x440D1117),
+                    Colors.transparent,
+                  ],
+                  stops: [0.0, 0.4, 0.65, 1.0],
                 ),
               ),
             ),
-            // Content
+
+            // ── Text content (bottom-left) ───────────────────────
             Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  const Text(
+                    'Find Nearby\nTechnicians',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '12 active specialists\navailable now',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFFCBD5E1),
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Cari Teknisi\nTerdekat',
+                        Icon(Icons.explore_rounded,
+                            size: 14, color: Color(0xFF0D1117)),
+                        SizedBox(width: 6),
+                        Text(
+                          'Explore Map',
                           style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Elektronik & kendaraan',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF93C5FD),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0061FF),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Lihat Semua →',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                            ),
+                            color: Color(0xFF0D1117),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const Icon(
-                    Icons.handyman_rounded,
-                    color: Colors.white,
-                    size: 64,
                   ),
                 ],
               ),
@@ -271,7 +348,7 @@ class _SearchBar extends StatelessWidget {
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
-                'Cari teknisi atau jenis perbaikan...',
+                'Search for hardware repair...',
                 style: TextStyle(
                   color: Color(0xFFADB5BD),
                   fontSize: 14,
@@ -288,7 +365,7 @@ class _SearchBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
-                Icons.tune_rounded,
+                Icons.search_rounded,
                 color: Colors.white,
                 size: 18,
               ),
@@ -301,48 +378,141 @@ class _SearchBar extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  REPAIR CATEGORIES
+//  CURRENT REPAIR CARD  (matches Figma: IN PROGRESS badge)
+// ═══════════════════════════════════════════════════════════════
+class _CurrentRepairCard extends StatelessWidget {
+  const _CurrentRepairCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(AppRoutes.orderTracking),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.laptop_mac_rounded,
+                  color: Color(0xFF475569), size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'CURRENT REPAIR',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF94A3B8),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'MacBook Pro M1 • Screen Replacement',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCEDFF),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'IN PROGRESS',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0061FF),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  REPAIR CATEGORIES  (matches Figma: TV & AUDIO, COMPUTERS, etc)
 // ═══════════════════════════════════════════════════════════════
 class _RepairCategories extends StatelessWidget {
   const _RepairCategories();
 
   static const _categories = [
+<<<<<<< HEAD
     {'icon': Icons.phone_android_rounded, 'label': 'HANDPHONE', 'category': 'electronic'},
     {'icon': Icons.laptop_rounded,        'label': 'KOMPUTER',  'category': 'electronic'},
     {'icon': Icons.tv_rounded,            'label': 'TV & AUDIO','category': 'electronic'},
     {'icon': Icons.kitchen_rounded,       'label': 'ELEKTRONIK','category': 'electronic'},
     {'icon': Icons.ac_unit_rounded,       'label': 'AC / KULKAS','category': 'electronic'},
     {'icon': Icons.directions_car_rounded,'label': 'KENDARAAN', 'category': 'vehicle'},
+=======
+    {'icon': Icons.tv_rounded, 'label': 'TV & AUDIO', 'category': 'electronic'},
+    {'icon': Icons.laptop_rounded, 'label': 'COMPUTERS', 'category': 'electronic'},
+    {'icon': Icons.kitchen_rounded, 'label': 'APPLIANCES', 'category': 'electronic'},
+    {'icon': Icons.directions_car_rounded, 'label': 'VEHICLES', 'category': 'vehicle'},
+>>>>>>> origin/main
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Kategori Layanan',
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Repair Categories',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => Get.toNamed(AppRoutes.technicianList),
+              child: const Text(
+                'View All',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E293B),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0061FF),
                 ),
               ),
+<<<<<<< HEAD
               GestureDetector(
                 onTap: () => Get.toNamed(AppRoutes.technicianList),
                 child: const Text(
@@ -379,6 +549,23 @@ class _RepairCategories extends StatelessWidget {
           ),
         ],
       ),
+=======
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: _categories.map((c) {
+            return _CategoryItem(
+              icon: c['icon'] as IconData,
+              label: c['label'] as String,
+              category: c['category'] as String,
+            );
+          }).toList(),
+        ),
+      ],
+>>>>>>> origin/main
     );
   }
 }
@@ -401,12 +588,18 @@ class _CategoryItem extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Icon(icon, color: const Color(0xFF475569), size: 26),
           ),
@@ -427,9 +620,9 @@ class _CategoryItem extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  NEARBY TECHNICIANS SECTION
+//  FEATURED SPECIALISTS SECTION
 // ═══════════════════════════════════════════════════════════════
-class _NearbyTechniciansSection extends GetView<HomeController> {
+class _FeaturedSpecialistsSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -439,7 +632,7 @@ class _NearbyTechniciansSection extends GetView<HomeController> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Teknisi Terdekat',
+              'Featured Specialists',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
@@ -449,7 +642,7 @@ class _NearbyTechniciansSection extends GetView<HomeController> {
             GestureDetector(
               onTap: () => Get.toNamed(AppRoutes.technicianList),
               child: const Text(
-                'Lihat Semua',
+                'See All',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -507,25 +700,21 @@ class _TechnicianCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final priceLabel = technician.serviceEstimates.isNotEmpty
-        ? technician.serviceEstimates.first.priceLabel
-        : 'Hubungi';
-
     return GestureDetector(
       onTap: () => Get.toNamed(
         AppRoutes.technicianDetail,
         arguments: technician,
       ),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -534,16 +723,16 @@ class _TechnicianCard extends StatelessWidget {
           children: [
             // Avatar
             Container(
-              width: 64,
-              height: 64,
+              width: 68,
+              height: 68,
               decoration: BoxDecoration(
                 color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: technician.photoUrl != null &&
                       technician.photoUrl!.isNotEmpty
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       child: Image.network(technician.photoUrl!,
                           fit: BoxFit.cover),
                     )
@@ -567,18 +756,18 @@ class _TechnicianCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     technician.specialty.isEmpty
-                        ? technician.category
-                        : technician.specialty,
+                        ? technician.category.toUpperCase()
+                        : technician.specialty.toUpperCase(),
                     style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
                       color: Color(0xFF1D4ED8),
-                      letterSpacing: 0.3,
+                      letterSpacing: 0.5,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       const Icon(Icons.location_on_rounded,
@@ -592,47 +781,51 @@ class _TechnicianCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.star_rounded,
-                          size: 12, color: Color(0xFFF59E0B)),
-                      const SizedBox(width: 3),
-                      Text(
-                        technician.rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w600,
+                      if (technician.totalJobs >= 200) ...[
+                        const SizedBox(width: 8),
+                        const Text(
+                          '•',
+                          style: TextStyle(color: Color(0xFFCBD5E1)),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${technician.totalJobs}+ Jobs',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
               ),
             ),
-            // Price + arrow
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  priceLabel,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF0061FF),
+            // Rating badge
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.star_rounded,
+                      size: 14, color: Color(0xFF0061FF)),
+                  const SizedBox(width: 4),
+                  Text(
+                    technician.rating.toStringAsFixed(1),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.chevron_right_rounded,
-                      size: 18, color: Color(0xFF475569)),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -641,51 +834,84 @@ class _TechnicianCard extends StatelessWidget {
   }
 }
 
-// ── Skeleton ───────────────────────────────────────────────────
-class _TechnicianCardSkeleton extends StatelessWidget {
+// ── Shimmer Skeleton ─────────────────────────────────────────────
+class _TechnicianCardSkeleton extends StatefulWidget {
   const _TechnicianCardSkeleton();
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          _shimmer(width: 64, height: 64, radius: 14),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _shimmer(width: 120, height: 14),
-                const SizedBox(height: 8),
-                _shimmer(width: 80, height: 11),
-                const SizedBox(height: 8),
-                _shimmer(width: 100, height: 11),
-              ],
-            ),
-          ),
-          _shimmer(width: 50, height: 32, radius: 8),
-        ],
-      ),
+  State<_TechnicianCardSkeleton> createState() =>
+      _TechnicianCardSkeletonState();
+}
+
+class _TechnicianCardSkeletonState extends State<_TechnicianCardSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
   }
 
-  Widget _shimmer({
-    required double width,
-    required double height,
-    double radius = 6,
-  }) {
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, child) {
+        final shimmerColor =
+            Color.lerp(const Color(0xFFE2E8F0), const Color(0xFFF8FAFC),
+                _anim.value)!;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            children: [
+              _box(shimmerColor, w: 68, h: 68, r: 16),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _box(shimmerColor, w: 130, h: 14),
+                    const SizedBox(height: 8),
+                    _box(shimmerColor, w: 90, h: 10),
+                    const SizedBox(height: 10),
+                    _box(shimmerColor, w: 110, h: 11),
+                  ],
+                ),
+              ),
+              _box(shimmerColor, w: 50, h: 32, r: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _box(Color color,
+      {required double w, required double h, double r = 6}) {
     return Container(
-      width: width,
-      height: height,
+      width: w,
+      height: h,
       decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(radius),
+        color: color,
+        borderRadius: BorderRadius.circular(r),
       ),
     );
   }

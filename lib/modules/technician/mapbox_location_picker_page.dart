@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart' hide Position;
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
+    if (dart.library.html) '../../config/mapbox_web_stub.dart';
 
 class MapboxLocationPickerPage extends StatefulWidget {
   const MapboxLocationPickerPage({super.key});
@@ -74,16 +75,19 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
       body: Stack(
         children: [
           // ── Mapbox Map ──────────────────────────────────────────
-          MapWidget(
-            key: const ValueKey('mapbox_picker'),
-            cameraOptions: CameraOptions(
-              center: Point(
-                coordinates: Position(_defaultLng, _defaultLat),
+          SizedBox.expand(
+            child: MapWidget(
+              key: const ValueKey('mapbox_picker'),
+              styleUri: MapboxStyles.MAPBOX_STREETS,
+              cameraOptions: CameraOptions(
+                center: Point(
+                  coordinates: Position(_defaultLng, _defaultLat),
+                ),
+                zoom: 13.0,
               ),
-              zoom: 13.0,
+              onMapCreated: _onMapCreated,
+              onTapListener: _onMapTap,
             ),
-            onMapCreated: _onMapCreated,
-            onTapListener: _onMapTap,
           ),
 
           // ── Header ─────────────────────────────────────────────

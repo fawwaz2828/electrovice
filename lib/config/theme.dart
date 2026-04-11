@@ -26,7 +26,7 @@ class AppTheme {
       ),
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
-        background: backgroundColor, // Added this to match scaffoldBackgroundColor
+        surface: backgroundColor, // Updated to surface from seed
       ),
     );
   }

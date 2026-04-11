@@ -399,7 +399,7 @@ class _TechnicianProfileEditPageState
         Switch(
           value: _isAvailable,
           onChanged: (val) => setState(() => _isAvailable = val),
-          activeColor: _accent,
+          activeThumbColor: _accent,
         ),
       ],
     );

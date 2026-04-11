@@ -30,7 +30,7 @@ import '../modules/booking/review_page.dart';
 class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
-  static const String profile_page = '/profile';
+  static const String profilePage = '/profile';
   static const String technicianProfile = '/technician/profile';
   static const String technicianHome = '/technician/home';
   static const String jobDetail = '/technician/job-detail';
@@ -75,7 +75,7 @@ class AppRoutes {
       }),
     ),
     GetPage(
-      name: profile_page,
+      name: profilePage,
       page: () => const ProfilePage(),
       binding: BindingsBuilder(() {
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
@@ -177,6 +177,10 @@ class AppRoutes {
     GetPage(
       name: AppRoutes.mapboxLocationPicker,
       page: () => const MapboxLocationPickerPage(),
+    ),
+    GetPage(
+      name: chat,
+      page: () => const ChatPage(),
     ),
     GetPage(
       name: jobSummary,
