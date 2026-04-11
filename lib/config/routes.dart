@@ -26,6 +26,8 @@ import '../modules/profile/profile_edit_page.dart';
 import '../modules/chat/chat_page.dart';
 import '../modules/chat/chat_controller.dart';
 import '../modules/booking/review_page.dart';
+import '../modules/technician/onboarding/onboarding_page.dart';
+import '../modules/technician/onboarding/onboarding_controller.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -50,6 +52,7 @@ class AppRoutes {
   static const mapboxLocationPicker = '/mapbox-location-picker';
   static const chat = '/chat';
   static const review = '/review';
+  static const technicianOnboarding = '/technician/onboarding';
 
   static final routes = [
     GetPage(
@@ -188,6 +191,14 @@ class AppRoutes {
     GetPage(
       name: review,
       page: () => const ReviewPage(),
+    ),
+    GetPage(
+      name: technicianOnboarding,
+      page: () => const TechnicianOnboardingPage(),
+      binding: BindingsBuilder(() {
+        Get.delete<TechnicianOnboardingController>(force: true);
+        Get.put(TechnicianOnboardingController());
+      }),
     ),
     GetPage(
       name: chat,

@@ -24,6 +24,7 @@ class AuthService {
     );
     final user = credential.user!;
 
+    // Buat user doc minimal — onboarding teknisi akan mengisi sisanya
     final Map<String, dynamic> userData = {
         'uid': user.uid,
         'email': email,
@@ -32,41 +33,9 @@ class AuthService {
         'createdAt': FieldValue.serverTimestamp(),
     };
 
-    // Jika teknisi, langsung buat technicianProfile kosong
-    if (role == 'technician') {
-        userData['technicianProfile'] = {
-        'category': 'electronic', // default, bisa diubah di profile setup
-        'bio': '',
-        'specialty': '',
-        'rating': 0.0,
-        'totalRatings': 0,
-        'totalJobs': 0,
-        'yearsExperience': 0,
-        'successRate': 100,
-        'serviceRadius': 10.0,
-        'isAvailable': false,
-        };
-    }
-
     await _firestore.collection('users').doc(user.uid).set(userData);
 
-    // Buat dokumen awal di technicians_online agar profile edit bisa langsung dipakai
-    if (role == 'technician') {
-      await _firestore.collection('technicians_online').doc(user.uid).set({
-        'uid': user.uid,
-        'name': name,
-        'specialty': '',
-        'category': 'electronic',
-        'isAvailable': false,
-        'workshopAddress': '',
-        'accreditations': [],
-        'serviceEstimates': [],
-        'serviceRadius': 10.0,
-        'rating': 0.0,
-        'totalJobs': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
+    // technicians_online & technicianProfile dibuat setelah onboarding selesai
 
     return user;
     }
@@ -104,6 +73,7 @@ class AuthService {
         if (!doc.exists) {
             isNew = true;
 
+            // User doc minimal — onboarding teknisi akan mengisi sisanya
             final Map<String, dynamic> userData = {
             'uid': user.uid,
             'email': user.email,
@@ -112,40 +82,7 @@ class AuthService {
             'createdAt': FieldValue.serverTimestamp(),
             };
 
-            if (role == 'technician') {
-                userData['technicianProfile'] = {
-                    'category': 'electronic',
-                    'bio': '',
-                    'specialty': '',
-                    'rating': 0.0,
-                    'totalRatings': 0,
-                    'totalJobs': 0,
-                    'yearsExperience': 0,
-                    'successRate': 100,
-                    'serviceRadius': 10.0,
-                    'isAvailable': false,
-                };
-            }
-
             await _firestore.collection('users').doc(user.uid).set(userData);
-
-            // Buat dokumen awal di technicians_online
-            if (role == 'technician') {
-              await _firestore.collection('technicians_online').doc(user.uid).set({
-                'uid': user.uid,
-                'name': user.displayName ?? 'User',
-                'specialty': '',
-                'category': 'electronic',
-                'isAvailable': false,
-                'workshopAddress': '',
-                'accreditations': [],
-                'serviceEstimates': [],
-                'serviceRadius': 10.0,
-                'rating': 0.0,
-                'totalJobs': 0,
-                'createdAt': FieldValue.serverTimestamp(),
-              });
-            }
         }
         return {'user': user, 'isNew': isNew};
     }

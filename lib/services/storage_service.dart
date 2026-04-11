@@ -1,0 +1,34 @@
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+
+class StorageService {
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  Future<String> uploadTechnicianKtp(String uid, File file) async {
+    final ref = _storage.ref('technicians/$uid/ktp.jpg');
+    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
+    return await ref.getDownloadURL();
+  }
+
+  Future<String> uploadTechnicianSelfie(String uid, File file) async {
+    final ref = _storage.ref('technicians/$uid/selfie.jpg');
+    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
+    return await ref.getDownloadURL();
+  }
+
+  Future<List<String>> uploadCertifications(String uid, List<File> files) async {
+    final List<String> urls = [];
+    for (int i = 0; i < files.length; i++) {
+      final ref = _storage.ref('technicians/$uid/certifications/cert_$i.jpg');
+      await ref.putFile(files[i], SettableMetadata(contentType: 'image/jpeg'));
+      urls.add(await ref.getDownloadURL());
+    }
+    return urls;
+  }
+
+  Future<String> uploadProfilePhoto(String uid, File file) async {
+    final ref = _storage.ref('profile_photos/$uid/photo.jpg');
+    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
+    return await ref.getDownloadURL();
+  }
+}

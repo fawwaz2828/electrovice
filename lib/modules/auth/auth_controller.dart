@@ -41,10 +41,17 @@ class AuthController extends GetxController {
 
       await Future.delayed(const Duration(seconds: 1));
 
-      await _navigateToHome(role);
+      // Teknisi baru langsung ke onboarding
+      if (role == 'technician') {
+        Get.offAllNamed(AppRoutes.technicianOnboarding);
+      } else {
+        Get.offAllNamed(AppRoutes.home);
+      }
       Get.snackbar(
         'Berhasil!',
-        'Akun berhasil dibuat.',
+        role == 'technician'
+            ? 'Akun dibuat! Lengkapi profil teknisimu.'
+            : 'Akun berhasil dibuat.',
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
@@ -87,6 +94,17 @@ class AuthController extends GetxController {
 
   Future<void> _navigateToHome(String role) async {
     if (role == 'technician') {
+      // Cek apakah onboarding sudah selesai
+      final uid = _authService.currentUser?.uid;
+      if (uid != null) {
+        final data = await _authService.getUserData(uid);
+        final techProfile = data?['technicianProfile'];
+        if (techProfile == null ||
+            (techProfile as Map)['verificationStatus'] == null) {
+          Get.offAllNamed(AppRoutes.technicianOnboarding);
+          return;
+        }
+      }
       Get.offAllNamed(AppRoutes.technicianHome);
     } else {
       Get.offAllNamed(AppRoutes.home);
