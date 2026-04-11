@@ -5,10 +5,12 @@ import '../../models/technician_model.dart';
 import '../../models/booking_document.dart';
 import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
+import '../../services/technician_service.dart' show TechnicianService, ServiceEstimate;
 
 class TechnicianController extends GetxController {
   final AuthService _authService = AuthService();
   final BookingService _bookingService = BookingService();
+  final TechnicianService _techService = TechnicianService();
 
   final Rxn<TechnicianProfileData> profile = Rxn<TechnicianProfileData>();
   final RxBool isOnline = true.obs;
@@ -24,6 +26,10 @@ class TechnicianController extends GetxController {
 
   /// Booking yang sedang dibuka detail / verifikasi
   final Rxn<BookingDocument> selectedOrder = Rxn<BookingDocument>();
+
+  // ── Service estimates (My Service page) ──────────────────────
+  final RxList<ServiceEstimate> serviceEstimates = <ServiceEstimate>[].obs;
+  final RxBool isLoadingServices = false.obs;
 
   // ── Legacy Rx untuk backward compat dengan home page UI ───────
   /// currentJob dipakai oleh TechnicianHomePage via .value
@@ -46,33 +52,92 @@ class TechnicianController extends GetxController {
   }
 
   Future<void> _loadUserData() async {
-    int retry = 0;
-    while (_authService.currentUser == null && retry < 6) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      retry++;
+    try {
+      int retry = 0;
+      while (_authService.currentUser == null && retry < 10) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        retry++;
+      }
+
+      final user = _authService.currentUser;
+      if (user == null) return;
+
+      final userModel = await _authService.getUserModel(user.uid);
+      final tp = userModel?.technicianProfile;
+
+      profile.value = TechnicianProfileData(
+        fullName: userModel?.name ?? user.email ?? 'Teknisi',
+        specialty: tp?.specialty ?? '',
+        yearsExperience: tp?.yearsExperience ?? 0,
+        successRate: tp?.successRate ?? 100,
+        rating: tp?.rating ?? 0.0,
+        completedWindowLabel: 'LAST 30 DAYS',
+        avatarUrl: tp?.photoUrl ?? userModel?.photoUrl,
+        serviceHistory: const [],
+        certifications: const [],
+      );
+
+      _listenToOrders(user.uid);
+      _loadServices(user.uid);
+    } catch (e) {
+      debugPrint('TechnicianController._loadUserData error: $e');
+      // Set minimal profile so UI doesn't stay in skeleton forever
+      final uid = _authService.currentUser?.uid;
+      profile.value = TechnicianProfileData(
+        fullName: _authService.currentUser?.email ?? 'Teknisi',
+        specialty: '',
+        yearsExperience: 0,
+        successRate: 100,
+        rating: 0.0,
+        completedWindowLabel: 'LAST 30 DAYS',
+        serviceHistory: const [],
+        certifications: const [],
+      );
+      if (uid != null) {
+        _listenToOrders(uid);
+        _loadServices(uid);
+      }
     }
+  }
 
-    final user = _authService.currentUser;
-    if (user == null) return;
+  Future<void> _loadServices(String uid) async {
+    try {
+      isLoadingServices.value = true;
+      final list = await _techService.getServiceEstimates(uid);
+      serviceEstimates.assignAll(list);
+    } catch (e) {
+      debugPrint('_loadServices error: $e');
+    } finally {
+      isLoadingServices.value = false;
+    }
+  }
 
-    final userModel = await _authService.getUserModel(user.uid);
-    if (userModel == null) return;
+  // ── Service CRUD ──────────────────────────────────────────────
 
-    final tp = userModel.technicianProfile;
+  Future<void> addService(ServiceEstimate s) async {
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
+    serviceEstimates.add(s);
+    await _techService.saveServiceEstimates(uid, serviceEstimates.toList());
+  }
 
-    profile.value = TechnicianProfileData(
-      fullName: userModel.name,
-      specialty: tp?.specialty ?? '',
-      yearsExperience: tp?.yearsExperience ?? 0,
-      successRate: tp?.successRate ?? 100,
-      rating: tp?.rating ?? 0.0,
-      completedWindowLabel: 'LAST 30 DAYS',
-      avatarUrl: tp?.photoUrl ?? userModel.photoUrl,
-      serviceHistory: const [],
-      certifications: const [],
-    );
+  Future<void> updateService(int index, ServiceEstimate s) async {
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
+    serviceEstimates[index] = s;
+    await _techService.saveServiceEstimates(uid, serviceEstimates.toList());
+  }
 
-    _listenToOrders(user.uid);
+  Future<void> deleteService(int index) async {
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
+    serviceEstimates.removeAt(index);
+    await _techService.saveServiceEstimates(uid, serviceEstimates.toList());
+  }
+
+  Future<void> refreshServices() async {
+    final uid = _authService.currentUser?.uid;
+    if (uid != null) await _loadServices(uid);
   }
 
   void _listenToOrders(String technicianId) {
@@ -194,6 +259,32 @@ class TechnicianController extends GetxController {
   Future<void> refreshProfile() async => _loadUserData();
 
   void setProfile(TechnicianProfileData data) => profile.value = data;
+
+  /// Legacy method used by technician_edit_profile_page.dart
+  void updateProfileInfo({
+    required String fullName,
+    required String specialty,
+    String description = '',
+    List<String> certifications = const [],
+    String address = '',
+    String? avatarUrl,
+  }) {
+    final current = profile.value;
+    if (current == null) return;
+    profile.value = TechnicianProfileData(
+      fullName: fullName,
+      specialty: specialty,
+      yearsExperience: current.yearsExperience,
+      successRate: current.successRate,
+      rating: current.rating,
+      completedWindowLabel: current.completedWindowLabel,
+      avatarUrl: avatarUrl ?? current.avatarUrl,
+      serviceHistory: current.serviceHistory,
+      certifications: certifications.isNotEmpty
+          ? certifications
+          : current.certifications,
+    );
+  }
 
   // ── Helpers ───────────────────────────────────────────────────
 

@@ -28,6 +28,8 @@ import '../modules/chat/chat_controller.dart';
 import '../modules/booking/review_page.dart';
 import '../modules/technician/onboarding/onboarding_page.dart';
 import '../modules/technician/onboarding/onboarding_controller.dart';
+import '../modules/technician/my_service_page.dart';
+import '../modules/technician/service_detail_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -53,6 +55,8 @@ class AppRoutes {
   static const chat = '/chat';
   static const review = '/review';
   static const technicianOnboarding = '/technician/onboarding';
+  static const myService = '/technician/my-service';
+  static const serviceDetail = '/technician/service-detail';
 
   static final routes = [
     GetPage(
@@ -207,6 +211,17 @@ class AppRoutes {
         Get.delete<ChatController>(force: true);
         Get.put(ChatController());
       }),
+    ),
+    GetPage(
+      name: myService,
+      page: () => const MyServicePage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: serviceDetail,
+      page: () => const ServiceDetailPage(),
     ),
   ];
 }

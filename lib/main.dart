@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'config/routes.dart';
+import 'config/theme.dart';
 import 'config/mapbox_config.dart';
 
 // mapbox_maps_flutter hanya support Android & iOS
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Electrovice',
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
       initialRoute: AppRoutes.register,
       getPages: AppRoutes.routes,
       defaultTransition: Transition.noTransition,

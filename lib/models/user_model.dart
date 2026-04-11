@@ -88,12 +88,19 @@ class TechnicianProfile {
       rating: (map['rating'] as num?)?.toDouble() ?? 0.0,
       totalRatings: (map['totalRatings'] as num?)?.toInt() ?? 0,
       totalJobs: (map['totalJobs'] as num?)?.toInt() ?? 0,
-      yearsExperience: (map['yearsExperience'] as num?)?.toInt() ?? 0,
-      successRate: (map['successRate'] as num?)?.toInt() ?? 100,
+      // yearsExperience may be stored as String (RxString from onboarding) or int
+      yearsExperience: _parseInt(map['yearsExperience']),
+      successRate: _parseInt(map['successRate'], fallback: 100),
       serviceRadius: (map['serviceRadius'] as num?)?.toDouble() ?? 10,
       isAvailable: map['isAvailable'] as bool? ?? false,
       photoUrl: map['photoUrl'] as String?,
     );
+  }
+
+  static int _parseInt(dynamic v, {int fallback = 0}) {
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v) ?? fallback;
+    return fallback;
   }
 
   Map<String, dynamic> toMap() {

@@ -1,137 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox
+    if (dart.library.html) '../../config/mapbox_web_stub.dart';
 
 import '../../config/routes.dart';
-import '../../models/booking_model.dart';
+import '../../services/technician_service.dart';
 import 'booking_controller.dart';
+
+// ── Palette ──────────────────────────────────────────────────────────────────
+const Color _bg    = Color(0xFFF2F3F7);
+const Color _card  = Colors.white;
+const Color _ink   = Color(0xFF0F172A);
+const Color _muted = Color(0xFF64748B);
+const Color _blue  = Color(0xFF0061FF);
 
 class BookingTechnicianDetailPage extends GetView<BookingController> {
   const BookingTechnicianDetailPage({super.key});
 
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _card = Colors.white;
-  static const Color _ink = Color(0xFF171717);
-  static const Color _muted = Color(0xFF737B8C);
-  static const Color _chip = Color(0xFFDDE8FB);
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bg,
-      body: SafeArea(
-        child: Obx(() {
-          final CustomerTechnicianDetail tech = controller.technicianData;
-
-          return Column(
-            children: [
-              _TopBar(title: 'Technician Details'),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _HeroCard(tech: tech),
-                      const SizedBox(height: 14),
-                      _TitleRow(title: 'ACCREDITATIONS'),
-                      const SizedBox(height: 10),
-                      _AccreditationsCard(items: tech.accreditations),
-                      const SizedBox(height: 14),
-                      _GuaranteeCard(text: tech.guaranteeText),
-                      const SizedBox(height: 14),
-                      _TitleRow(title: 'SERVICE ESTIMATES', trailing: Icons.payments_outlined),
-                      const SizedBox(height: 10),
-                      _EstimateCard(estimates: tech.estimates),
-                      const SizedBox(height: 14),
-                      _LocationCard(
-                        title: tech.workshopName,
-                        subtitle: tech.workshopAddress,
-                      ),
-                      const SizedBox(height: 14),
-                      const _SectionHeader(
-                        title: 'USER REVIEWS',
-                        actionLabel: 'See All',
-                      ),
-                      const SizedBox(height: 10),
-                      ...tech.reviews.map(
-                        (review) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: _ReviewCard(review: review),
-                        ),
-                      ),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: _bg,
+        body: SafeArea(
+          child: Obx(() {
+            final tech = controller.selectedTechnician.value;
+            if (tech == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return Column(
+              children: [
+                // ── Top bar ─────────────────────────────────────────
+                _TopBar(name: tech.name),
+                // ── Profile header ──────────────────────────────────
+                _ProfileHeader(tech: tech),
+                // ── Tab bar ─────────────────────────────────────────
+                Container(
+                  color: _card,
+                  child: const TabBar(
+                    tabs: [
+                      Tab(text: 'SERVICE'),
+                      Tab(text: 'REVIEWS'),
+                      Tab(text: 'ABOUT'),
                     ],
                   ),
                 ),
-              ),
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-                child: SafeArea(
-                  top: false,
-                  child: Row(
+                // ── Tab views ───────────────────────────────────────
+                Expanded(
+                  child: TabBarView(
                     children: [
-                      const Expanded(
-                        child: _FooterHint(),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: FilledButton(
-                          onPressed: () => Get.toNamed(AppRoutes.createOrder),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size.fromHeight(52),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(26),
-                            ),
-                          ),
-                          child: const Text(
-                            'BOOK NOW',
-                            style: TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                      ),
+                      _ServiceTab(tech: tech),
+                      _ReviewsTab(),
+                      _AboutTab(tech: tech),
                     ],
                   ),
                 ),
-              ),
-            ],
-          );
-        }),
+              ],
+            );
+          }),
+        ),
       ),
     );
   }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  TOP BAR
+// ════════════════════════════════════════════════════════════════════════════
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.title});
-
-  final String title;
+  final String name;
+  const _TopBar({required this.name});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 6, 6, 6),
+    return Container(
+      color: _card,
+      padding: const EdgeInsets.fromLTRB(4, 6, 6, 6),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Get.back(),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           ),
-          Expanded(
+          const Expanded(
             child: Text(
-              title,
-              style: const TextStyle(
-                color: BookingTechnicianDetailPage._ink,
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-              ),
+              'Technician Details',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _ink),
             ),
           ),
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.share_outlined, color: Colors.black),
+            icon: const Icon(Icons.more_vert_rounded, color: _ink),
           ),
         ],
       ),
@@ -139,289 +100,366 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _HeroCard extends StatelessWidget {
-  const _HeroCard({required this.tech});
-
-  final CustomerTechnicianDetail tech;
+// ════════════════════════════════════════════════════════════════════════════
+//  PROFILE HEADER  (avatar, name, location, stats, CHAT FIRST)
+// ════════════════════════════════════════════════════════════════════════════
+class _ProfileHeader extends GetView<BookingController> {
+  final TechnicianOnlineModel tech;
+  const _ProfileHeader({required this.tech});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: BookingTechnicianDetailPage._card,
-        borderRadius: BorderRadius.circular(18),
-      ),
+      color: _card,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
         children: [
-          _AvatarCard(imageUrl: tech.avatarUrl),
-          const SizedBox(height: 14),
-          Text(
-            tech.name,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: BookingTechnicianDetailPage._chip,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              tech.specialty,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF325081),
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
+          // ── Avatar + Name + Location ─────────────────────────────
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _Avatar(photoUrl: tech.photoUrl, size: 80),
+              const SizedBox(width: 14),
               Expanded(
-                child: _StatBox(
-                  value: '${tech.yearsExperience}+',
-                  label: 'YEARS EXP.',
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _StatBox(
-                  value: '${tech.successRate}%',
-                  label: 'SUCCESS',
-                  valueColor: const Color(0xFF8A5A20),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _StatBox(
-                  value: tech.rating.toStringAsFixed(1),
-                  icon: Icons.star,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tech.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: _ink,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_rounded,
+                            size: 13, color: _muted),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            tech.workshopAddress.isEmpty
+                                ? tech.distanceLabel
+                                : '${tech.distanceLabel} • ${tech.workshopAddress}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _muted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // ── Specialty tags ─────────────────────────────
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        _Tag(
+                          label: tech.specialty.isEmpty
+                              ? tech.category.toUpperCase()
+                              : tech.specialty.toUpperCase(),
+                          color: const Color(0xFFDCEDFF),
+                          textColor: const Color(0xFF1D4ED8),
+                        ),
+                        if (tech.accreditations.isNotEmpty)
+                          _Tag(
+                            label: tech.accreditations.first.toUpperCase(),
+                            color: const Color(0xFFE0F2FE),
+                            textColor: const Color(0xFF0369A1),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
+
+          const SizedBox(height: 16),
+
+          // ── Stats row ────────────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: _StatChip(
+                  value: '${tech.totalJobs}',
+                  label: 'JOBS DONE',
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: _StatChip(
+                  value: '98%',
+                  label: 'COMPLETION',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _StatChip(
+                  value: '${tech.yearsExperience > 0 ? tech.yearsExperience : 1}y',
+                  label: 'MEMBER',
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── CHAT FIRST button ────────────────────────────────────
+          OutlinedButton.icon(
+            onPressed: () {
+              final t = controller.selectedTechnician.value;
+              if (t == null) return;
+              Get.toNamed(AppRoutes.chat, arguments: {
+                'chatId': t.uid,
+                'otherPartyName': t.name,
+                'otherPartyPhotoUrl': t.photoUrl,
+              });
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _ink,
+              side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+              minimumSize: const Size(double.infinity, 44),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+            label: const Text(
+              'CHAT FIRST',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _AvatarCard extends StatelessWidget {
-  const _AvatarCard({this.imageUrl});
-
-  final String? imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 104,
-          height: 104,
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: const Color(0xFFD9E4F8),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const _AvatarFallback(),
-        ),
-        Positioned(
-          right: -2,
-          bottom: -2,
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: const Color(0xFF3F5E9B),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: const Icon(Icons.verified, size: 14, color: Colors.white),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AvatarFallback extends StatelessWidget {
-  const _AvatarFallback();
+class _Avatar extends StatelessWidget {
+  final String? photoUrl;
+  final double size;
+  const _Avatar({required this.size, this.photoUrl});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF10151C),
-      child: const Center(
-        child: Icon(Icons.person_rounded, color: Color(0xFFB8C1D4), size: 54),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(size * 0.22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: photoUrl != null && photoUrl!.isNotEmpty
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(size * 0.22),
+              child: Image.network(photoUrl!, fit: BoxFit.cover),
+            )
+          : Icon(Icons.person_rounded, color: const Color(0xFF94A3B8), size: size * 0.45),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color textColor;
+  const _Tag({required this.label, required this.color, required this.textColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          color: textColor,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }
 }
 
-class _StatBox extends StatelessWidget {
-  const _StatBox({
-    required this.value,
-    this.label,
-    this.icon,
-    this.valueColor = BookingTechnicianDetailPage._ink,
-  });
-
+class _StatChip extends StatelessWidget {
   final String value;
-  final String? label;
-  final IconData? icon;
-  final Color valueColor;
+  final String label;
+  const _StatChip({required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         children: [
           Text(
             value,
-            style: TextStyle(
-              color: valueColor,
+            style: const TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
+              color: _ink,
             ),
           ),
-          const SizedBox(height: 4),
-          if (icon != null)
-            const Icon(Icons.star, size: 16, color: Color(0xFF3654FF))
-          else
-            Text(
-              label!,
-              style: const TextStyle(
-                color: BookingTechnicianDetailPage._muted,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.6,
-              ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: _muted,
+              letterSpacing: 0.5,
             ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _TitleRow extends StatelessWidget {
-  const _TitleRow({required this.title, this.trailing});
-
-  final String title;
-  final IconData? trailing;
+// ════════════════════════════════════════════════════════════════════════════
+//  SERVICE TAB
+// ════════════════════════════════════════════════════════════════════════════
+class _ServiceTab extends GetView<BookingController> {
+  final TechnicianOnlineModel tech;
+  const _ServiceTab({required this.tech});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final estimates = tech.serviceEstimates;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: BookingTechnicianDetailPage._ink,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2,
-          ),
-        ),
-        const Spacer(),
-        if (trailing != null)
-          Icon(trailing, color: BookingTechnicianDetailPage._muted, size: 18),
+        if (estimates.isEmpty)
+          _EmptyServices()
+        else ...[
+          ...estimates.map((e) => Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: _ServiceCard(estimate: e),
+              )),
+        ],
+        _NotListedCard(),
+        const SizedBox(height: 80),
       ],
     );
   }
 }
 
-class _AccreditationsCard extends StatelessWidget {
-  const _AccreditationsCard({required this.items});
-
-  final List<String> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (_, index) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.verified_user_outlined, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                items[index],
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemCount: items.length,
-      ),
-    );
-  }
-}
-
-class _GuaranteeCard extends StatelessWidget {
-  const _GuaranteeCard({required this.text});
-
-  final String text;
+class _ServiceCard extends GetView<BookingController> {
+  final ServiceEstimate estimate;
+  const _ServiceCard({required this.estimate});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F3F8),
+        color: _card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD6DCE7)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Title + Price ──────────────────────────────────────
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(12),
+              Expanded(
+                child: Text(
+                  estimate.service,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: _ink,
+                  ),
                 ),
-                child: const Icon(Icons.lock_outline_rounded, color: Colors.white),
               ),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Secure Service Guarantee',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    estimate.priceLabel,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: _blue,
+                    ),
+                  ),
+                  const Text(
+                    'depend on brands & size',
+                    style: TextStyle(fontSize: 9, color: _muted),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            text,
-            style: const TextStyle(
-              color: BookingTechnicianDetailPage._muted,
-              fontSize: 13,
-              height: 1.4,
+          // ── Tags ──────────────────────────────────────────────
+          Wrap(
+            spacing: 6,
+            children: [
+              _ServiceTag(label: 'HOME VISIT'),
+              _ServiceTag(label: estimate.durationLabel.toUpperCase()),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // ── Book Now ──────────────────────────────────────────
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                controller.setSelectedService(estimate);
+                Get.toNamed(AppRoutes.createOrder);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _ink,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.calendar_today_rounded, size: 15),
+                  SizedBox(width: 6),
+                  Text('BOOK NOW', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                ],
+              ),
             ),
           ),
         ],
@@ -430,131 +468,565 @@ class _GuaranteeCard extends StatelessWidget {
   }
 }
 
-class _EstimateCard extends StatelessWidget {
-  const _EstimateCard({required this.estimates});
-
-  final List<ServiceEstimate> estimates;
+class _ServiceTag extends StatelessWidget {
+  final String label;
+  const _ServiceTag({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(5),
       ),
-      child: Column(
-        children: estimates
-            .map(
-              (estimate) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        estimate.title,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    Text(
-                      estimate.priceLabel,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
-                    ),
-                  ],
-                ),
-              ),
-            )
-            .toList(),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          color: _muted,
+          letterSpacing: 0.3,
+        ),
       ),
     );
   }
 }
 
-class _LocationCard extends StatelessWidget {
-  const _LocationCard({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
+class _NotListedCard extends GetView<BookingController> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F5F8),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.location_on_outlined),
+          const Text(
+            '+ Not Listed Above?',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _ink),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 4),
+          const Text(
+            'Chat directly — if it\'s a laptop or PC, they can most likely help.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: _muted, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () {
+              final t = controller.selectedTechnician.value;
+              if (t == null) return;
+              Get.toNamed(AppRoutes.chat, arguments: {
+                'chatId': t.uid,
+                'otherPartyName': t.name,
+                'otherPartyPhotoUrl': t.photoUrl,
+              });
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _blue,
+              side: const BorderSide(color: _blue),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.chat_rounded, size: 15),
+            label: const Text('START CHAT',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyServices extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        children: [
+          const Icon(Icons.build_outlined, size: 40, color: _muted),
+          const SizedBox(height: 12),
+          const Text(
+            'Belum ada daftar layanan.\nChat teknisi untuk informasi harga.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: _muted, fontSize: 13, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  REVIEWS TAB
+// ════════════════════════════════════════════════════════════════════════════
+class _ReviewsTab extends GetView<BookingController> {
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isLoadingReviews.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      final reviews = controller.technicianReviews;
+      final tech = controller.selectedTechnician.value;
+      final avgRating = tech?.rating ?? 0;
+      final totalRatings = reviews.length;
+
+      // Count per star
+      final counts = List.filled(6, 0);
+      for (final r in reviews) {
+        final s = (r['rating'] as num?)?.toInt() ?? 0;
+        if (s >= 1 && s <= 5) counts[s]++;
+      }
+
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        children: [
+          // ── Rating Summary Card ──────────────────────────────
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _card,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: BookingTechnicianDetailPage._muted,
-                    fontSize: 13,
+                // Big rating number
+                Column(
+                  children: [
+                    Text(
+                      avgRating.toStringAsFixed(1),
+                      style: const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                        color: _ink,
+                      ),
+                    ),
+                    Row(
+                      children: List.generate(
+                        5,
+                        (i) => Icon(
+                          i < avgRating.floor()
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          size: 16,
+                          color: const Color(0xFFF59E0B),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$totalRatings Reviewed',
+                      style: const TextStyle(fontSize: 11, color: _muted),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 20),
+                // Star bars
+                Expanded(
+                  child: Column(
+                    children: List.generate(5, (i) {
+                      final star = 5 - i;
+                      final count = counts[star];
+                      final pct = totalRatings > 0 ? count / totalRatings : 0.0;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          children: [
+                            Text(
+                              '$star',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: _muted,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: pct.toDouble(),
+                                  minHeight: 6,
+                                  backgroundColor: const Color(0xFFE2E8F0),
+                                  color: _ratingBarColor(star),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            SizedBox(
+                              width: 32,
+                              child: Text(
+                                '${(pct * 100).toInt()}%',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: _muted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ],
             ),
           ),
+
+          const SizedBox(height: 14),
+
+          if (reviews.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(
+                child: Text(
+                  'Belum ada ulasan.',
+                  style: TextStyle(color: _muted, fontSize: 13),
+                ),
+              ),
+            )
+          else
+            ...reviews.map((r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ReviewCard(review: r),
+                )),
+
+          const SizedBox(height: 80),
+        ],
+      );
+    });
+  }
+
+  Color _ratingBarColor(int star) {
+    if (star >= 4) return const Color(0xFF10B981);
+    if (star == 3) return const Color(0xFFF59E0B);
+    return const Color(0xFFEF4444);
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  final Map<String, dynamic> review;
+  const _ReviewCard({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = review['reviewerName'] as String? ?? '-';
+    final rating = (review['rating'] as num?)?.toInt() ?? 0;
+    final comment = review['comment'] as String? ?? '';
+    final date = review['date'] as String? ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: const Color(0xFFF1F5F9),
+                child: Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: _ink,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: _ink,
+                      ),
+                    ),
+                    Text(
+                      date,
+                      style: const TextStyle(fontSize: 11, color: _muted),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: List.generate(
+                  5,
+                  (i) => Icon(
+                    i < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                    size: 13,
+                    color: const Color(0xFFF59E0B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (comment.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              comment,
+              style: const TextStyle(
+                fontSize: 13,
+                color: _muted,
+                height: 1.5,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.actionLabel});
-
-  final String title;
-  final String actionLabel;
+// ════════════════════════════════════════════════════════════════════════════
+//  ABOUT TAB
+// ════════════════════════════════════════════════════════════════════════════
+class _AboutTab extends GetView<BookingController> {
+  final TechnicianOnlineModel tech;
+  const _AboutTab({required this.tech});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2,
+        // ── About / Bio ─────────────────────────────────────────
+        _SectionCard(
+          title: 'ABOUT',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Teknisi ${tech.specialty.isEmpty ? tech.category : tech.specialty} '
+                'dengan pengalaman ${tech.yearsExperience > 0 ? tech.yearsExperience : 1}+ tahun. '
+                'Melayani berbagai merek dan model. Garansi pengerjaan.',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _muted,
+                  height: 1.6,
+                ),
+              ),
+            ],
           ),
         ),
-        const Spacer(),
-        Text(
-          actionLabel,
-          style: const TextStyle(
-            color: Color(0xFF3654FF),
-            fontWeight: FontWeight.w700,
+
+        const SizedBox(height: 14),
+
+        // ── Details ─────────────────────────────────────────────
+        _SectionCard(
+          title: 'DETAILS',
+          child: Column(
+            children: [
+              _DetailRow(label: 'Service area', value: tech.workshopAddress.isEmpty
+                  ? 'Yogyakarta, Sleman'
+                  : tech.workshopAddress),
+              _DetailRow(label: 'Service method', value: 'Pick-up & return only'),
+              _DetailRow(label: 'Experience', value: '${tech.yearsExperience > 0 ? tech.yearsExperience : 1} years'),
+              _DetailRow(label: 'Verification', value: 'Certified', isGreen: true),
+            ],
           ),
         ),
+
+        const SizedBox(height: 14),
+
+        // ── Certifications ──────────────────────────────────────
+        if (tech.accreditations.isNotEmpty)
+          _SectionCard(
+            title: 'CERTIFICATION',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.verified_outlined,
+                            size: 28, color: _muted),
+                        const SizedBox(height: 4),
+                        Text(
+                          tech.accreditations.join(', '),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        if (tech.accreditations.isNotEmpty) const SizedBox(height: 14),
+
+        // ── Workshop Location ────────────────────────────────────
+        _SectionCard(
+          title: 'WORKSHOP LOCATION',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Mini map
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  height: 160,
+                  width: double.infinity,
+                  child: tech.lat != null && tech.lng != null
+                      ? _WorkshopMap(lat: tech.lat!, lng: tech.lng!)
+                      : Container(
+                          color: const Color(0xFFE2E8F0),
+                          child: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.map_outlined,
+                                    size: 32, color: _muted),
+                                SizedBox(height: 6),
+                                Text(
+                                  'Lokasi belum diset',
+                                  style: TextStyle(color: _muted, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                tech.name,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: _ink,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                tech.workshopAddress.isEmpty
+                    ? 'Alamat belum diisi'
+                    : tech.workshopAddress,
+                style: const TextStyle(fontSize: 12, color: _muted, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _blue,
+                        side: const BorderSide(color: _blue),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      icon: const Icon(Icons.map_outlined, size: 15),
+                      label: const Text(
+                        'OPEN IN MAPS',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Clipboard.setData(
+                          ClipboardData(text: tech.workshopAddress),
+                        );
+                        Get.snackbar(
+                          'Tersalin',
+                          'Alamat disalin ke clipboard',
+                          snackPosition: SnackPosition.BOTTOM,
+                          duration: const Duration(seconds: 2),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _muted,
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      icon: const Icon(Icons.copy_rounded, size: 15),
+                      label: const Text(
+                        'COPY ADDRESS',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // ── Send a message ───────────────────────────────────────
+        ElevatedButton.icon(
+          onPressed: () {
+            final t = controller.selectedTechnician.value;
+            if (t == null) return;
+            Get.toNamed(AppRoutes.chat, arguments: {
+              'chatId': t.uid,
+              'otherPartyName': t.name,
+              'otherPartyPhotoUrl': t.photoUrl,
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _ink,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            elevation: 0,
+          ),
+          icon: const Icon(Icons.send_rounded, size: 17),
+          label: const Text(
+            'Send a message',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          ),
+        ),
+
+        const SizedBox(height: 80),
       ],
     );
   }
 }
 
-class _ReviewCard extends StatelessWidget {
-  const _ReviewCard({required this.review});
-
-  final CustomerReview review;
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final Widget child;
+  const _SectionCard({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -562,44 +1034,64 @@ class _ReviewCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _card,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                radius: 16,
-                backgroundColor: Color(0xFF1D2430),
-                child: Icon(Icons.person, size: 16, color: Colors.white),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  review.author,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-              Row(
-                children: List.generate(
-                  review.rating,
-                  (_) => const Icon(
-                    Icons.star,
-                    size: 14,
-                    color: Color(0xFF3654FF),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
           Text(
-            review.comment,
+            title,
             style: const TextStyle(
-              color: BookingTechnicianDetailPage._muted,
-              height: 1.5,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: _muted,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isGreen;
+  const _DetailRow({required this.label, required this.value, this.isGreen = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: _muted),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: isGreen ? const Color(0xFF10B981) : _ink,
+              ),
             ),
           ),
         ],
@@ -608,24 +1100,54 @@ class _ReviewCard extends StatelessWidget {
   }
 }
 
-class _FooterHint extends StatelessWidget {
-  const _FooterHint();
+// ── Workshop Mapbox Widget ─────────────────────────────────────────────────
+class _WorkshopMap extends StatefulWidget {
+  final double lat;
+  final double lng;
+  const _WorkshopMap({required this.lat, required this.lng});
+
+  @override
+  State<_WorkshopMap> createState() => _WorkshopMapState();
+}
+
+class _WorkshopMapState extends State<_WorkshopMap> {
+  mapbox.CircleAnnotationManager? _circleManager;
+
+  Future<void> _onMapCreated(mapbox.MapboxMap map) async {
+    await map.gestures.updateSettings(mapbox.GesturesSettings(
+      scrollEnabled: false,
+      rotateEnabled: false,
+      pitchEnabled: false,
+      pinchToZoomEnabled: false,
+      doubleTapToZoomInEnabled: false,
+      doubleTouchToZoomOutEnabled: false,
+      quickZoomEnabled: false,
+    ));
+
+    _circleManager = await map.annotations.createCircleAnnotationManager();
+    await _circleManager?.create(
+      mapbox.CircleAnnotationOptions(
+        geometry: mapbox.Point(
+            coordinates: mapbox.Position(widget.lng, widget.lat)),
+        circleRadius: 10.0,
+        circleColor: 0xFFEF4444,
+        circleStrokeWidth: 3.0,
+        circleStrokeColor: 0xFFFFFFFF,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.info_outline, color: BookingTechnicianDetailPage._muted),
-        SizedBox(height: 4),
-        Text(
-          'DETAILS',
-          style: TextStyle(
-            color: BookingTechnicianDetailPage._muted,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
+    return mapbox.MapWidget(
+      key: ValueKey('workshop_map_${widget.lat}_${widget.lng}'),
+      styleUri: mapbox.MapboxStyles.OUTDOORS,
+      cameraOptions: mapbox.CameraOptions(
+        center: mapbox.Point(
+            coordinates: mapbox.Position(widget.lng, widget.lat)),
+        zoom: 14.0,
+      ),
+      onMapCreated: _onMapCreated,
     );
   }
 }

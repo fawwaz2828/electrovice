@@ -7,6 +7,7 @@ import '../../models/booking_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
 import '../../services/technician_service.dart' show TechnicianOnlineModel;
+import '../../services/technician_service.dart' as tech_svc show ServiceEstimate;
 import '../../config/routes.dart';
 
 class BookingController extends GetxController {
@@ -15,6 +16,9 @@ class BookingController extends GetxController {
 
   // ── Technician yang dipilih customer ──────────────────────────
   final Rxn<TechnicianOnlineModel> selectedTechnician = Rxn();
+
+  // ── Service yang dipilih customer dari tab SERVICE ──────────
+  final Rxn<tech_svc.ServiceEstimate> selectedService = Rxn();
 
   // ── Form state (BookingFormPage) ──────────────────────────────
   final RxString description = ''.obs;
@@ -206,6 +210,7 @@ class BookingController extends GetxController {
   void setDescription(String value) => description.value = value;
   void setDamageType(String value) => damageType.value = value;
   void setUserAddress(String value) => userAddress.value = value;
+  void setSelectedService(tech_svc.ServiceEstimate s) => selectedService.value = s;
 
   /// Set tanggal saja — pertahankan jam yang sudah dipilih jika slotnya masih tersedia.
   void setScheduledDate(DateTime date) {
@@ -313,14 +318,14 @@ class BookingController extends GetxController {
 
   /// Map ke CheckoutSummary untuk UI checkout page.
   CheckoutSummary get checkoutData {
-    final t = selectedTechnician.value;
-    final estimates = t?.serviceEstimates ?? [];
-    final minPrice = estimates.isNotEmpty ? estimates.first.minPrice : 0;
+    final svc = selectedService.value;
+    final minPrice = svc?.minPrice ?? 0;
+    final maxPrice = svc?.maxPrice ?? 0;
+    final adminFee = 12000.0;
 
     return CheckoutSummary(
-      currentRepairTitle: _damageTypeLabel(damageType.value),
-      scheduledForLabel:
-          'Jadwal: ${_formatDateTime(scheduledAt.value)}',
+      currentRepairTitle: svc?.service ?? _damageTypeLabel(damageType.value),
+      scheduledForLabel: _formatDateTime(scheduledAt.value),
       paymentMethod: _mapPaymentType(paymentMethod.value),
       paymentOptions: const [
         PaymentOption(
@@ -330,9 +335,9 @@ class BookingController extends GetxController {
         ),
       ],
       serviceFee: minPrice.toDouble(),
-      partsLabel: 'Estimasi biaya (bisa berubah)',
-      partsFee: 0,
-      taxFee: 0,
+      partsLabel: maxPrice > 0 ? 'Estimasi maks' : 'Estimasi (bisa berubah)',
+      partsFee: maxPrice.toDouble(),
+      taxFee: adminFee,
     );
   }
 

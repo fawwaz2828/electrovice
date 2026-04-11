@@ -4,10 +4,27 @@ import 'package:get/get.dart';
 import '../../models/booking_model.dart';
 import 'booking_controller.dart';
 
+// ── Palette ──────────────────────────────────────────────────────────────────
+const Color _bg   = Color(0xFFF2F3F7);
+const Color _card = Colors.white;
+const Color _ink  = Color(0xFF0F172A);
+const Color _muted= Color(0xFF64748B);
+const Color _blue = Color(0xFF0061FF);
+
+String _rp(double v) {
+  final s = v.round().toString();
+  final buf = StringBuffer();
+  int count = 0;
+  for (int i = s.length - 1; i >= 0; i--) {
+    if (count > 0 && count % 3 == 0) buf.write('.');
+    buf.write(s[i]);
+    count++;
+  }
+  return 'Rp ${buf.toString().split('').reversed.join()}';
+}
+
 class CheckoutPage extends GetView<BookingController> {
   const CheckoutPage({super.key});
-
-  static const Color _bg = Color(0xFFF7F8FC);
 
   @override
   Widget build(BuildContext context) {
@@ -16,73 +33,71 @@ class CheckoutPage extends GetView<BookingController> {
       body: SafeArea(
         child: Obx(() {
           final CheckoutSummary checkout = controller.checkoutData;
+          final tech = controller.selectedTechnician.value;
 
           return Column(
             children: [
+              // ── Top bar ──────────────────────────────────────────
               const _CheckoutTopBar(),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
                   child: Column(
                     children: [
-                      _CurrentRepairCard(checkout: checkout),
-                      const SizedBox(height: 16),
-                      const _SectionLabel('Payment Method'),
-                      const SizedBox(height: 10),
-                      ...checkout.paymentOptions.map(
-                        (option) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: _PaymentOptionTile(
-                            option: option,
-                            selected: checkout.paymentMethod == option.type,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _PromoTile(),
-                      const SizedBox(height: 16),
+                      // ── 1. Current Repair Card ───────────────────
+                      _CurrentRepairCard(checkout: checkout, tech: tech),
+                      const SizedBox(height: 14),
+
+                      // ── 2. Jadwal Repair ─────────────────────────
+                      _JadwalRepairCard(),
+                      const SizedBox(height: 14),
+
+                      // ── 3. Biaya Diagnosa ────────────────────────
+                      _BiayaDiagnosaCard(tech: tech),
+                      const SizedBox(height: 14),
+
+                      // ── 4. Cost Breakdown ────────────────────────
                       _CostBreakdown(checkout: checkout),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
+
+                      // ── Footer badges ────────────────────────────
                       const _CheckoutFooterBadges(),
                     ],
                   ),
                 ),
               ),
+              // ── Order Now button ──────────────────────────────────
               Container(
-                color: Colors.white,
+                color: _card,
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
                 child: SafeArea(
                   top: false,
-                  child: Obx(() => FilledButton(
+                  child: Obx(() => FilledButton.icon(
                     onPressed: controller.isSubmitting.value
                         ? null
                         : () => controller.submitBooking(),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: _ink,
                       foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(56),
+                      minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(28),
                       ),
+                      elevation: 0,
                     ),
-                    child: controller.isSubmitting.value
+                    icon: controller.isSubmitting.value
                         ? const SizedBox(
-                            width: 22,
-                            height: 22,
+                            width: 20, height: 20,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
+                              color: Colors.white, strokeWidth: 2.5,
                             ),
                           )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Konfirmasi Pesanan',
-                                  style: TextStyle(fontWeight: FontWeight.w800)),
-                              SizedBox(width: 8),
-                              Icon(Icons.check_circle_outline_rounded),
-                            ],
-                          ),
+                        : const Icon(Icons.arrow_forward_rounded),
+                    label: controller.isSubmitting.value
+                        ? const Text('Memproses...',
+                            style: TextStyle(fontWeight: FontWeight.w800))
+                        : const Text('Order Now',
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                   )),
                 ),
               ),
@@ -94,22 +109,24 @@ class CheckoutPage extends GetView<BookingController> {
   }
 }
 
+// ── Top Bar ───────────────────────────────────────────────────────────────
 class _CheckoutTopBar extends StatelessWidget {
   const _CheckoutTopBar();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+    return Container(
+      color: _card,
+      padding: const EdgeInsets.fromLTRB(4, 6, 16, 6),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Get.back(),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           ),
           const Text(
             'Checkout',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _ink),
           ),
         ],
       ),
@@ -117,28 +134,35 @@ class _CheckoutTopBar extends StatelessWidget {
   }
 }
 
+// ── 1. Current Repair Card ────────────────────────────────────────────────
 class _CurrentRepairCard extends StatelessWidget {
-  const _CurrentRepairCard({required this.checkout});
-
   final CheckoutSummary checkout;
+  final dynamic tech; // TechnicianOnlineModel | null
+  const _CurrentRepairCard({required this.checkout, this.tech});
 
   @override
   Widget build(BuildContext context) {
+    final name = tech?.name as String? ?? checkout.currentRepairTitle;
+    final scheduled = checkout.scheduledForLabel;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _card,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'CURRENT REPAIR',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1),
-          ),
-          const SizedBox(height: 8),
+          // Name + icon
           Row(
             children: [
               Expanded(
@@ -146,45 +170,51 @@ class _CurrentRepairCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      checkout.currentRepairTitle,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                      name,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: _ink,
+                      ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
-                      checkout.scheduledForLabel,
-                      style: const TextStyle(color: Color(0xFF727B8B)),
+                      'Scheduled for $scheduled',
+                      style: const TextStyle(fontSize: 12, color: _muted),
                     ),
                   ],
                 ),
               ),
               Container(
-                width: 54,
-                height: 38,
+                width: 48,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F3F7),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.laptop_mac_rounded),
+                child: const Icon(Icons.laptop_mac_rounded, color: _muted, size: 20),
               ),
             ],
           ),
           const SizedBox(height: 12),
+          // Verified badge
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F4FF),
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFFEEF4FF),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.verified, color: Color(0xFF3654FF), size: 18),
+                Icon(Icons.verified, color: _blue, size: 16),
                 SizedBox(width: 8),
                 Text(
                   'Verified Professional Service assigned',
                   style: TextStyle(
-                    color: Color(0xFF3654FF),
+                    color: _blue,
                     fontWeight: FontWeight.w700,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -196,151 +226,207 @@ class _CurrentRepairCard extends StatelessWidget {
   }
 }
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}
-
-class _PaymentOptionTile extends StatelessWidget {
-  const _PaymentOptionTile({
-    required this.option,
-    required this.selected,
-  });
-
-  final PaymentOption option;
-  final bool selected;
+// ── 2. Jadwal Repair Card ─────────────────────────────────────────────────
+class _JadwalRepairCard extends GetView<BookingController> {
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0F2F6),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(_iconFor(option.type)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(option.title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 2),
-                Text(
-                  option.subtitle,
-                  style: const TextStyle(color: Color(0xFF727B8B), fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            selected ? Icons.radio_button_checked : Icons.radio_button_off,
-            color: selected ? const Color(0xFF3654FF) : const Color(0xFFB4BCCB),
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _iconFor(PaymentMethodType type) {
-    switch (type) {
-      case PaymentMethodType.card:
-        return Icons.credit_card_rounded;
-      case PaymentMethodType.googlePay:
-        return Icons.account_balance_wallet_outlined;
-      case PaymentMethodType.wallet:
-        return Icons.wallet_outlined;
-    }
-  }
-}
-
-class _PromoTile extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.sell_outlined, color: Color(0xFF8A5A20)),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Apply promo code or voucher',
-              style: TextStyle(color: Color(0xFF727B8B)),
-            ),
-          ),
-          Text(
-            'Apply',
-            style: TextStyle(color: Color(0xFF3654FF), fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CostBreakdown extends StatelessWidget {
-  const _CostBreakdown({required this.checkout});
-
-  final CheckoutSummary checkout;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _card,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _costRow('Service Fee', checkout.serviceFee),
-          const SizedBox(height: 10),
-          _costRow(checkout.partsLabel, checkout.partsFee),
-          const SizedBox(height: 10),
-          _costRow('Tax & Processing Fee', checkout.taxFee),
-          const Divider(height: 26),
+          const Text(
+            'Jadwal Repair',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: _ink,
+            ),
+          ),
+          const SizedBox(height: 14),
+          // ── Date + Time row ───────────────────────────────────
+          Obx(() {
+            final dt = controller.scheduledAt.value;
+            final day = dt.day;
+            final month = _months[dt.month - 1];
+            final year = dt.year;
+            final hour = dt.hour.toString().padLeft(2, '0');
+            final weekdays = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+            final dayName = weekdays[dt.weekday - 1];
+
+            return Row(
+              children: [
+                // Date
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$day $month $year',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: _ink,
+                        ),
+                      ),
+                      Text(
+                        dayName,
+                        style: const TextStyle(fontSize: 12, color: _muted),
+                      ),
+                    ],
+                  ),
+                ),
+                // Time
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Time $hour:00',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _ink,
+                      ),
+                    ),
+                    const Text(
+                      'waktu',
+                      style: TextStyle(fontSize: 12, color: _muted),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }),
+          const Divider(height: 24, color: Color(0xFFF1F5F9)),
+          // ── Address row ───────────────────────────────────────
+          Obx(() {
+            final address = controller.userAddress.value;
+            return Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        address.isEmpty ? 'Alamat Lengkap' : address,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: address.isEmpty ? _muted : _ink,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Text(
+                        'Address',
+                        style: TextStyle(fontSize: 11, color: _muted),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'GPS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: _muted,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 3. Biaya Diagnosa Card ────────────────────────────────────────────────
+class _BiayaDiagnosaCard extends StatelessWidget {
+  final dynamic tech;
+  const _BiayaDiagnosaCard({this.tech});
+
+  @override
+  Widget build(BuildContext context) {
+    // diagnosisFee from TechnicianOnlineModel (stored in technicians_online as int)
+    // We show Rp 12.000 as admin fee placeholder; actual fee from tech profile
+    final fee = 12000.0; // default biaya administrasi
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Biaya Diagnosa',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: _ink,
+            ),
+          ),
+          const SizedBox(height: 14),
           Row(
             children: [
-              const Text(
-                'Total Amount',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Biaya Administrasi',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: _ink,
+                      ),
+                    ),
+                    const Text(
+                      'Pencatatan sistem',
+                      style: TextStyle(fontSize: 11, color: _muted),
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
               Text(
-                _money(checkout.totalAmount),
+                _rp(fee),
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF3654FF),
+                  color: _ink,
                 ),
               ),
             ],
@@ -349,29 +435,129 @@ class _CostBreakdown extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _costRow(String label, double value) {
+// ── 4. Cost Breakdown ─────────────────────────────────────────────────────
+class _CostBreakdown extends StatelessWidget {
+  final CheckoutSummary checkout;
+  const _CostBreakdown({required this.checkout});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Cost Breakdown',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: _ink,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _CostRow(label: 'Service Fee', value: checkout.serviceFee),
+          const SizedBox(height: 8),
+          _CostRow(label: checkout.partsLabel, value: checkout.partsFee),
+          const SizedBox(height: 8),
+          _CostRow(label: 'Tax & Processing Fee', value: checkout.taxFee),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+          ),
+          Row(
+            children: [
+              const Text(
+                'Total Amount',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _ink),
+              ),
+              const Spacer(),
+              Text(
+                _rp(checkout.totalAmount),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: _blue,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CostRow extends StatelessWidget {
+  final String label;
+  final double value;
+  const _CostRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF60697A)))),
-        Text(_money(value), style: const TextStyle(fontWeight: FontWeight.w700)),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: _muted),
+          ),
+        ),
+        Text(
+          _rp(value),
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: _ink,
+          ),
+        ),
       ],
     );
   }
-
-  String _money(double value) => '\$${value.toStringAsFixed(2)}';
 }
 
+// ── Footer Badges ─────────────────────────────────────────────────────────
 class _CheckoutFooterBadges extends StatelessWidget {
   const _CheckoutFooterBadges();
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('SECURE ENCRYPTION', style: TextStyle(fontSize: 10, color: Color(0xFF727B8B))),
-        Text('FRAUD PROTECTION', style: TextStyle(fontSize: 10, color: Color(0xFF727B8B))),
+        const Icon(Icons.lock_rounded, size: 12, color: _muted),
+        const SizedBox(width: 4),
+        const Text(
+          'SECURE ENCRYPTION',
+          style: TextStyle(fontSize: 10, color: _muted, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(width: 20),
+        Container(
+          width: 1,
+          height: 12,
+          color: const Color(0xFFE2E8F0),
+        ),
+        const SizedBox(width: 20),
+        const Icon(Icons.verified_user_outlined, size: 12, color: _muted),
+        const SizedBox(width: 4),
+        const Text(
+          'FRAUD PROTECTION',
+          style: TextStyle(fontSize: 10, color: _muted, fontWeight: FontWeight.w700),
+        ),
       ],
     );
   }

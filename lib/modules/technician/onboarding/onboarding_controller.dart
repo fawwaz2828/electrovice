@@ -307,6 +307,19 @@ class TechnicianOnboardingController extends GetxController {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
+      // Build diagnosa service estimate dari diagnosisFee
+      final List<Map<String, dynamic>> initialServices = [];
+      if (fee > 0) {
+        initialServices.add({
+          'service': 'Diagnosa',
+          'minPrice': fee,
+          'maxPrice': fee,
+          'description':
+              'Pemeriksaan awal kondisi perangkat untuk menentukan kerusakan dan estimasi biaya perbaikan.',
+          'duration': 'same_day',
+        });
+      }
+
       // Create technicians_online doc (untuk geo-query)
       final GeoFirePoint point = GeoFirePoint(GeoPoint(lat.value, lng.value));
       await _firestore.collection('technicians_online').doc(uid).set({
@@ -318,7 +331,7 @@ class TechnicianOnboardingController extends GetxController {
         'workshopAddress': workshopAddressCtrl.text.trim(),
         'location': point.data,
         'accreditations': certUrls,
-        'serviceEstimates': [],
+        'serviceEstimates': initialServices,
         'serviceRadius': radius,
         'diagnosisFee': fee,
         'rating': 0.0,

@@ -75,33 +75,62 @@ class TechnicianService {
     double radiusKm = 10,
     String? category,
   }) async {
-    final collection = _firestore.collection('technicians_online');
-    final geoRef = GeoCollectionReference<Map<String, dynamic>>(collection);
-    final center = GeoFirePoint(GeoPoint(lat, lng));
+    List<TechnicianOnlineModel> result = [];
 
-    final snapshots = await geoRef.fetchWithin(
-      center: center,
-      radiusInKm: radiusKm,
-      field: 'location',
-      geopointFrom: (data) =>
-          (data['location']['geopoint'] as GeoPoint),
-      strictMode: true,
-    );
+    // ── 1. Try geo-query (requires correct geohash in location field)
+    try {
+      final collection = _firestore.collection('technicians_online');
+      final geoRef = GeoCollectionReference<Map<String, dynamic>>(collection);
+      final center = GeoFirePoint(GeoPoint(lat, lng));
 
-    List<TechnicianOnlineModel> result = snapshots
-        .where((doc) => doc.data() != null)
-        .map((doc) {
-          final data = doc.data()!;
-          final GeoPoint geopoint =
-              data['location']['geopoint'] as GeoPoint;
-          final double distanceKm = Geolocator.distanceBetween(
-                lat, lng,
-                geopoint.latitude, geopoint.longitude,
-              ) / 1000;
-          return TechnicianOnlineModel.fromMap(data,
-              distanceKm: distanceKm);
-        })
-        .toList();
+      final snapshots = await geoRef.fetchWithin(
+        center: center,
+        radiusInKm: radiusKm,
+        field: 'location',
+        geopointFrom: (data) => (data['location']['geopoint'] as GeoPoint),
+        strictMode: false, // false = bounding box saja, lebih toleran
+      );
+
+      result = snapshots
+          .where((doc) => doc.data() != null)
+          .map((doc) {
+            final data = doc.data()!;
+            double distKm = 0;
+            try {
+              final GeoPoint gp = data['location']['geopoint'] as GeoPoint;
+              distKm = Geolocator.distanceBetween(
+                    lat, lng, gp.latitude, gp.longitude) /
+                  1000;
+            } catch (_) {}
+            return TechnicianOnlineModel.fromMap(data, distanceKm: distKm);
+          })
+          .toList();
+    } catch (_) {}
+
+    // ── 2. Fallback: fetch semua dokumen jika geo-query gagal / kosong
+    if (result.isEmpty) {
+      final snapshot = await _firestore
+          .collection('technicians_online')
+          .get();
+
+      result = snapshot.docs
+          .where((d) => d.data().isNotEmpty)
+          .map((d) {
+            final data = d.data();
+            double distKm = 0;
+            try {
+              final loc = data['location'];
+              if (loc is Map) {
+                final gp = loc['geopoint'] as GeoPoint;
+                distKm = Geolocator.distanceBetween(
+                        lat, lng, gp.latitude, gp.longitude) /
+                    1000;
+              }
+            } catch (_) {}
+            return TechnicianOnlineModel.fromMap(data, distanceKm: distKm);
+          })
+          .toList();
+    }
 
     if (category != null && category.isNotEmpty) {
       result = result.where((t) => t.category == category).toList();
@@ -119,6 +148,56 @@ class TechnicianService {
         .get();
     if (!doc.exists || doc.data() == null) return null;
     return TechnicianOnlineModel.fromMap(doc.data()!);
+  }
+
+  // ── SERVICE ESTIMATE CRUD ───────────────────────────────────────
+
+  /// Load daftar service dari technicians_online/{uid}.
+  /// Diagnosa selalu disertakan di posisi pertama jika diagnosisFee > 0
+  /// dan belum ada service bernama "Diagnosa" di dalam list.
+  Future<List<ServiceEstimate>> getServiceEstimates(String uid) async {
+    final doc = await _firestore
+        .collection('technicians_online')
+        .doc(uid)
+        .get();
+    if (!doc.exists || doc.data() == null) return [];
+
+    final data = doc.data()!;
+    final raw  = data['serviceEstimates'] as List<dynamic>? ?? [];
+    final list = raw
+        .whereType<Map>()
+        .map((e) => ServiceEstimate.fromMap(Map<String, dynamic>.from(e)))
+        .toList();
+
+    // Inject diagnosa dari diagnosisFee jika belum ada
+    final diagFee = (data['diagnosisFee'] as num?)?.toInt() ?? 0;
+    final hasDiagnosa = list.any(
+      (s) => s.service.toLowerCase().contains('diagnosa'),
+    );
+    if (diagFee > 0 && !hasDiagnosa) {
+      list.insert(
+        0,
+        ServiceEstimate(
+          service: 'Diagnosa',
+          minPrice: diagFee,
+          maxPrice: diagFee,
+          description:
+              'Pemeriksaan awal kondisi perangkat untuk menentukan kerusakan dan estimasi biaya perbaikan.',
+          duration: 'same_day',
+        ),
+      );
+    }
+
+    return list;
+  }
+
+  /// Simpan seluruh list service (replace all)
+  Future<void> saveServiceEstimates(
+      String uid, List<ServiceEstimate> estimates) async {
+    await _firestore.collection('technicians_online').doc(uid).set(
+      {'serviceEstimates': estimates.map((e) => e.toMap()).toList()},
+      SetOptions(merge: true),
+    );
   }
 }
 
@@ -217,11 +296,15 @@ class ServiceEstimate {
   final String service;
   final int minPrice;
   final int maxPrice;
+  final String description;
+  final String duration; // 'same_day' | '1-2_days' | '2-6_days'
 
   const ServiceEstimate({
     required this.service,
     required this.minPrice,
     required this.maxPrice,
+    this.description = '',
+    this.duration = 'same_day',
   });
 
   factory ServiceEstimate.fromMap(Map<String, dynamic> map) {
@@ -229,11 +312,40 @@ class ServiceEstimate {
       service: map['service'] as String? ?? '',
       minPrice: (map['minPrice'] as num?)?.toInt() ?? 0,
       maxPrice: (map['maxPrice'] as num?)?.toInt() ?? 0,
+      description: map['description'] as String? ?? '',
+      duration: map['duration'] as String? ?? 'same_day',
     );
   }
 
+  Map<String, dynamic> toMap() => {
+        'service': service,
+        'minPrice': minPrice,
+        'maxPrice': maxPrice,
+        'description': description,
+        'duration': duration,
+      };
+
+  String get durationLabel => switch (duration) {
+        '1-2_days' => '1 - 2 Days',
+        '2-6_days' => '2 - 6 Days',
+        _ => 'Same day',
+      };
+
   String get priceLabel {
-    if (minPrice == maxPrice) return 'Dari Rp$minPrice';
-    return 'Rp$minPrice - Rp$maxPrice';
+    String _fmt(int v) {
+      final s = v.toString();
+      final buf = StringBuffer();
+      int c = 0;
+      for (int i = s.length - 1; i >= 0; i--) {
+        if (c > 0 && c % 3 == 0) buf.write('.');
+        buf.write(s[i]);
+        c++;
+      }
+      return 'Rp ${buf.toString().split('').reversed.join()}';
+    }
+
+    if (maxPrice <= 0) return '${_fmt(minPrice)}k +';
+    if (minPrice == maxPrice) return _fmt(minPrice);
+    return '${_fmt(minPrice)} - ${_fmt(maxPrice)}';
   }
 }
