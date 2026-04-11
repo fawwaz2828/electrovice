@@ -472,47 +472,42 @@ class _RepairCategories extends StatelessWidget {
   const _RepairCategories();
 
   static const _categories = [
-<<<<<<< HEAD
     {'icon': Icons.phone_android_rounded, 'label': 'HANDPHONE', 'category': 'electronic'},
     {'icon': Icons.laptop_rounded,        'label': 'KOMPUTER',  'category': 'electronic'},
     {'icon': Icons.tv_rounded,            'label': 'TV & AUDIO','category': 'electronic'},
     {'icon': Icons.kitchen_rounded,       'label': 'ELEKTRONIK','category': 'electronic'},
     {'icon': Icons.ac_unit_rounded,       'label': 'AC / KULKAS','category': 'electronic'},
     {'icon': Icons.directions_car_rounded,'label': 'KENDARAAN', 'category': 'vehicle'},
-=======
-    {'icon': Icons.tv_rounded, 'label': 'TV & AUDIO', 'category': 'electronic'},
-    {'icon': Icons.laptop_rounded, 'label': 'COMPUTERS', 'category': 'electronic'},
-    {'icon': Icons.kitchen_rounded, 'label': 'APPLIANCES', 'category': 'electronic'},
-    {'icon': Icons.directions_car_rounded, 'label': 'VEHICLES', 'category': 'vehicle'},
->>>>>>> origin/main
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Repair Categories',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1E293B),
-              ),
-            ),
-            GestureDetector(
-              onTap: () => Get.toNamed(AppRoutes.technicianList),
-              child: const Text(
-                'View All',
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Kategori Layanan',
                 style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0061FF),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
                 ),
               ),
-<<<<<<< HEAD
               GestureDetector(
                 onTap: () => Get.toNamed(AppRoutes.technicianList),
                 child: const Text(
@@ -549,23 +544,6 @@ class _RepairCategories extends StatelessWidget {
           ),
         ],
       ),
-=======
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: _categories.map((c) {
-            return _CategoryItem(
-              icon: c['icon'] as IconData,
-              label: c['label'] as String,
-              category: c['category'] as String,
-            );
-          }).toList(),
-        ),
-      ],
->>>>>>> origin/main
     );
   }
 }

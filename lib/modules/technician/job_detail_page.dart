@@ -193,13 +193,8 @@ class _JobDetailPageState extends State<JobDetailPage> {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-<<<<<<< HEAD
                                   const Icon(Icons.location_on_rounded, color: Color(0xFF6F88AE), size: 16),
                                   const SizedBox(width: 6),
-=======
-                                  Icon(Icons.location_on_rounded, color: Color(0xFF6F88AE), size: 16),
-                                  SizedBox(width: 6),
->>>>>>> origin/main
                                   Expanded(
                                     child: Text(
                                       (order?.userAddress.isNotEmpty ?? false)

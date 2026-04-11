@@ -179,10 +179,6 @@ class AppRoutes {
       page: () => const MapboxLocationPickerPage(),
     ),
     GetPage(
-      name: chat,
-      page: () => const ChatPage(),
-    ),
-    GetPage(
       name: jobSummary,
       page: () => const JobSummaryPage(),
       binding: BindingsBuilder(() {
