@@ -55,3 +55,8 @@ lib/config/mapbox_config.dart
 # Firebase config (JANGAN COMMIT)
 google-services.json
 android/app/google-services.json
+
+echo "HANDOVER.md" >> .gitignore
+echo "REWORK_PLAN.md" >> .gitignore
+echo "WORKFLOW_BARU.md" >> .gitignore
+echo ".claude/" >> .gitignore
