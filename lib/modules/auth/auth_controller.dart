@@ -93,7 +93,9 @@ class AuthController extends GetxController {
   }
 
   Future<void> _navigateToHome(String role) async {
-    if (role == 'technician') {
+    if (role == 'admin') {
+      Get.offAllNamed(AppRoutes.adminHome);
+    } else if (role == 'technician') {
       // Cek apakah onboarding sudah selesai
       final uid = _authService.currentUser?.uid;
       if (uid != null) {

@@ -7,8 +7,32 @@ class MapboxOptions {
   static void setAccessToken(String token) {}
 }
 
-class MapboxMap {}
-class PointAnnotationManager {}
+class GesturesManager {
+  Future<void> updateSettings(GesturesSettings settings) async {}
+}
+
+class LocationManager {
+  Future<void> updateSettings(LocationComponentSettings settings) async {}
+}
+
+class AnnotationsManager {
+  Future<PointAnnotationManager> createPointAnnotationManager() async =>
+      PointAnnotationManager();
+}
+
+class MapboxMap {
+  GesturesManager get gestures => GesturesManager();
+  LocationManager get location => LocationManager();
+  AnnotationsManager get annotations => AnnotationsManager();
+  Future<void> flyTo(CameraOptions options, [MapAnimationOptions? mapAnimationOptions]) async {}
+}
+
+class PointAnnotationManager {
+  Future<void> delete(PointAnnotation annotation) async {}
+  Future<PointAnnotation> create(PointAnnotationOptions options) async =>
+      PointAnnotation();
+}
+
 class PointAnnotation {}
 class MapAnimationOptions {
   MapAnimationOptions({int? duration});
@@ -61,6 +85,11 @@ class GesturesSettings {
 
 abstract class MapboxStyles {
   static const String MAPBOX_STREETS = '';
+  static const String OUTDOORS = '';
+  static const String SATELLITE = '';
+  static const String SATELLITE_STREETS = '';
+  static const String LIGHT = '';
+  static const String DARK = '';
 }
 
 class MapWidget extends StatelessWidget {

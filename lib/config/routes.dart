@@ -30,6 +30,8 @@ import '../modules/technician/onboarding/onboarding_page.dart';
 import '../modules/technician/onboarding/onboarding_controller.dart';
 import '../modules/technician/my_service_page.dart';
 import '../modules/technician/service_detail_page.dart';
+import '../admin/admin_verification_page.dart';
+import '../admin/admin_home_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -57,6 +59,8 @@ class AppRoutes {
   static const technicianOnboarding = '/technician/onboarding';
   static const myService = '/technician/my-service';
   static const serviceDetail = '/technician/service-detail';
+  static const String adminVerification = '/admin-verification';
+  static const String adminHome = '/admin-home';
 
   static final routes = [
     GetPage(
@@ -222,6 +226,14 @@ class AppRoutes {
     GetPage(
       name: serviceDetail,
       page: () => const ServiceDetailPage(),
+    ),
+    GetPage(
+      name: adminVerification,
+      page: () => const admin_verification_page(),
+    ),
+    GetPage(
+      name: adminHome,
+      page: () => const AdminHomePage(),
     ),
   ];
 }
