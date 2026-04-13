@@ -330,7 +330,8 @@ class TechnicianOnboardingController extends GetxController {
         'isAvailable': false,
         'workshopAddress': workshopAddressCtrl.text.trim(),
         'location': point.data,
-        'accreditations': certUrls,
+        'accreditations': [], // nama sertifikasi — diisi manual via profile edit
+        'certificationUrls': certUrls, // foto sertifikat dari upload
         'serviceEstimates': initialServices,
         'serviceRadius': radius,
         'diagnosisFee': fee,

@@ -87,6 +87,7 @@ class BookingService {
           BookingStatus.pending,
           BookingStatus.confirmed,
           BookingStatus.onProgress,
+          BookingStatus.awaitingPayment,
           BookingStatus.done, // include done agar tracking page bisa tampil review banner
         ])
         .orderBy('createdAt', descending: true)
@@ -116,6 +117,7 @@ class BookingService {
           BookingStatus.pending,
           BookingStatus.confirmed,
           BookingStatus.onProgress,
+          BookingStatus.awaitingPayment,
         ])
         .orderBy('createdAt', descending: true)
         .snapshots()
@@ -158,6 +160,32 @@ class BookingService {
     });
   }
 
+  /// Teknisi submit harga final → status `awaiting_payment`.
+  Future<void> submitFinalPrice({
+    required String bookingId,
+    required int serviceFee,
+    required List<Map<String, dynamic>> spareParts,
+    required String note,
+    required int totalAmount,
+  }) async {
+    await _db.collection('bookings').doc(bookingId).update({
+      'finalServiceFee': serviceFee,
+      'finalSpareParts': spareParts,
+      'finalNote': note,
+      'finalTotalAmount': totalAmount,
+      'status': BookingStatus.awaitingPayment,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Customer konfirmasi pembayaran tunai → status `done`.
+  Future<void> confirmPayment(String bookingId) async {
+    await _db.collection('bookings').doc(bookingId).update({
+      'status': BookingStatus.done,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Teknisi tandai pekerjaan selesai → status `done`.
   Future<void> markAsDone(String bookingId) async {
     await _db.collection('bookings').doc(bookingId).update({
@@ -173,11 +201,13 @@ class BookingService {
     required String technicianId,
     required int rating,
     String review = '',
+    bool recommend = true,
   }) async {
     // 1. Simpan rating ke booking doc
     await _db.collection('bookings').doc(bookingId).update({
       'customerRating': rating,
       'customerReview': review,
+      'customerRecommend': recommend,
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
@@ -229,6 +259,18 @@ class BookingService {
         .toList();
   }
 
+  /// Ambil riwayat order selesai (done) milik teknisi tertentu.
+  Future<List<BookingDocument>> fetchDoneOrders(String technicianId) async {
+    final snap = await _db
+        .collection('bookings')
+        .where('technicianId', isEqualTo: technicianId)
+        .where('status', isEqualTo: BookingStatus.done)
+        .orderBy('updatedAt', descending: true)
+        .limit(50)
+        .get();
+    return snap.docs.map(BookingDocument.fromFirestore).toList();
+  }
+
   /// Ambil jam-jam yang sudah terisi untuk teknisi di tanggal tertentu.
   /// Menggunakan index yang sudah ada (technicianId + status whereIn).
   /// Filter tanggal dilakukan client-side untuk menghindari index baru.
@@ -243,6 +285,7 @@ class BookingService {
           BookingStatus.pending,
           BookingStatus.confirmed,
           BookingStatus.onProgress,
+          BookingStatus.awaitingPayment,
         ])
         .get();
 

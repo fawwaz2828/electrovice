@@ -47,12 +47,24 @@ class BookingHistoryPage extends GetView<BookingController> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                ...items.map(
-                  (item) => Padding(
+                ...List.generate(items.length, (i) {
+                  final item = items[i];
+                  final doc = controller.bookingHistory.length > i
+                      ? controller.bookingHistory[i]
+                      : null;
+                  return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _HistoryRecordCard(item: item),
-                  ),
-                ),
+                    child: GestureDetector(
+                      onTap: doc == null
+                          ? null
+                          : () => Get.toNamed(
+                                AppRoutes.bookingDetail,
+                                arguments: doc,
+                              ),
+                      child: _HistoryRecordCard(item: item),
+                    ),
+                  );
+                }),
                 const SizedBox(height: 10),
                 // Cari booking done yang belum dirating
                 Builder(builder: (_) {

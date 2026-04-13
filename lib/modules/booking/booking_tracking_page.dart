@@ -4,6 +4,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
+
 import '../../models/booking_model.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
@@ -60,6 +61,15 @@ class BookingTrackingPage extends GetView<BookingController> {
                   imageUrl: tracking.technicianAvatarUrl,
                   bookingDoc: controller.activeBooking.value,
                 ),
+                // ── Pay Now banner (awaiting_payment) ─────────
+                if (controller.activeBooking.value?.status ==
+                    BookingStatus.awaitingPayment)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _PayNowBanner(
+                      booking: controller.activeBooking.value!,
+                    ),
+                  ),
                 // ── Review prompt saat done ────────────────────
                 if (controller.activeBooking.value?.status ==
                         BookingStatus.done &&
@@ -464,6 +474,68 @@ class _TechnicianContactCard extends StatelessWidget {
                 child: const Icon(Icons.call_outlined),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Pay Now Banner ────────────────────────────────────────────────────────
+class _PayNowBanner extends StatelessWidget {
+  final BookingDocument booking;
+  const _PayNowBanner({required this.booking});
+
+  String _rp(int v) {
+    if (v == 0) return 'Rp 0';
+    final s = v.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return 'Rp ${buf.toString()}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = booking.finalTotalAmount ?? booking.estimatedPrice;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF2FF),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFBFCBFF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.receipt_long_rounded, color: Color(0xFF4163FF), size: 22),
+              const SizedBox(width: 8),
+              const Text(
+                'Pembayaran Siap Dilakukan',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Teknisi telah menyelesaikan diagnosa. Total yang harus dibayar: ${_rp(total)}',
+            style: const TextStyle(color: Color(0xFF4B5563), height: 1.4, fontSize: 13),
+          ),
+          const SizedBox(height: 14),
+          FilledButton(
+            onPressed: () => Get.toNamed(AppRoutes.payService),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF4163FF),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(46),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('BAYAR SEKARANG', style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),

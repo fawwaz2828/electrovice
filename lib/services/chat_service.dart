@@ -5,7 +5,7 @@ class ChatService {
 
   // ── Ensure chat room exists ────────────────────────────────────
   /// Pastikan dokumen chat ada. Dipanggil sebelum membuka ChatPage.
-  /// chatId = bookingId (1 booking = 1 chat room).
+  /// chatId = bookingId  ATAU  pre-booking chatId (lihat [preChatId]).
   Future<void> ensureChatExists({
     required String chatId,
     required String bookingId,
@@ -21,6 +21,41 @@ class ChatService {
     if (!snap.exists) {
       await ref.set({
         'bookingId': bookingId,
+        'participants': [customerId, technicianId],
+        'customerName': customerName,
+        'technicianName': technicianName,
+        'customerPhotoUrl': customerPhotoUrl,
+        'technicianPhotoUrl': technicianPhotoUrl,
+        'lastMessage': '',
+        'lastMessageAt': FieldValue.serverTimestamp(),
+        'lastSenderId': '',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  /// Pre-booking chat: chatId = sorted(customerId, technicianId) dipisah "_"
+  /// Sehingga satu pasangan customer-teknisi hanya punya 1 pre-booking room.
+  static String preChatId(String customerId, String technicianId) {
+    final ids = [customerId, technicianId]..sort();
+    return '${ids[0]}_${ids[1]}';
+  }
+
+  /// Pastikan pre-booking chat room ada. Tidak butuh bookingId.
+  Future<void> ensurePreChatExists({
+    required String customerId,
+    required String customerName,
+    required String technicianId,
+    required String technicianName,
+    String? customerPhotoUrl,
+    String? technicianPhotoUrl,
+  }) async {
+    final chatId = preChatId(customerId, technicianId);
+    final ref = _db.collection('chats').doc(chatId);
+    final snap = await ref.get();
+    if (!snap.exists) {
+      await ref.set({
+        'bookingId': chatId, // pakai chatId sebagai bookingId placeholder
         'participants': [customerId, technicianId],
         'customerName': customerName,
         'technicianName': technicianName,

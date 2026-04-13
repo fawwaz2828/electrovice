@@ -9,6 +9,7 @@ class TechnicianService {
   Future<void> updateTechnicianProfile(
     String uid, {
     required String name,
+    String phone = '',
     required String category,
     required String specialty,
     required String bio,
@@ -20,12 +21,14 @@ class TechnicianService {
     required double lng,
     required List<String> accreditations,
     required List<Map<String, dynamic>> serviceEstimates,
+    int diagnosisFee = 0,
   }) async {
     final GeoFirePoint point = GeoFirePoint(GeoPoint(lat, lng));
 
     // Update collection users
     await _firestore.collection('users').doc(uid).update({
       'name': name,
+      if (phone.isNotEmpty) 'phone': phone,
       'technicianProfile.category': category,
       'technicianProfile.specialty': specialty,
       'technicianProfile.bio': bio,
@@ -102,7 +105,8 @@ class TechnicianService {
                     lat, lng, gp.latitude, gp.longitude) /
                   1000;
             } catch (_) {}
-            return TechnicianOnlineModel.fromMap(data, distanceKm: distKm);
+            return TechnicianOnlineModel.fromMap(data,
+                distanceKm: distKm, injectDiagnosa: true);
           })
           .toList();
     } catch (_) {}
@@ -127,7 +131,8 @@ class TechnicianService {
                     1000;
               }
             } catch (_) {}
-            return TechnicianOnlineModel.fromMap(data, distanceKm: distKm);
+            return TechnicianOnlineModel.fromMap(data,
+                distanceKm: distKm, injectDiagnosa: true);
           })
           .toList();
     }
@@ -147,7 +152,30 @@ class TechnicianService {
         .doc(uid)
         .get();
     if (!doc.exists || doc.data() == null) return null;
-    return TechnicianOnlineModel.fromMap(doc.data()!);
+    return TechnicianOnlineModel.fromMap(doc.data()!, injectDiagnosa: true);
+  }
+
+  // ── INJECT DIAGNOSA HELPER ─────────────────────────────────────
+  static List<ServiceEstimate> _withDiagnosa(
+    List<ServiceEstimate> list,
+    int diagFee,
+  ) {
+    if (diagFee <= 0) return list;
+    final hasDiagnosa = list.any(
+      (s) => s.service.toLowerCase().contains('diagnosa'),
+    );
+    if (hasDiagnosa) return list;
+    return [
+      ServiceEstimate(
+        service: 'Diagnosa',
+        minPrice: diagFee,
+        maxPrice: diagFee,
+        description:
+            'Pemeriksaan awal kondisi perangkat untuk menentukan kerusakan dan estimasi biaya perbaikan.',
+        duration: 'same_day',
+      ),
+      ...list,
+    ];
   }
 
   // ── SERVICE ESTIMATE CRUD ───────────────────────────────────────
@@ -169,26 +197,8 @@ class TechnicianService {
         .map((e) => ServiceEstimate.fromMap(Map<String, dynamic>.from(e)))
         .toList();
 
-    // Inject diagnosa dari diagnosisFee jika belum ada
     final diagFee = (data['diagnosisFee'] as num?)?.toInt() ?? 0;
-    final hasDiagnosa = list.any(
-      (s) => s.service.toLowerCase().contains('diagnosa'),
-    );
-    if (diagFee > 0 && !hasDiagnosa) {
-      list.insert(
-        0,
-        ServiceEstimate(
-          service: 'Diagnosa',
-          minPrice: diagFee,
-          maxPrice: diagFee,
-          description:
-              'Pemeriksaan awal kondisi perangkat untuk menentukan kerusakan dan estimasi biaya perbaikan.',
-          duration: 'same_day',
-        ),
-      );
-    }
-
-    return list;
+    return _withDiagnosa(list, diagFee);
   }
 
   /// Simpan seluruh list service (replace all)
@@ -216,7 +226,9 @@ class TechnicianOnlineModel {
   final String workshopAddress;
   final double distanceKm;
   final List<String> accreditations;
+  final List<String> certificationUrls; // foto sertifikat
   final List<ServiceEstimate> serviceEstimates;
+  final int diagnosisFee;
   // Koordinat workshop — null jika belum pernah di-set
   final double? lat;
   final double? lng;
@@ -233,7 +245,9 @@ class TechnicianOnlineModel {
     required this.workshopAddress,
     required this.distanceKm,
     required this.accreditations,
+    required this.certificationUrls,
     required this.serviceEstimates,
+    required this.diagnosisFee,
     this.photoUrl,
     this.lat,
     this.lng,
@@ -242,18 +256,32 @@ class TechnicianOnlineModel {
   factory TechnicianOnlineModel.fromMap(
     Map<String, dynamic> map, {
     double distanceKm = 0,
+    bool injectDiagnosa = false,
   }) {
     final List<String> accreditations =
         (map['accreditations'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
+            // Filter out accidental URLs stored by old onboarding
+            .where((s) => !s.startsWith('http'))
             .toList();
 
-    final List<ServiceEstimate> estimates =
+    final List<String> certUrls =
+        (map['certificationUrls'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+
+    final diagFee = (map['diagnosisFee'] as num?)?.toInt() ?? 0;
+
+    List<ServiceEstimate> estimates =
         (map['serviceEstimates'] as List<dynamic>? ?? [])
             .whereType<Map>()
             .map((e) => ServiceEstimate.fromMap(
                 Map<String, dynamic>.from(e)))
             .toList();
+
+    if (injectDiagnosa) {
+      estimates = TechnicianService._withDiagnosa(estimates, diagFee);
+    }
 
     // Baca koordinat dari GeoFirePoint ('location.geopoint')
     double? lat;
@@ -280,7 +308,9 @@ class TechnicianOnlineModel {
       workshopAddress: map['workshopAddress'] as String? ?? '',
       distanceKm: distanceKm,
       accreditations: accreditations,
+      certificationUrls: certUrls,
       serviceEstimates: estimates,
+      diagnosisFee: diagFee,
       lat: lat,
       lng: lng,
     );

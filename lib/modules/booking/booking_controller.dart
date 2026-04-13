@@ -212,6 +212,22 @@ class BookingController extends GetxController {
   void setUserAddress(String value) => userAddress.value = value;
   void setSelectedService(tech_svc.ServiceEstimate s) => selectedService.value = s;
 
+  /// Helper untuk membuka pre-booking chat ke teknisi yang sedang dibuka
+  void openPreChat() async {
+    final t = selectedTechnician.value;
+    if (t == null) return;
+    final uid  = _authService.currentUser?.uid ?? '';
+    final user = await _authService.getUserModel(uid);
+    final name = user?.name ?? _authService.currentUser?.email ?? 'Customer';
+    Get.toNamed(AppRoutes.chat, arguments: {
+      'customerId':      uid,
+      'customerName':    name,
+      'technicianId':    t.uid,
+      'otherPartyName':  t.name,
+      'otherPartyPhotoUrl': t.photoUrl,
+    });
+  }
+
   /// Set tanggal saja — pertahankan jam yang sudah dipilih jika slotnya masih tersedia.
   void setScheduledDate(DateTime date) {
     final currentHour = scheduledAt.value.hour;
@@ -316,6 +332,21 @@ class BookingController extends GetxController {
 
   void setPaymentMethod(String method) => paymentMethod.value = method;
 
+  /// Customer konfirmasi pembayaran → status done → navigasi ke review
+  Future<void> confirmPayment() async {
+    final booking = activeBooking.value;
+    if (booking == null) return;
+    isSubmitting.value = true;
+    try {
+      await _bookingService.confirmPayment(booking.bookingId);
+      Get.offNamed(AppRoutes.review, arguments: booking);
+    } catch (e) {
+      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
   /// Map ke CheckoutSummary untuk UI checkout page.
   CheckoutSummary get checkoutData {
     final svc = selectedService.value;
@@ -368,9 +399,11 @@ class BookingController extends GetxController {
 
     try {
       final userModel = await _authService.getUserModel(user.uid);
-      final estimatedPrice = tech.serviceEstimates.isNotEmpty
-          ? tech.serviceEstimates.first.minPrice
-          : 0;
+      final svc = selectedService.value;
+      final estimatedPrice = svc?.minPrice ??
+          (tech.serviceEstimates.isNotEmpty
+              ? tech.serviceEstimates.first.minPrice
+              : 0);
 
       final bookingId = await _bookingService.createBooking(
         userId: user.uid,
@@ -380,7 +413,7 @@ class BookingController extends GetxController {
         technicianPhotoUrl: tech.photoUrl,
         category: tech.category,
         description: description.value.trim(),
-        damageType: damageType.value,
+        damageType: damageType.value.isEmpty ? 'other' : damageType.value,
         scheduledAt: scheduledAt.value,
         estimatedPrice: estimatedPrice,
         userAddress: userAddress.value.trim(),
@@ -411,6 +444,7 @@ class BookingController extends GetxController {
     final isPending = booking.status == BookingStatus.pending;
     final isConfirmed = booking.status == BookingStatus.confirmed;
     final isOnProgress = booking.status == BookingStatus.onProgress;
+    final isAwaitingPayment = booking.status == BookingStatus.awaitingPayment;
     final isDone = booking.status == BookingStatus.done;
 
     final steps = [
@@ -439,15 +473,17 @@ class BookingController extends GetxController {
         step: OrderStatusStep.inProgress,
         title: 'Sedang Diperbaiki',
         subtitle: 'Teknisi sedang mengerjakan perangkat',
-        isComplete: isDone,
+        isComplete: isAwaitingPayment || isDone,
         isCurrent: isOnProgress,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.completed,
         title: 'Selesai',
-        subtitle: 'Pekerjaan telah selesai',
+        subtitle: isAwaitingPayment
+            ? 'Silakan lakukan pembayaran'
+            : 'Pekerjaan telah selesai',
         isComplete: isDone,
-        isCurrent: isDone,
+        isCurrent: isAwaitingPayment || isDone,
       ),
     ];
 
@@ -520,6 +556,7 @@ class BookingController extends GetxController {
         BookingStatus.pending => 'Menunggu Konfirmasi',
         BookingStatus.confirmed => 'Teknisi Menuju Lokasi',
         BookingStatus.onProgress => 'Sedang Dikerjakan',
+        BookingStatus.awaitingPayment => 'Menunggu Pembayaran',
         BookingStatus.done => 'Selesai',
         BookingStatus.cancelled => 'Dibatalkan',
         _ => status,

@@ -16,7 +16,10 @@ class TechnicianNavBar extends StatelessWidget {
         Get.offNamed(AppRoutes.technicianHome);
         break;
       case AppNavItem.active:
-        Get.offNamed(AppRoutes.activeJob);
+        Get.offNamed(AppRoutes.activeOrders);
+        break;
+      case AppNavItem.history:
+        Get.offNamed(AppRoutes.technicianOrderHistory);
         break;
       case AppNavItem.profile:
         Get.offNamed(AppRoutes.technicianProfile);
@@ -148,6 +151,12 @@ class AppBottomNavBar extends StatelessWidget {
       icon: Icons.build_outlined,
       activeIcon: Icons.build_rounded,
       label: 'ACTIVE',
+    ),
+    AppBottomNavEntry(
+      item: AppNavItem.history,
+      icon: Icons.history_rounded,
+      activeIcon: Icons.history_rounded,
+      label: 'HISTORY',
     ),
     AppBottomNavEntry(
       item: AppNavItem.profile,

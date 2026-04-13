@@ -43,13 +43,14 @@ class ChatController extends GetxController {
   void _loadFromArgs() {
     final args = Get.arguments;
     if (args is Map) {
-      chatId = args['chatId'] as String? ?? '';
       otherPartyName = args['otherPartyName'] as String? ?? 'Pengguna';
       otherPartyPhotoUrl = args['otherPartyPhotoUrl'] as String?;
 
-      // Ensure chat doc exists (fire & forget)
       final bookingDoc = args['bookingDoc'] as BookingDocument?;
+
+      // ── Case 1: chat dari tracking/active job (ada bookingDoc) ──
       if (bookingDoc != null) {
+        chatId = bookingDoc.bookingId;
         _chatService.ensureChatExists(
           chatId: chatId,
           bookingId: bookingDoc.bookingId,
@@ -59,7 +60,28 @@ class ChatController extends GetxController {
           technicianName: bookingDoc.technicianName,
           technicianPhotoUrl: bookingDoc.technicianPhotoUrl,
         );
+        return;
       }
+
+      // ── Case 2: pre-booking chat dari technician detail ──────────
+      final customerId   = args['customerId']   as String?;
+      final customerName = args['customerName'] as String?;
+      final techId       = args['technicianId'] as String?;
+
+      if (customerId != null && techId != null) {
+        chatId = ChatService.preChatId(customerId, techId);
+        _chatService.ensurePreChatExists(
+          customerId: customerId,
+          customerName: customerName ?? 'Customer',
+          technicianId: techId,
+          technicianName: otherPartyName,
+          technicianPhotoUrl: otherPartyPhotoUrl,
+        );
+        return;
+      }
+
+      // ── Case 3: fallback — chatId eksplisit dikirim ───────────────
+      chatId = args['chatId'] as String? ?? '';
     } else {
       chatId = '';
       otherPartyName = 'Pengguna';

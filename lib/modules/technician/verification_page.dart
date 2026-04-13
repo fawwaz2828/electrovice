@@ -36,12 +36,28 @@ class _VerificationPageState extends State<VerificationPage> {
 
     try {
       await Get.find<TechnicianController>().verifyCode(code);
+      setState(() => _isVerifying = false);
+
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const _VerificationResultDialog(success: true),
+      );
+      // Dialog dismissed → navigate to active job
       Get.offNamed(AppRoutes.activeJob);
     } catch (e) {
-      Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
-          snackPosition: SnackPosition.BOTTOM);
-    } finally {
-      setState(() => _isVerifying = false);
+      // Clear pin for re-entry
+      setState(() {
+        for (int i = 0; i < 6; i++) { _pin[i] = ''; }
+        _isVerifying = false;
+      });
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const _VerificationResultDialog(success: false),
+      );
     }
   }
 
@@ -421,6 +437,119 @@ class _Numpad extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  VERIFICATION RESULT DIALOG
+// ─────────────────────────────────────────────────────────────────
+class _VerificationResultDialog extends StatelessWidget {
+  final bool success;
+  const _VerificationResultDialog({required this.success});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Icon Circle ─────────────────────────────────────────
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: success
+                    ? const Color(0xFFDCFCE7)
+                    : const Color(0xFFFEE2E2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                success
+                    ? Icons.check_circle_rounded
+                    : Icons.error_rounded,
+                color: success
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFFDC2626),
+                size: 44,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Title ───────────────────────────────────────────────
+            Text(
+              success ? 'Verification Accepted' : 'Verification Failed',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // ── Subtitle ────────────────────────────────────────────
+            Text(
+              success ? 'Verification Code Received' : 'Enter the right Code',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            // ── Button ──────────────────────────────────────────────
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                success ? 'Check Order' : 'Retry',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Quote ───────────────────────────────────────────────
+            const Text(
+              'No pain no gain\n-random person',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFFCBD5E1),
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

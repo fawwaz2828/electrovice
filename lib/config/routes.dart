@@ -30,6 +30,12 @@ import '../modules/technician/onboarding/onboarding_page.dart';
 import '../modules/technician/onboarding/onboarding_controller.dart';
 import '../modules/technician/my_service_page.dart';
 import '../modules/technician/service_detail_page.dart';
+import '../modules/technician/technician_active_orders_page.dart';
+import '../modules/technician/price_estimate_page.dart';
+import '../modules/technician/repair_approval_page.dart';
+import '../modules/technician/technician_order_history_page.dart';
+import '../modules/booking/pay_service_page.dart';
+import '../modules/booking/booking_detail_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -57,6 +63,12 @@ class AppRoutes {
   static const technicianOnboarding = '/technician/onboarding';
   static const myService = '/technician/my-service';
   static const serviceDetail = '/technician/service-detail';
+  static const activeOrders = '/technician/active-orders';
+  static const priceEstimate = '/technician/price-estimate';
+  static const repairApproval = '/technician/repair-approval';
+  static const payService = '/customer/pay-service';
+  static const technicianOrderHistory = '/technician/order-history';
+  static const bookingDetail = '/customer/booking-detail';
 
   static final routes = [
     GetPage(
@@ -222,6 +234,45 @@ class AppRoutes {
     GetPage(
       name: serviceDetail,
       page: () => const ServiceDetailPage(),
+    ),
+    GetPage(
+      name: activeOrders,
+      page: () => const TechnicianActiveOrdersPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: priceEstimate,
+      page: () => const PriceEstimatePage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: repairApproval,
+      page: () => const RepairApprovalPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: payService,
+      page: () => const PayServicePage(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<BookingController>()) Get.put(BookingController());
+      }),
+    ),
+    GetPage(
+      name: technicianOrderHistory,
+      page: () => const TechnicianOrderHistoryPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: bookingDetail,
+      page: () => const BookingDetailPage(),
     ),
   ];
 }

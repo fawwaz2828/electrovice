@@ -10,6 +10,7 @@ class BookingStatus {
   static const pending = 'pending';
   static const confirmed = 'confirmed';
   static const onProgress = 'on_progress';
+  static const awaitingPayment = 'awaiting_payment';
   static const done = 'done';
   static const cancelled = 'cancelled';
 }
@@ -43,6 +44,11 @@ class BookingDocument {
   final double? longitude;
   final int? customerRating;    // 1–5 bintang, null = belum review
   final String? customerReview; // teks ulasan, boleh kosong
+  // ── Final price (diset teknisi sebelum awaiting_payment) ─────
+  final int? finalServiceFee;
+  final List<Map<String, dynamic>> finalSpareParts; // [{name, price}]
+  final String? finalNote;
+  final int? finalTotalAmount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -70,6 +76,10 @@ class BookingDocument {
     this.longitude,
     this.customerRating,
     this.customerReview,
+    this.finalServiceFee,
+    this.finalSpareParts = const [],
+    this.finalNote,
+    this.finalTotalAmount,
   });
 
   factory BookingDocument.fromFirestore(DocumentSnapshot doc) {
@@ -96,6 +106,13 @@ class BookingDocument {
       longitude: (data['longitude'] as num?)?.toDouble(),
       customerRating: (data['customerRating'] as num?)?.toInt(),
       customerReview: data['customerReview'] as String?,
+      finalServiceFee: (data['finalServiceFee'] as num?)?.toInt(),
+      finalSpareParts: (data['finalSpareParts'] as List<dynamic>? ?? [])
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      finalNote: data['finalNote'] as String?,
+      finalTotalAmount: (data['finalTotalAmount'] as num?)?.toInt(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -124,6 +141,10 @@ class BookingDocument {
       'longitude': longitude,
       'customerRating': customerRating,
       'customerReview': customerReview,
+      'finalServiceFee': finalServiceFee,
+      'finalSpareParts': finalSpareParts,
+      'finalNote': finalNote,
+      'finalTotalAmount': finalTotalAmount,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -132,7 +153,8 @@ class BookingDocument {
   bool get isActive =>
       status == BookingStatus.pending ||
       status == BookingStatus.confirmed ||
-      status == BookingStatus.onProgress;
+      status == BookingStatus.onProgress ||
+      status == BookingStatus.awaitingPayment;
 
   bool get isCodeExpired =>
       codeExpiryAt != null && DateTime.now().isAfter(codeExpiryAt!);

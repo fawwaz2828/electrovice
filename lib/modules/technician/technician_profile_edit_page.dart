@@ -20,9 +20,11 @@ class _TechnicianProfileEditPageState
 
   // Controllers
   final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _specialtyController = TextEditingController();
   final _bioController = TextEditingController();
   final _workshopAddressController = TextEditingController();
+  final _diagnosisFeeController = TextEditingController();
   final _newAccreditationController = TextEditingController();
   final _newServiceController = TextEditingController();
   final _newMinPriceController = TextEditingController();
@@ -68,6 +70,7 @@ class _TechnicianProfileEditPageState
 
     setState(() {
       _nameController.text = userModel.name;
+      _phoneController.text = userModel.phone ?? '';
       _specialtyController.text = tp?.specialty ?? '';
       _bioController.text = tp?.bio ?? '';
       _category = tp?.category ?? 'electronic';
@@ -78,6 +81,9 @@ class _TechnicianProfileEditPageState
         _isAvailable = techOnline.isAvailable;
         _workshopAddressController.text = techOnline.workshopAddress;
         _accreditations = List.from(techOnline.accreditations);
+        if (techOnline.diagnosisFee > 0) {
+          _diagnosisFeeController.text = techOnline.diagnosisFee.toString();
+        }
         _serviceEstimates = techOnline.serviceEstimates
             .map((e) => {
                   'service': e.service,
@@ -115,9 +121,14 @@ class _TechnicianProfileEditPageState
     setState(() => _isLoading = true);
 
     try {
+      final diagFee = int.tryParse(
+              _diagnosisFeeController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+          0;
+
       await _technicianService.updateTechnicianProfile(
         user.uid,
         name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
         category: _category,
         specialty: _specialtyController.text.trim(),
         bio: _bioController.text.trim(),
@@ -129,7 +140,17 @@ class _TechnicianProfileEditPageState
         lng: _lng!,
         accreditations: _accreditations,
         serviceEstimates: _serviceEstimates,
+        diagnosisFee: diagFee,
       );
+
+      // Update diagnosisFee juga di users collection jika ada
+      if (_phoneController.text.trim().isNotEmpty) {
+        await _authService.updateUserProfile(
+          user.uid,
+          name: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
+      }
 
       Get.back();
       Get.snackbar('Berhasil', 'Profil berhasil disimpan',
@@ -195,9 +216,11 @@ class _TechnicianProfileEditPageState
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     _specialtyController.dispose();
     _bioController.dispose();
     _workshopAddressController.dispose();
+    _diagnosisFeeController.dispose();
     _newAccreditationController.dispose();
     _newServiceController.dispose();
     _newMinPriceController.dispose();
@@ -262,6 +285,13 @@ class _TechnicianProfileEditPageState
                       controller: _nameController,
                       hint: 'Masukkan nama lengkap',
                     ),
+                    const SizedBox(height: 16),
+                    _buildField(
+                      label: 'Nomor HP',
+                      controller: _phoneController,
+                      hint: 'Contoh: 08123456789',
+                      keyboardType: TextInputType.phone,
+                    ),
                   ]),
                   const SizedBox(height: 24),
 
@@ -303,6 +333,26 @@ class _TechnicianProfileEditPageState
                   // ── SERTIFIKASI ────────────────────────────────
                   _buildSection('SERTIFIKASI & AKREDITASI', [
                     _buildAccreditationSection(),
+                  ]),
+                  const SizedBox(height: 24),
+
+                  // ── BIAYA DIAGNOSA ─────────────────────────────
+                  _buildSection('BIAYA DIAGNOSA', [
+                    _buildField(
+                      label: 'Biaya Diagnosa Awal (Rp)',
+                      controller: _diagnosisFeeController,
+                      hint: 'Contoh: 50000',
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Biaya ini otomatis muncul sebagai item pertama di daftar layananmu.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _muted,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   ]),
                   const SizedBox(height: 24),
 
@@ -772,6 +822,7 @@ class _TechnicianProfileEditPageState
     required TextEditingController controller,
     required String hint,
     int maxLines = 1,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -788,6 +839,7 @@ class _TechnicianProfileEditPageState
         TextField(
           controller: controller,
           maxLines: maxLines,
+          keyboardType: keyboardType,
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,

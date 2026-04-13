@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
@@ -14,6 +15,38 @@ class ActiveJobPage extends StatefulWidget {
 
 class _ActiveJobPageState extends State<ActiveJobPage> {
   bool _isCompleting = false;
+  Timer? _timer;
+  Duration _elapsed = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _startElapsedTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startElapsedTimer() {
+    final order = Get.find<TechnicianController>().activeOrder.value;
+    final startTime = order?.codeVerifiedAt ?? order?.updatedAt;
+    if (startTime != null) {
+      _elapsed = DateTime.now().difference(startTime);
+    }
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
+    });
+  }
+
+  String get _elapsedLabel {
+    final h = _elapsed.inHours.toString().padLeft(2, '0');
+    final m = (_elapsed.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (_elapsed.inSeconds % 60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
+  }
 
   String _damageLabel(String type) => switch (type) {
         'screen' => 'Kerusakan Layar',
@@ -52,6 +85,7 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                 customerName: order?.userName ?? '-',
                 userAddress: order?.userAddress ?? 'Alamat tidak tersedia',
                 status: order?.status ?? BookingStatus.onProgress,
+                elapsedLabel: _elapsedLabel,
               ),
 
               const SizedBox(height: 24),
@@ -89,26 +123,49 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
 
               const SizedBox(height: 16),
 
-              // ── Technician Notes ────────────────────────────────────
-              const _TechnicianNotesCard(),
+              // ── System Estimate Card ────────────────────────────────
+              if (order != null) _SystemEstimateCard(order: order),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
 
-              // ── Main Action Button ──────────────────────────────────
+              // ── Update price button ─────────────────────────────────
+              OutlinedButton(
+                onPressed: order == null
+                    ? null
+                    : () => Get.toNamed(AppRoutes.priceEstimate),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  side: const BorderSide(
+                      color: Color(0xFF0061FF), width: 1.5),
+                  foregroundColor: const Color(0xFF0061FF),
+                ),
+                child: const Text(
+                  'Update price',
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // ── Complete Order button ───────────────────────────────
               ElevatedButton(
                 onPressed: _isCompleting || order == null
                     ? null
                     : () async {
-                        setState(() => _isCompleting = true);
-                        try {
-                          final order = await controller.completeJob();
-                          Get.offAllNamed(AppRoutes.jobSummary, arguments: order);
-                        } catch (e) {
-                          Get.snackbar('Gagal', e.toString(),
-                              snackPosition: SnackPosition.BOTTOM);
-                        } finally {
-                          if (mounted) setState(() => _isCompleting = false);
+                        // If no final price set, prompt to set it first
+                        if ((order.finalTotalAmount ?? 0) == 0) {
+                          Get.toNamed(AppRoutes.priceEstimate);
+                          return;
                         }
+                        setState(() => _isCompleting = true);
+                        // finalTotalAmount already set → already in awaiting_payment
+                        // Just navigate to repair approval
+                        Get.toNamed(AppRoutes.repairApproval);
+                        if (mounted) setState(() => _isCompleting = false);
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -121,16 +178,20 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                 ),
                 child: _isCompleting
                     ? const SizedBox(
-                        width: 24, height: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5))
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.check_circle_outline_rounded, size: 22),
                           SizedBox(width: 12),
                           Text(
-                            'Complete Repair',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                            'Complete Order',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800),
                           ),
                         ],
                       ),
@@ -140,7 +201,7 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'Dengan menekan tombol ini, Anda mengkonfirmasi pekerjaan telah selesai.',
+                    'By clicking complete, you confirm all safety checks are performed and a diagnostic report will be sent to the customer.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11,
@@ -167,6 +228,7 @@ class _WorkOrderHeader extends StatelessWidget {
   final String customerName;
   final String userAddress;
   final String status;
+  final String elapsedLabel;
 
   const _WorkOrderHeader({
     required this.bookingId,
@@ -174,6 +236,7 @@ class _WorkOrderHeader extends StatelessWidget {
     required this.customerName,
     required this.userAddress,
     required this.status,
+    required this.elapsedLabel,
   });
 
   @override
@@ -249,7 +312,7 @@ class _WorkOrderHeader extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Nested Cards
-          const _TimeElapsedCard(),
+          _TimeElapsedCard(elapsedLabel: elapsedLabel),
           const SizedBox(height: 12),
           _LocationCard(address: userAddress),
 
@@ -262,7 +325,9 @@ class _WorkOrderHeader extends StatelessWidget {
 }
 
 class _TimeElapsedCard extends StatelessWidget {
-  const _TimeElapsedCard();
+  final String elapsedLabel;
+  const _TimeElapsedCard({required this.elapsedLabel});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -286,16 +351,16 @@ class _TimeElapsedCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           RichText(
-            text: const TextSpan(
-              style: TextStyle(
+            text: TextSpan(
+              style: const TextStyle(
                 fontSize: 42,
                 fontWeight: FontWeight.w900,
                 color: Color(0xFF111111),
                 letterSpacing: -1,
               ),
               children: [
-                TextSpan(text: '01:42:15'),
-                TextSpan(
+                TextSpan(text: elapsedLabel),
+                const TextSpan(
                   text: ' hrs',
                   style: TextStyle(
                     fontSize: 16,
@@ -555,6 +620,151 @@ class _TechnicianNotesCard extends StatelessWidget {
                 style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── System Estimate Card ──────────────────────────────────────────────────
+class _SystemEstimateCard extends StatelessWidget {
+  final BookingDocument order;
+  const _SystemEstimateCard({required this.order});
+
+  String _rp(int v) {
+    if (v == 0) return 'Rp 0';
+    final s = v.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return 'Rp ${buf.toString()}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasFinal = (order.finalTotalAmount ?? 0) > 0;
+    final total = hasFinal
+        ? order.finalTotalAmount!
+        : order.estimatedPrice;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: const BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'System Estimate',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Icon(Icons.bar_chart_rounded,
+                    color: Colors.white, size: 20),
+              ],
+            ),
+          ),
+          // Body
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'TOTAL RANGE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF94A3B8),
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _rp(total),
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0061FF),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                if (hasFinal) ...[
+                  const SizedBox(height: 12),
+                  if ((order.finalServiceFee ?? 0) > 0)
+                    _EstimateRow(
+                      label: 'Service Fee',
+                      value: _rp(order.finalServiceFee!),
+                    ),
+                  ...order.finalSpareParts.map((p) => _EstimateRow(
+                        label: p['name'] as String? ?? 'Part',
+                        value: _rp(
+                            (p['price'] as num?)?.toInt() ?? 0),
+                      )),
+                ] else ...[
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Estimasi biaya awal (belum final)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF94A3B8),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EstimateRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _EstimateRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+                fontSize: 13, color: Color(0xFF475569)),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
+            ),
           ),
         ],
       ),

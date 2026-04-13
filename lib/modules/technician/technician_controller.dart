@@ -21,6 +21,10 @@ class TechnicianController extends GetxController {
   final RxList<BookingDocument> incomingOrders = <BookingDocument>[].obs;
   final RxBool isLoadingOrders = true.obs;
 
+  /// Order yang sudah selesai (done) — untuk history page
+  final RxList<BookingDocument> completedOrders = <BookingDocument>[].obs;
+  final RxBool isLoadingCompleted = false.obs;
+
   /// Booking yang sedang aktif dikerjakan (on_progress)
   final Rxn<BookingDocument> activeOrder = Rxn<BookingDocument>();
 
@@ -169,13 +173,12 @@ class TechnicianController extends GetxController {
                   .toList(),
             );
 
-            // activeOrder = confirmed (sudah accept, belum verif) ATAU on_progress
-            // confirmed: teknisi sudah terima, menuju lokasi, belum input kode
-            // on_progress: kode sudah diverifikasi, sedang dikerjakan
+            // activeOrder = confirmed / on_progress / awaiting_payment
             final active = orders
                 .where((o) =>
                     o.status == BookingStatus.confirmed ||
-                    o.status == BookingStatus.onProgress)
+                    o.status == BookingStatus.onProgress ||
+                    o.status == BookingStatus.awaitingPayment)
                 .firstOrNull;
             activeOrder.value = active;
 
@@ -203,6 +206,21 @@ class TechnicianController extends GetxController {
             isLoadingOrders.value = false;
           },
         );
+  }
+
+  /// Muat riwayat order selesai dari Firestore
+  Future<void> loadCompletedOrders() async {
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
+    isLoadingCompleted.value = true;
+    try {
+      final orders = await _bookingService.fetchDoneOrders(uid);
+      completedOrders.assignAll(orders);
+    } catch (e) {
+      debugPrint('loadCompletedOrders error: $e');
+    } finally {
+      isLoadingCompleted.value = false;
+    }
   }
 
   // ── Actions ───────────────────────────────────────────────────
@@ -245,6 +263,27 @@ class TechnicianController extends GetxController {
     final order = selectedOrder.value ?? activeOrder.value;
     if (order == null) throw Exception('Tidak ada order yang dipilih');
     await _bookingService.verifyCode(order.bookingId, enteredCode);
+  }
+
+  /// Teknisi submit harga final → status awaiting_payment
+  Future<void> submitFinalPrice({
+    required int serviceFee,
+    required List<Map<String, dynamic>> spareParts,
+    required String note,
+    required int diagnosisFee,
+  }) async {
+    final order = activeOrder.value ?? selectedOrder.value;
+    if (order == null) throw Exception('Tidak ada order aktif');
+    final partsTotal = spareParts.fold<int>(
+        0, (sum, p) => sum + ((p['price'] as num?)?.toInt() ?? 0));
+    final totalAmount = serviceFee + partsTotal + diagnosisFee;
+    await _bookingService.submitFinalPrice(
+      bookingId: order.bookingId,
+      serviceFee: serviceFee,
+      spareParts: spareParts,
+      note: note,
+      totalAmount: totalAmount,
+    );
   }
 
   /// Tandai pekerjaan selesai — return order untuk ditampilkan di JobSummaryPage
