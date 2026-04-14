@@ -93,6 +93,7 @@ class AppRoutes {
       binding: BindingsBuilder(() {
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
         Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
+        Get.lazyPut<BookingController>(() => BookingController(), fenix: true);
       }),
     ),
     GetPage(

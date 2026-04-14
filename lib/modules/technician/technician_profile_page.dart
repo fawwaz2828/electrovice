@@ -165,7 +165,7 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await AuthService().signOut();
+              await AuthService().logout();
               Get.offAllNamed(AppRoutes.login);
             },
             style: ElevatedButton.styleFrom(

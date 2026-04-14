@@ -352,7 +352,15 @@ class BookingController extends GetxController {
     final svc = selectedService.value;
     final minPrice = svc?.minPrice ?? 0;
     final maxPrice = svc?.maxPrice ?? 0;
-    final adminFee = 12000.0;
+
+    // Admin fee = 10% dari minPrice (dibulatkan ke ratusan terdekat)
+    final adminFee = minPrice > 0
+        ? ((minPrice * 0.10) / 100).round() * 100.0
+        : 0.0;
+
+    // Delivery fee berdasarkan jarak ke workshop teknisi
+    final distKm = selectedTechnician.value?.distanceKm ?? 0;
+    final deliveryFee = distKm >= 10 ? 15000.0 : 8000.0;
 
     return CheckoutSummary(
       currentRepairTitle: svc?.service ?? _damageTypeLabel(damageType.value),
@@ -368,7 +376,8 @@ class BookingController extends GetxController {
       serviceFee: minPrice.toDouble(),
       partsLabel: maxPrice > 0 ? 'Estimasi maks' : 'Estimasi (bisa berubah)',
       partsFee: maxPrice.toDouble(),
-      taxFee: adminFee,
+      adminFee: adminFee,
+      deliveryFee: deliveryFee,
     );
   }
 

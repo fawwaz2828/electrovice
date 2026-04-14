@@ -21,6 +21,20 @@ class BookingTrackingPage extends GetView<BookingController> {
       bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.order),
       body: SafeArea(
         child: Obx(() {
+          final booking = controller.activeBooking.value;
+
+          // ── No active booking state ──────────────────────────
+          if (booking == null) {
+            // Masih loading (history stream belum selesai)
+            if (controller.isLoadingHistory.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return _NoActiveOrderState(
+              onGoToHistory: () =>
+                  Get.toNamed(AppRoutes.orderHistory),
+            );
+          }
+
           final OrderTrackingData tracking = controller.trackingData;
 
           return SingleChildScrollView(
@@ -50,8 +64,7 @@ class BookingTrackingPage extends GetView<BookingController> {
                 const SizedBox(height: 14),
                 _SecurityCodeCard(
                   code: tracking.securityCode,
-                  isPending: controller.activeBooking.value?.status ==
-                      BookingStatus.pending,
+                  isPending: booking.status == BookingStatus.pending,
                 ),
                 const SizedBox(height: 14),
                 _TechnicianContactCard(
@@ -59,26 +72,20 @@ class BookingTrackingPage extends GetView<BookingController> {
                   role: tracking.technicianRole,
                   partnerLabel: tracking.partnerLabel,
                   imageUrl: tracking.technicianAvatarUrl,
-                  bookingDoc: controller.activeBooking.value,
+                  bookingDoc: booking,
                 ),
                 // ── Pay Now banner (awaiting_payment) ─────────
-                if (controller.activeBooking.value?.status ==
-                    BookingStatus.awaitingPayment)
+                if (booking.status == BookingStatus.awaitingPayment)
                   Padding(
                     padding: const EdgeInsets.only(top: 14),
-                    child: _PayNowBanner(
-                      booking: controller.activeBooking.value!,
-                    ),
+                    child: _PayNowBanner(booking: booking),
                   ),
                 // ── Review prompt saat done ────────────────────
-                if (controller.activeBooking.value?.status ==
-                        BookingStatus.done &&
-                    controller.activeBooking.value?.customerRating == null)
+                if (booking.status == BookingStatus.done &&
+                    booking.customerRating == null)
                   Padding(
                     padding: const EdgeInsets.only(top: 14),
-                    child: _ReviewBanner(
-                      booking: controller.activeBooking.value!,
-                    ),
+                    child: _ReviewBanner(booking: booking),
                   ),
               ],
             ),
@@ -538,6 +545,83 @@ class _PayNowBanner extends StatelessWidget {
             child: const Text('BAYAR SEKARANG', style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── No Active Order State ─────────────────────────────────────────────────
+class _NoActiveOrderState extends StatelessWidget {
+  final VoidCallback onGoToHistory;
+  const _NoActiveOrderState({required this.onGoToHistory});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.receipt_long_outlined,
+                size: 36,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Tidak Ada Pesanan Aktif',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Kamu belum memiliki pesanan yang sedang berjalan. Mulai booking untuk melacak status servis.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: onGoToHistory,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(200, 48),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+              ),
+              child: const Text('Lihat Riwayat',
+                  style: TextStyle(fontWeight: FontWeight.w800)),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => Get.toNamed(AppRoutes.technicianList),
+              child: const Text(
+                'Cari Teknisi →',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF0061FF),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

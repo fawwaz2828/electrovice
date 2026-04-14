@@ -12,6 +12,8 @@ class HomeController extends GetxController {
       <TechnicianOnlineModel>[].obs;
   final RxBool isLoadingTechnicians = true.obs;
   final RxString locationError = ''.obs;
+  /// Total teknisi available di area (sebelum dibatasi 3)
+  final RxInt technicianCount = 0.obs;
 
   @override
   void onInit() {
@@ -54,10 +56,11 @@ class HomeController extends GetxController {
         radiusKm: 10,
       );
 
+      final available = technicians.where((t) => t.isAvailable).toList();
+      // Simpan total count sebelum dibatasi 3
+      technicianCount.value = available.length;
       // Ambil max 3 teknisi terdekat yang available untuk home page
-      nearbyTechnicians.assignAll(
-        technicians.where((t) => t.isAvailable).take(3).toList(),
-      );
+      nearbyTechnicians.assignAll(available.take(3).toList());
     } catch (e) {
       debugPrint('HomeController: gagal load teknisi - $e');
       locationError.value = 'Gagal memuat data';
