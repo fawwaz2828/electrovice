@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../config/routes.dart';
 import '../../models/booking_document.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'technician_controller.dart';
@@ -106,12 +107,18 @@ class _TechnicianOrderHistoryPageState
                         order.finalTotalAmount ?? order.estimatedPrice;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _CompletedOrderCard(
-                        order: order,
-                        damageLabel: _damageLabel(order.damageType),
-                        dateLabel: _formatDate(order.updatedAt),
-                        totalLabel: _rp(total),
-                        rating: order.customerRating,
+                      child: GestureDetector(
+                        onTap: () => Get.toNamed(
+                          AppRoutes.bookingDetail,
+                          arguments: order,
+                        ),
+                        child: _CompletedOrderCard(
+                          order: order,
+                          damageLabel: _damageLabel(order.damageType),
+                          dateLabel: _formatDate(order.updatedAt),
+                          totalLabel: _rp(total),
+                          rating: order.customerRating,
+                        ),
                       ),
                     );
                   },

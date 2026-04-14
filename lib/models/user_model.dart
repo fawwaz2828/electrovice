@@ -99,7 +99,15 @@ class TechnicianProfile {
 
   static int _parseInt(dynamic v, {int fallback = 0}) {
     if (v is num) return v.toInt();
-    if (v is String) return int.tryParse(v) ?? fallback;
+    if (v is String) {
+      // Direct parse first (e.g. "5")
+      final direct = int.tryParse(v);
+      if (direct != null) return direct;
+      // Handle range strings: '<1yr' → 0, '1-2yr' → 1, '3-5yr' → 3, '5yr+' → 5
+      final match = RegExp(r'(\d+)').firstMatch(v);
+      if (match != null) return int.parse(match.group(1)!);
+      return fallback;
+    }
     return fallback;
   }
 

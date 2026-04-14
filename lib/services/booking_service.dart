@@ -229,7 +229,7 @@ class BookingService {
             .reduce((a, b) => a + b) /
         rated.length;
 
-    await _db.collection('technicians').doc(technicianId).update({
+    await _db.collection('technicians_online').doc(technicianId).update({
       'rating': double.parse(avg.toStringAsFixed(1)),
       'totalRatings': rated.length,
     });

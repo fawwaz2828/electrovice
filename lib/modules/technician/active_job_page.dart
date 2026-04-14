@@ -554,79 +554,6 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-class _TechnicianNotesCard extends StatelessWidget {
-  const _TechnicianNotesCard();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.description_outlined,
-                color: Color(0xFF111111),
-                size: 20,
-              ),
-              SizedBox(width: 10),
-              Text(
-                'TECHNICIAN NOTES',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF111111),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 120,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F6FA),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const TextField(
-              maxLines: null,
-              decoration: InputDecoration(
-                hintText:
-                    'Document technical adjustments, parts used, or upcoming requirements...',
-                hintStyle: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF94A3B8),
-                  height: 1.5,
-                ),
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _NoteTool(icon: Icons.camera_alt_outlined, onTap: () {}),
-              const SizedBox(width: 12),
-              _NoteTool(icon: Icons.attach_file_rounded, onTap: () {}),
-              const Spacer(),
-              const Text(
-                'Autosaved 14:42',
-                style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── System Estimate Card ──────────────────────────────────────────────────
 class _SystemEstimateCard extends StatelessWidget {
   final BookingDocument order;
@@ -772,24 +699,3 @@ class _EstimateRow extends StatelessWidget {
   }
 }
 
-class _NoteTool extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _NoteTool({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, size: 20, color: const Color(0xFF64748B)),
-      ),
-    );
-  }
-}

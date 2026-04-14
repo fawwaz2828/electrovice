@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
 import '../../services/technician_service.dart';
 import '../../config/routes.dart';
 
@@ -17,6 +20,8 @@ class _TechnicianProfileEditPageState
     extends State<TechnicianProfileEditPage> {
   final _authService = AuthService();
   final _technicianService = TechnicianService();
+  final _storageService = StorageService();
+  final _imagePicker = ImagePicker();
 
   // Controllers
   final _nameController = TextEditingController();
@@ -38,6 +43,10 @@ class _TechnicianProfileEditPageState
   double? _lat;
   double? _lng;
   List<String> _accreditations = [];
+  /// Existing certification photo URLs (from Firestore), parallel to _accreditations
+  List<String> _certUrls = [];
+  /// New photo files to upload (null = keep existing URL, if any)
+  List<File?> _certNewFiles = [];
   List<Map<String, dynamic>> _serviceEstimates = [];
   bool _isLoading = false;
   bool _isFetching = true;
@@ -81,6 +90,10 @@ class _TechnicianProfileEditPageState
         _isAvailable = techOnline.isAvailable;
         _workshopAddressController.text = techOnline.workshopAddress;
         _accreditations = List.from(techOnline.accreditations);
+        _certUrls = List.from(techOnline.certificationUrls);
+        // Pad _certNewFiles and _certUrls to match _accreditations length
+        while (_certUrls.length < _accreditations.length) { _certUrls.add(''); }
+        _certNewFiles = List.filled(_accreditations.length, null);
         if (techOnline.diagnosisFee > 0) {
           _diagnosisFeeController.text = techOnline.diagnosisFee.toString();
         }
@@ -125,6 +138,19 @@ class _TechnicianProfileEditPageState
               _diagnosisFeeController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
           0;
 
+      // Upload any new cert photos and build final URL list
+      final List<String> finalCertUrls = [];
+      for (int i = 0; i < _accreditations.length; i++) {
+        final newFile = i < _certNewFiles.length ? _certNewFiles[i] : null;
+        if (newFile != null) {
+          final uploaded = await _storageService.uploadCertifications(
+              user.uid, [newFile]);
+          finalCertUrls.add(uploaded.isNotEmpty ? uploaded.first : '');
+        } else {
+          finalCertUrls.add(i < _certUrls.length ? _certUrls[i] : '');
+        }
+      }
+
       await _technicianService.updateTechnicianProfile(
         user.uid,
         name: _nameController.text.trim(),
@@ -139,6 +165,7 @@ class _TechnicianProfileEditPageState
         lat: _lat!,
         lng: _lng!,
         accreditations: _accreditations,
+        certificationUrls: finalCertUrls,
         serviceEstimates: _serviceEstimates,
         diagnosisFee: diagFee,
       );
@@ -178,12 +205,31 @@ class _TechnicianProfileEditPageState
     if (text.isEmpty) return;
     setState(() {
       _accreditations.add(text);
+      _certUrls.add('');
+      _certNewFiles.add(null);
       _newAccreditationController.clear();
     });
   }
 
   void _removeAccreditation(int index) {
-    setState(() => _accreditations.removeAt(index));
+    setState(() {
+      _accreditations.removeAt(index);
+      if (index < _certUrls.length) _certUrls.removeAt(index);
+      if (index < _certNewFiles.length) _certNewFiles.removeAt(index);
+    });
+  }
+
+  Future<void> _pickCertPhoto(int index) async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (picked != null) {
+      setState(() {
+        while (_certNewFiles.length <= index) { _certNewFiles.add(null); }
+        _certNewFiles[index] = File(picked.path);
+      });
+    }
   }
 
   void _addServiceEstimate() {
@@ -460,48 +506,81 @@ class _TechnicianProfileEditPageState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Existing chips
+        // Existing certs with photo
         if (_accreditations.isNotEmpty) ...[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _accreditations.asMap().entries.map((entry) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.verified_rounded,
-                        size: 14, color: _accent),
-                    const SizedBox(width: 6),
-                    Text(
-                      entry.value,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: _accent,
-                      ),
+          ..._accreditations.asMap().entries.map((entry) {
+            final i = entry.key;
+            final name = entry.value;
+            final newFile = i < _certNewFiles.length ? _certNewFiles[i] : null;
+            final existingUrl = i < _certUrls.length ? _certUrls[i] : '';
+            final hasPhoto = newFile != null || existingUrl.isNotEmpty;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F9FB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  // Photo thumbnail / upload button
+                  GestureDetector(
+                    onTap: () => _pickCertPhoto(i),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: hasPhoto
+                          ? (newFile != null
+                              ? Image.file(newFile,
+                                  width: 52, height: 52, fit: BoxFit.cover)
+                              : Image.network(existingUrl,
+                                  width: 52, height: 52, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _certPlaceholder()))
+                          : _certPlaceholder(),
                     ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => _removeAccreditation(entry.key),
-                      child: const Icon(Icons.close_rounded,
-                          size: 14, color: _accent),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: _ink,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        GestureDetector(
+                          onTap: () => _pickCertPhoto(i),
+                          child: Text(
+                            hasPhoto ? 'Ganti foto' : 'Upload foto sertifikat',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _accent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
+                  ),
+                  GestureDetector(
+                    onTap: () => _removeAccreditation(i),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        size: 20, color: Color(0xFFE11D48)),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
         ],
 
-        // Add new
+        // Add new cert name
         Row(
           children: [
             Expanded(
@@ -512,7 +591,7 @@ class _TechnicianProfileEditPageState
                 decoration: InputDecoration(
                   hintText: 'Contoh: Apple Certified',
                   hintStyle: TextStyle(
-                    color: _muted.withOpacity(0.5),
+                    color: _muted.withValues(alpha: 0.5),
                     fontWeight: FontWeight.w400,
                   ),
                   filled: true,
@@ -543,6 +622,16 @@ class _TechnicianProfileEditPageState
           ],
         ),
       ],
+    );
+  }
+
+  Widget _certPlaceholder() {
+    return Container(
+      width: 52,
+      height: 52,
+      color: const Color(0xFFE2E8F0),
+      child: const Icon(Icons.upload_file_outlined,
+          size: 22, color: Color(0xFF94A3B8)),
     );
   }
 

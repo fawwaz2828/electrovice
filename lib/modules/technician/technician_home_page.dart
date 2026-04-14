@@ -128,8 +128,7 @@ class _ActiveJobCard extends StatelessWidget {
 
 class _TechnicianHomePageState extends State<TechnicianHomePage> {
   final TechnicianController _controller = Get.find<TechnicianController>();
-  final bool _isOnline = true;
-  _FilterTab _selectedFilter = _FilterTab.distance;
+  _FilterTab _selectedFilter = _FilterTab.newOrders;
 
   String _damageLabel(String type) => switch (type) {
         'screen' => 'Kerusakan Layar',
@@ -261,49 +260,76 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                           ),
                           const Spacer(),
                           _FilterChip(
-                            label: 'TERBARU',
-                            selected: _selectedFilter == _FilterTab.distance,
+                            label: 'NEW',
+                            selected: _selectedFilter == _FilterTab.newOrders,
                             onTap: () => setState(
-                                () => _selectedFilter = _FilterTab.distance),
+                                () => _selectedFilter = _FilterTab.newOrders),
                           ),
                           const SizedBox(width: 8),
                           _FilterChip(
-                            label: 'URGENSI',
-                            selected: _selectedFilter == _FilterTab.urgency,
+                            label: 'ACTIVE',
+                            selected: _selectedFilter == _FilterTab.activeOrders,
                             onTap: () => setState(
-                                () => _selectedFilter = _FilterTab.urgency),
+                                () => _selectedFilter = _FilterTab.activeOrders),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      if (pendingOrders.isEmpty)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: Text(
-                              'Belum ada permintaan masuk',
-                              style: TextStyle(color: Color(0xFF94A3B8)),
-                            ),
-                          ),
-                        )
-                      else
-                        ...pendingOrders.map((order) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _RequestCard(
-                                category: order.category.toUpperCase(),
-                                categoryColor: const Color(0xFF0061FF),
-                                icon: Icons.build_rounded,
-                                distance: _formatSchedule(order.scheduledAt),
-                                title: _damageLabel(order.damageType),
-                                description: order.description.isEmpty
-                                    ? 'Tidak ada deskripsi tambahan'
-                                    : order.description,
-                                onTap: () {
-                                  _controller.selectOrder(order);
-                                  Get.toNamed(AppRoutes.jobDetail);
-                                },
+                      Builder(builder: (_) {
+                        // NEW: pending orders yang bisa diambil
+                        // ACTIVE: confirmed/on_progress/awaitingPayment
+                        final displayOrders = _selectedFilter == _FilterTab.newOrders
+                            ? pendingOrders
+                            : _controller.incomingOrders
+                                .where((o) =>
+                                    o.status == BookingStatus.confirmed ||
+                                    o.status == BookingStatus.onProgress ||
+                                    o.status == BookingStatus.awaitingPayment)
+                                .toList();
+
+                        if (displayOrders.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 40),
+                              child: Text(
+                                _selectedFilter == _FilterTab.newOrders
+                                    ? 'Belum ada permintaan baru'
+                                    : 'Tidak ada order aktif',
+                                style: const TextStyle(color: Color(0xFF94A3B8)),
                               ),
-                            )),
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: displayOrders.map((order) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _RequestCard(
+                                  category: order.category.toUpperCase(),
+                                  categoryColor: _selectedFilter == _FilterTab.newOrders
+                                      ? const Color(0xFF0061FF)
+                                      : const Color(0xFF16A34A),
+                                  icon: _selectedFilter == _FilterTab.newOrders
+                                      ? Icons.build_rounded
+                                      : Icons.bolt_rounded,
+                                  distance: _formatSchedule(order.scheduledAt),
+                                  title: _damageLabel(order.damageType),
+                                  description: order.description.isEmpty
+                                      ? 'Tidak ada deskripsi tambahan'
+                                      : order.description,
+                                  onTap: () {
+                                    _controller.selectOrder(order);
+                                    if (order.status == BookingStatus.pending) {
+                                      Get.toNamed(AppRoutes.jobDetail);
+                                    } else if (order.status == BookingStatus.confirmed) {
+                                      Get.toNamed(AppRoutes.verification);
+                                    } else {
+                                      Get.toNamed(AppRoutes.activeJob);
+                                    }
+                                  },
+                                ),
+                              )).toList(),
+                        );
+                      }),
                     ],
                   ],
                 );
@@ -321,7 +347,7 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
 // ─────────────────────────────────────────────────────────────────
 //  ENUM
 // ─────────────────────────────────────────────────────────────────
-enum _FilterTab { distance, urgency }
+enum _FilterTab { newOrders, activeOrders }
 
 // ─────────────────────────────────────────────────────────────────
 //  HEADER
@@ -380,7 +406,8 @@ class _Header extends StatelessWidget {
               Switch.adaptive(
                 value: isOnline,
                 onChanged: onToggle,
-                activeColor: const Color(0xFF0061FF),
+                activeThumbColor: Colors.white,
+                activeTrackColor: const Color(0xFF0061FF),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ],
@@ -397,73 +424,74 @@ class _Header extends StatelessWidget {
 class _EarningsCard extends StatelessWidget {
   const _EarningsCard();
 
+  String _rp(int v) {
+    if (v == 0) return 'Rp 0';
+    final s = v.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return 'Rp ${buf.toString()}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'TOTAL EARNINGS',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-              color: Color(0xFF94A3B8),
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Rp 482.500',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF0F172A),
-              letterSpacing: -1,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(
-                Icons.trending_up_rounded,
-                size: 16,
-                color: Color(0xFF059669),
+    final ctrl = Get.find<TechnicianController>();
+    return Obx(() {
+      final earnings = ctrl.totalEarnings;
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'TOTAL EARNINGS',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+                color: Color(0xFF94A3B8),
               ),
-              const SizedBox(width: 4),
-              RichText(
-                text: const TextSpan(
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                  children: [
-                    TextSpan(
-                      text: '+12%',
-                      style: TextStyle(color: Color(0xFF059669)),
-                    ),
-                    TextSpan(
-                      text: ' from yesterday',
-                      style: TextStyle(color: Color(0xFF64748B)),
-                    ),
-                  ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _rp(earnings),
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -1,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(
+                  Icons.receipt_long_outlined,
+                  size: 14,
+                  color: Color(0xFF94A3B8),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+                const SizedBox(width: 6),
+                Text(
+                  '${ctrl.completedOrders.length} order selesai',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -473,93 +501,99 @@ class _EarningsCard extends StatelessWidget {
 class _OrdersCompletedCard extends StatelessWidget {
   const _OrdersCompletedCard();
 
-  static const int completed = 8;
-  static const int dailyGoal = 12;
-
   @override
   Widget build(BuildContext context) {
-    final double progress = completed / dailyGoal;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 0, 0, 0),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'ORDERS COMPLETED',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                    color: Color(0xFF3254FF),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '08',
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    height: 1.0,
-                    letterSpacing: -1,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF3254FF),
-                    ),
-                    minHeight: 6,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'DAILY GOAL: $dailyGoal',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    color: Color(0xFF475569),
-                  ),
-                ),
-              ],
+    final ctrl = Get.find<TechnicianController>();
+    return Obx(() {
+      final completed = ctrl.completedOrders.length;
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(width: 16),
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color.fromARGB(255, 0, 0, 0),
-                width: 2,
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'ORDERS COMPLETED',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    completed.toString().padLeft(2, '0'),
+                    style: const TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF16A34A),
+                      height: 1.0,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: completed == 0 ? 0.0 : (completed % 10) / 10.0,
+                      backgroundColor: const Color(0xFFF1F5F9),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF16A34A),
+                      ),
+                      minHeight: 6,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'TOTAL ALL TIME',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: const Icon(
-              Icons.check_circle_outline_rounded,
-              color: Color(0xFF3254FF),
-              size: 20,
+            const SizedBox(width: 16),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFECFDF5),
+                border: Border.all(
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: const Icon(
+                Icons.check_circle_outline_rounded,
+                color: Color(0xFF16A34A),
+                size: 20,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
 

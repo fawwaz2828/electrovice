@@ -36,6 +36,7 @@ import '../modules/technician/repair_approval_page.dart';
 import '../modules/technician/technician_order_history_page.dart';
 import '../modules/booking/pay_service_page.dart';
 import '../modules/booking/booking_detail_page.dart';
+import '../modules/technician/technician_saved_address_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -69,6 +70,7 @@ class AppRoutes {
   static const payService = '/customer/pay-service';
   static const technicianOrderHistory = '/technician/order-history';
   static const bookingDetail = '/customer/booking-detail';
+  static const technicianSavedAddress = '/technician/saved-address';
 
   static final routes = [
     GetPage(
@@ -273,6 +275,14 @@ class AppRoutes {
     GetPage(
       name: bookingDetail,
       page: () => const BookingDetailPage(),
+    ),
+    GetPage(
+      name: technicianSavedAddress,
+      page: () => const TechnicianSavedAddressPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(
+            () => TechnicianController(), fenix: true);
+      }),
     ),
   ];
 }

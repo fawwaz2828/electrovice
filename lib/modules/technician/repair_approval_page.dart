@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
+import '../../services/booking_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'technician_controller.dart';
 
@@ -27,16 +28,25 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
       duration: const Duration(seconds: 4),
     )..repeat();
 
-    // Listen for customer payment (status → done)
+    // Capture booking ID now — before activeOrder becomes null after status→done
     final ctrl = Get.find<TechnicianController>();
-    _sub = Stream.periodic(const Duration(seconds: 2)).listen((_) {
-      final order = ctrl.activeOrder.value ?? ctrl.selectedOrder.value;
-      if (order == null) return;
-      if (order.status == BookingStatus.done) {
-        _sub?.cancel();
-        Get.offAllNamed(AppRoutes.jobSummary, arguments: order);
-      }
-    });
+    final bookingId =
+        ctrl.activeOrder.value?.bookingId ?? ctrl.selectedOrder.value?.bookingId;
+
+    if (bookingId != null) {
+      // Listen directly to this booking's Firestore doc.
+      // streamBookingById includes ALL statuses, so we reliably get the done event
+      // even after the order leaves streamTechnicianOrders.
+      _sub = BookingService()
+          .streamBookingById(bookingId)
+          .listen((booking) {
+        if (booking == null) return;
+        if (booking.status == BookingStatus.done) {
+          _sub?.cancel();
+          Get.offAllNamed(AppRoutes.jobSummary, arguments: booking);
+        }
+      });
+    }
   }
 
   @override

@@ -20,6 +20,7 @@ class TechnicianService {
     required double lat,
     required double lng,
     required List<String> accreditations,
+    List<String> certificationUrls = const [],
     required List<Map<String, dynamic>> serviceEstimates,
     int diagnosisFee = 0,
   }) async {
@@ -47,11 +48,34 @@ class TechnicianService {
       'workshopAddress': workshopAddress,
       'location': point.data,
       'accreditations': accreditations,
+      'certificationUrls': certificationUrls,
       'serviceEstimates': serviceEstimates,
       'serviceRadius': serviceRadius,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     // merge: true supaya rating & totalJobs tidak tertimpa
+  }
+
+  // ── UPDATE WORKSHOP ADDRESS ONLY ──────────────────────────────
+  Future<void> updateWorkshopAddress({
+    required String uid,
+    required String address,
+    required double lat,
+    required double lng,
+  }) async {
+    final GeoFirePoint point = GeoFirePoint(GeoPoint(lat, lng));
+    await _firestore.collection('technicians_online').doc(uid).set({
+      'workshopAddress': address,
+      'location': point.data,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    // Also update users collection
+    await _firestore.collection('users').doc(uid).update({
+      'technicianProfile.workshopAddress': address,
+      'technicianProfile.latitude': lat,
+      'technicianProfile.longitude': lng,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   // ── GET CURRENT LOCATION ───────────────────────────────────────
@@ -302,7 +326,7 @@ class TechnicianOnlineModel {
       category: map['category'] as String? ?? 'electronic',
       rating: (map['rating'] as num?)?.toDouble() ?? 0.0,
       totalJobs: (map['totalJobs'] as num?)?.toInt() ?? 0,
-      yearsExperience: (map['yearsExperience'] as num?)?.toInt() ?? 0,
+      yearsExperience: _parseYearsExp(map['yearsExperience']),
       isAvailable: map['isAvailable'] as bool? ?? false,
       photoUrl: map['photoUrl'] as String?,
       workshopAddress: map['workshopAddress'] as String? ?? '',
@@ -320,6 +344,19 @@ class TechnicianOnlineModel {
     if (distanceKm < 1) return '${(distanceKm * 1000).toInt()} m';
     return '${distanceKm.toStringAsFixed(1)} km';
   }
+}
+
+/// Parse yearsExperience yang mungkin disimpan sebagai String ('1-2yr', '<1yr', '5yr+')
+/// atau sebagai num (int/double). Mengekstrak digit pertama dari string.
+int _parseYearsExp(dynamic v) {
+  if (v is num) return v.toInt();
+  if (v is String) {
+    final direct = int.tryParse(v);
+    if (direct != null) return direct;
+    final match = RegExp(r'(\d+)').firstMatch(v);
+    if (match != null) return int.parse(match.group(1)!);
+  }
+  return 0;
 }
 
 class ServiceEstimate {

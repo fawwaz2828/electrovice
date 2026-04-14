@@ -1050,6 +1050,11 @@ class _Step4 extends StatelessWidget {
                       _CertItem(
                           index: e.key,
                           file: e.value,
+                          initialName: e.key < ctrl.certificationNames.length
+                              ? ctrl.certificationNames[e.key]
+                              : '',
+                          onNameChanged: (name) =>
+                              ctrl.updateCertificationName(e.key, name),
                           onRemove: () => ctrl.removeCertification(e.key))),
                   if (ctrl.certificationFiles.length < 5)
                     _AddCertButton(onTap: ctrl.pickCertification),
@@ -1158,12 +1163,38 @@ class _ServiceMethodCard extends StatelessWidget {
   }
 }
 
-class _CertItem extends StatelessWidget {
+class _CertItem extends StatefulWidget {
   final int index;
   final File file;
+  final String initialName;
+  final ValueChanged<String> onNameChanged;
   final VoidCallback onRemove;
-  const _CertItem(
-      {required this.index, required this.file, required this.onRemove});
+  const _CertItem({
+    required this.index,
+    required this.file,
+    required this.initialName,
+    required this.onNameChanged,
+    required this.onRemove,
+  });
+
+  @override
+  State<_CertItem> createState() => _CertItemState();
+}
+
+class _CertItemState extends State<_CertItem> {
+  late final TextEditingController _nameCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1175,22 +1206,36 @@ class _CertItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: _border)),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: Image.file(file,
+            child: Image.file(widget.file,
                 width: 48, height: 48, fit: BoxFit.cover),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              'Certification ${index + 1}',
-              style:
-                  const TextStyle(color: _white, fontWeight: FontWeight.w600),
+            child: TextField(
+              controller: _nameCtrl,
+              onChanged: widget.onNameChanged,
+              style: const TextStyle(color: _white, fontSize: 13, fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                hintText: 'Certificate name (e.g. Samsung Certified)',
+                hintStyle: const TextStyle(color: _hint, fontSize: 12),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: _border),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF3654FF)),
+                ),
+              ),
             ),
           ),
+          const SizedBox(width: 4),
           IconButton(
-            onPressed: onRemove,
+            onPressed: widget.onRemove,
             icon: const Icon(Icons.close_rounded,
                 color: Colors.redAccent, size: 20),
             padding: EdgeInsets.zero,

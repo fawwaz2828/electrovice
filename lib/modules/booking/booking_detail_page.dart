@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
@@ -48,6 +49,10 @@ class BookingDetailPage extends StatelessWidget {
         body: const Center(child: Text('Data tidak ditemukan')),
       );
     }
+
+    // Tampilkan review button hanya jika yang membuka adalah customer dari booking ini
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final isCustomerView = currentUid == booking.userId;
 
     final diagnoseFee = booking.estimatedPrice;
     final serviceFee = booking.finalServiceFee ?? 0;
@@ -405,8 +410,9 @@ class BookingDetailPage extends StatelessWidget {
                       ),
                     ),
 
-                    // Review button if not reviewed yet
-                    if (booking.status == BookingStatus.done &&
+                    // Review button — hanya untuk customer, bukan teknisi
+                    if (isCustomerView &&
+                        booking.status == BookingStatus.done &&
                         booking.customerRating == null) ...[
                       const SizedBox(height: 16),
                       FilledButton.icon(

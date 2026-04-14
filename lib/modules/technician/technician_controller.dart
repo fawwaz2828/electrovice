@@ -55,6 +55,10 @@ class TechnicianController extends GetxController {
     super.onClose();
   }
 
+  /// Total earnings dari semua order selesai
+  int get totalEarnings => completedOrders.fold(
+      0, (sum, o) => sum + (o.finalTotalAmount ?? o.estimatedPrice));
+
   Future<void> _loadUserData() async {
     try {
       int retry = 0;
@@ -83,6 +87,7 @@ class TechnicianController extends GetxController {
 
       _listenToOrders(user.uid);
       _loadServices(user.uid);
+      loadCompletedOrders();
     } catch (e) {
       debugPrint('TechnicianController._loadUserData error: $e');
       // Set minimal profile so UI doesn't stay in skeleton forever
