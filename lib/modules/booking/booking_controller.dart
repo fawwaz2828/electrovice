@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
-import '../../services/technician_service.dart' show TechnicianOnlineModel;
+import '../../services/storage_service.dart';
+import '../../services/technician_service.dart' show TechnicianOnlineModel, TechnicianService;
 import '../../services/technician_service.dart' as tech_svc show ServiceEstimate;
 import '../../config/routes.dart';
 
@@ -44,6 +47,10 @@ class BookingController extends GetxController {
   final RxnDouble latitude = RxnDouble();
   final RxnDouble longitude = RxnDouble();
   final RxBool isDetectingLocation = false.obs;
+
+  // ── Foto kerusakan customer ───────────────────────────────────
+  final RxList<File> damagePhotos = <File>[].obs;
+  final _imagePicker = ImagePicker();
 
   // ── Technician reviews (untuk detail page) ───────────────────
   final RxList<Map<String, dynamic>> technicianReviews = <Map<String, dynamic>>[].obs;
@@ -83,8 +90,41 @@ class BookingController extends GetxController {
   void _loadTechnicianFromArguments() {
     final args = Get.arguments;
     if (args is TechnicianOnlineModel) {
+      // Set dari args dulu agar UI langsung tampil
       selectedTechnician.value = args;
       _loadTechnicianReviews(args.uid);
+      // Fresh fetch agar rating & totalJobs selalu up-to-date
+      _refreshTechnicianData(args.uid, args.distanceKm);
+    }
+  }
+
+  Future<void> _refreshTechnicianData(String uid, double distanceKm) async {
+    try {
+      final fresh = await TechnicianService().getTechnicianDetail(uid);
+      if (fresh != null) {
+        // Pertahankan distanceKm dari list (tidak tersimpan di Firestore)
+        selectedTechnician.value = TechnicianOnlineModel(
+          uid: fresh.uid,
+          name: fresh.name,
+          specialty: fresh.specialty,
+          category: fresh.category,
+          rating: fresh.rating,
+          totalJobs: fresh.totalJobs,
+          yearsExperience: fresh.yearsExperience,
+          isAvailable: fresh.isAvailable,
+          workshopAddress: fresh.workshopAddress,
+          distanceKm: distanceKm,
+          accreditations: fresh.accreditations,
+          certificationUrls: fresh.certificationUrls,
+          serviceEstimates: fresh.serviceEstimates,
+          diagnosisFee: fresh.diagnosisFee,
+          photoUrl: fresh.photoUrl,
+          lat: fresh.lat,
+          lng: fresh.lng,
+        );
+      }
+    } catch (e) {
+      debugPrint('_refreshTechnicianData error: $e');
     }
   }
 
@@ -212,6 +252,18 @@ class BookingController extends GetxController {
   void setUserAddress(String value) => userAddress.value = value;
   void setSelectedService(tech_svc.ServiceEstimate s) => selectedService.value = s;
 
+  /// Buka Mapbox location picker → set lat/lng + isi teks alamat secara otomatis.
+  Future<void> pickLocationFromMap(
+      void Function(String address) onAddressChanged) async {
+    final result = await Get.toNamed(AppRoutes.mapboxLocationPicker);
+    if (result != null && result is Map) {
+      latitude.value = result['lat'] as double?;
+      longitude.value = result['lng'] as double?;
+      final addr = result['address'] as String? ?? '';
+      if (addr.isNotEmpty) onAddressChanged(addr);
+    }
+  }
+
   /// Helper untuk membuka pre-booking chat ke teknisi yang sedang dibuka
   void openPreChat() async {
     final t = selectedTechnician.value;
@@ -328,6 +380,33 @@ class BookingController extends GetxController {
     }
   }
 
+  // ── Damage Photos ─────────────────────────────────────────────
+
+  Future<void> addDamagePhoto() async {
+    if (damagePhotos.length >= 3) {
+      Get.snackbar('Maksimal 3 foto', 'Hapus foto yang ada untuk menambah yang baru',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 1280,
+      );
+      if (picked != null) damagePhotos.add(File(picked.path));
+    } catch (e) {
+      Get.snackbar('Gagal', 'Tidak bisa membuka galeri',
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  void removeDamagePhoto(int index) {
+    if (index >= 0 && index < damagePhotos.length) {
+      damagePhotos.removeAt(index);
+    }
+  }
+
   // ── Checkout Page ─────────────────────────────────────────────
 
   void setPaymentMethod(String method) => paymentMethod.value = method;
@@ -414,6 +493,7 @@ class BookingController extends GetxController {
               ? tech.serviceEstimates.first.minPrice
               : 0);
 
+      // 1. Buat booking dulu (tanpa foto)
       final bookingId = await _bookingService.createBooking(
         userId: user.uid,
         userName: userModel?.name ?? user.email ?? 'Customer',
@@ -432,6 +512,22 @@ class BookingController extends GetxController {
       );
 
       debugPrint('Booking created: $bookingId');
+
+      // 2. Upload foto menggunakan bookingId asli, lalu update doc
+      if (damagePhotos.isNotEmpty) {
+        try {
+          final photoUrls = await StorageService()
+              .uploadDamagePhotos(bookingId, damagePhotos.toList());
+          if (photoUrls.isNotEmpty) {
+            await _bookingService.updateDamagePhotos(bookingId, photoUrls);
+          }
+        } catch (e) {
+          debugPrint('uploadDamagePhotos error (non-fatal): $e');
+          // Booking tetap berhasil meski foto gagal upload
+        }
+      }
+
+      damagePhotos.clear();
 
       // Navigate ke tracking page (replace checkout dari stack)
       Get.offNamed(AppRoutes.orderTracking);
@@ -535,7 +631,8 @@ class BookingController extends GetxController {
       final statusUi = switch (b.status) {
         BookingStatus.done => OrderHistoryStatus.success,
         BookingStatus.cancelled => OrderHistoryStatus.canceled,
-        _ => OrderHistoryStatus.success,
+        BookingStatus.awaitingPayment => OrderHistoryStatus.awaitingPayment,
+        _ => OrderHistoryStatus.active, // pending / confirmed / on_progress
       };
 
       return OrderHistoryRecord(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
+import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../../widget/customer_location_map.dart';
 import '../technician/technician_controller.dart';
 
 class VerificationPage extends StatefulWidget {
@@ -223,6 +225,8 @@ class _ClientSummaryCard extends StatelessWidget {
           ? order!.userAddress
           : 'Alamat tidak tersedia';
       final damageTitle = _verifDamageLabel(order?.damageType ?? '');
+      final lat = order?.latitude;
+      final lng = order?.longitude;
 
       return Container(
         width: double.infinity,
@@ -231,7 +235,7 @@ class _ClientSummaryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -239,45 +243,112 @@ class _ClientSummaryCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // Map placeholder
-            Container(
-              height: 170,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                color: Color(0xFFE8EDF5),
-              ),
-              child: Stack(
-                children: [
-                  const Center(
-                    child: Icon(Icons.location_on_rounded, color: Color(0xFF0061FF), size: 48),
-                  ),
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
+            // ── Map (real Mapbox jika lat/lng tersedia, placeholder jika tidak) ──
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
+              child: SizedBox(
+                height: 170,
+                width: double.infinity,
+                child: lat != null && lng != null
+                    ? Stack(
                         children: [
-                          const Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
-                          const SizedBox(width: 6),
-                          Text(
-                            address.length > 25 ? '${address.substring(0, 25)}...' : address,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.5,
+                          CustomerLocationMap(lat: lat, lng: lng),
+                          // Address label bawah-kiri
+                          Positioned(
+                            bottom: 12,
+                            left: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.85),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.location_on_rounded,
+                                      color: Colors.white, size: 12),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    address.length > 22
+                                        ? '${address.substring(0, 22)}...'
+                                        : address,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Navigate button bawah-kanan
+                          Positioned(
+                            bottom: 12,
+                            right: 12,
+                            child: GestureDetector(
+                              onTap: () => MapsLauncher.navigateTo(
+                                lat: lat,
+                                lng: lng,
+                                label: address,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.12),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.navigation_rounded,
+                                        size: 14, color: Color(0xFF0061FF)),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Navigasi',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF0061FF),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ],
+                      )
+                    : Container(
+                        color: const Color(0xFFE8EDF5),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.location_off_outlined,
+                                size: 28, color: Color(0xFF94A3B8)),
+                            const SizedBox(height: 8),
+                            Text(
+                              address,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Color(0xFF64748B), fontSize: 12),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                ],
               ),
             ),
             Padding(

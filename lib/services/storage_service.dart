@@ -31,4 +31,17 @@ class StorageService {
     await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
     return await ref.getDownloadURL();
   }
+
+  /// Upload foto kerusakan dari customer (disimpan di bookings/{bookingId}/damages/)
+  Future<List<String>> uploadDamagePhotos(
+      String bookingId, List<File> files) async {
+    final List<String> urls = [];
+    for (int i = 0; i < files.length; i++) {
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final ref = _storage.ref('bookings/$bookingId/damages/img_${ts}_$i.jpg');
+      await ref.putFile(files[i], SettableMetadata(contentType: 'image/jpeg'));
+      urls.add(await ref.getDownloadURL());
+    }
+    return urls;
+  }
 }

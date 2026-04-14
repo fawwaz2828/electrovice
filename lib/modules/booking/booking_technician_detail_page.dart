@@ -6,6 +6,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox
 
 import '../../config/routes.dart';
 import '../../services/technician_service.dart';
+import '../../utils/maps_launcher.dart';
 import 'booking_controller.dart';
 
 // ── Palette ──────────────────────────────────────────────────────────────────
@@ -961,7 +962,23 @@ class _AboutTab extends GetView<BookingController> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        if (tech.lat != null && tech.lng != null) {
+                          MapsLauncher.navigateTo(
+                            lat: tech.lat!,
+                            lng: tech.lng!,
+                            label: tech.name,
+                          );
+                        } else if (tech.workshopAddress.isNotEmpty) {
+                          MapsLauncher.searchAddress(tech.workshopAddress);
+                        } else {
+                          Get.snackbar(
+                            'Lokasi tidak tersedia',
+                            'Teknisi belum mengisi alamat workshop',
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _blue,
                         side: const BorderSide(color: _blue),

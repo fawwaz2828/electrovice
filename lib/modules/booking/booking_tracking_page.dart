@@ -4,8 +4,8 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
-
 import '../../models/booking_model.dart';
+import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
 
@@ -471,14 +471,30 @@ class _TechnicianContactCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F4F8),
-                  borderRadius: BorderRadius.circular(12),
+              GestureDetector(
+                onTap: () {
+                  final lat = bookingDoc?.latitude;
+                  final lng = bookingDoc?.longitude;
+                  if (lat != null && lng != null) {
+                    MapsLauncher.navigateTo(lat: lat, lng: lng);
+                  } else {
+                    Get.snackbar(
+                      'Lokasi tidak tersedia',
+                      'Customer belum mengaktifkan GPS',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  }
+                },
+                child: Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F4F8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.navigation_rounded,
+                      color: Color(0xFF4163FF)),
                 ),
-                child: const Icon(Icons.call_outlined),
               ),
             ],
           ),

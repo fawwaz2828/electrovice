@@ -374,6 +374,32 @@ class _Header extends StatelessWidget {
             ),
           ),
         ),
+        // ── Chat icon ──────────────────────────────────────────
+        GestureDetector(
+          onTap: () => Get.toNamed(AppRoutes.chatInbox),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: Color(0xFF0F172A),
+              size: 18,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // ── Online toggle ──────────────────────────────────────
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(

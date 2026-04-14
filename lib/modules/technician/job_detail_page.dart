@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../../config/routes.dart';
+import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../technician/technician_controller.dart';
 
@@ -288,6 +289,41 @@ class _JobDetailPageState extends State<JobDetailPage> {
                               ],
                             ),
                           ),
+                  ),
+                );
+              }),
+
+              // ── Navigate Button ────────────────────────────────────
+              Obx(() {
+                final order = controller.selectedOrder.value;
+                final lat = order?.latitude;
+                final lng = order?.longitude;
+                if (lat == null || lng == null) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => MapsLauncher.navigateTo(
+                        lat: lat,
+                        lng: lng,
+                        label: order?.userAddress,
+                      ),
+                      icon: const Icon(Icons.navigation_rounded, size: 18),
+                      label: const Text(
+                        'Navigasi ke Lokasi',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w800),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 52),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                    ),
                   ),
                 );
               }),

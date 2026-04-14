@@ -49,6 +49,8 @@ class BookingDocument {
   final List<Map<String, dynamic>> finalSpareParts; // [{name, price}]
   final String? finalNote;
   final int? finalTotalAmount;
+  /// Foto kerusakan yang di-upload customer saat booking
+  final List<String> damagePhotoUrls;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -80,6 +82,7 @@ class BookingDocument {
     this.finalSpareParts = const [],
     this.finalNote,
     this.finalTotalAmount,
+    this.damagePhotoUrls = const [],
   });
 
   factory BookingDocument.fromFirestore(DocumentSnapshot doc) {
@@ -113,6 +116,9 @@ class BookingDocument {
           .toList(),
       finalNote: data['finalNote'] as String?,
       finalTotalAmount: (data['finalTotalAmount'] as num?)?.toInt(),
+      damagePhotoUrls: (data['damagePhotoUrls'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -145,6 +151,7 @@ class BookingDocument {
       'finalSpareParts': finalSpareParts,
       'finalNote': finalNote,
       'finalTotalAmount': finalTotalAmount,
+      'damagePhotoUrls': damagePhotoUrls,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };

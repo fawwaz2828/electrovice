@@ -2,12 +2,14 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import '../../services/auth_service.dart';
+import '../../services/booking_service.dart';
 import '../../services/chat_service.dart';
 import '../../models/booking_document.dart';
 
 class ChatController extends GetxController {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
+  final BookingService _bookingService = BookingService();
 
   // ── Args dari navigation ──────────────────────────────────────
   late final String chatId;
@@ -19,12 +21,17 @@ class ChatController extends GetxController {
   final RxBool isLoading = true.obs;
   final RxBool isSending = false.obs;
 
+  /// true jika booking sudah done/cancelled — input dinonaktifkan.
+  final RxBool sessionClosed = false.obs;
+
   // ── Current user ──────────────────────────────────────────────
   String get currentUserId => _authService.currentUser?.uid ?? '';
   String _currentUserName = '';
 
   final TextEditingController inputController = TextEditingController();
   StreamSubscription? _msgSub;
+  StreamSubscription? _bookingSub;
+  String? _bookingId; // non-null hanya untuk booking-attached chat
 
   @override
   void onInit() {
@@ -36,6 +43,7 @@ class ChatController extends GetxController {
   @override
   void onClose() {
     _msgSub?.cancel();
+    _bookingSub?.cancel();
     inputController.dispose();
     super.onClose();
   }
@@ -51,6 +59,12 @@ class ChatController extends GetxController {
       // ── Case 1: chat dari tracking/active job (ada bookingDoc) ──
       if (bookingDoc != null) {
         chatId = bookingDoc.bookingId;
+        _bookingId = bookingDoc.bookingId;
+        // Jika booking sudah done/cancelled saat dibuka, langsung tutup
+        if (bookingDoc.status == BookingStatus.done ||
+            bookingDoc.status == BookingStatus.cancelled) {
+          sessionClosed.value = true;
+        }
         _chatService.ensureChatExists(
           chatId: chatId,
           bookingId: bookingDoc.bookingId,
@@ -80,8 +94,10 @@ class ChatController extends GetxController {
         return;
       }
 
-      // ── Case 3: fallback — chatId eksplisit dikirim ───────────────
+      // ── Case 3: fallback — chatId eksplisit dikirim (misal dari inbox) ──
       chatId = args['chatId'] as String? ?? '';
+      // bookingId opsional — dipakai untuk stream status saat dibuka dari inbox
+      _bookingId = args['bookingId'] as String?;
     } else {
       chatId = '';
       otherPartyName = 'Pengguna';
@@ -114,6 +130,21 @@ class ChatController extends GetxController {
         isLoading.value = false;
       },
     );
+
+    // Stream status booking agar chat otomatis tertutup saat done/cancelled
+    if (_bookingId != null) {
+      _bookingSub = _bookingService.streamBookingById(_bookingId!).listen(
+        (doc) {
+          if (doc != null &&
+              (doc.status == BookingStatus.done ||
+                  doc.status == BookingStatus.cancelled)) {
+            sessionClosed.value = true;
+            _bookingSub?.cancel();
+          }
+        },
+        onError: (e) => debugPrint('ChatController booking stream error: $e'),
+      );
+    }
   }
 
   Future<void> sendMessage() async {

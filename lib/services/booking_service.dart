@@ -25,6 +25,7 @@ class BookingService {
     String paymentMethod = PaymentMethod.cash,
     double? latitude,
     double? longitude,
+    List<String> damagePhotoUrls = const [],
   }) async {
     final ref = _db.collection('bookings').doc();
     final now = DateTime.now();
@@ -48,6 +49,7 @@ class BookingService {
       status: BookingStatus.pending,
       latitude: latitude,
       longitude: longitude,
+      damagePhotoUrls: damagePhotoUrls,
       createdAt: now,
       updatedAt: now,
     );
@@ -186,12 +188,22 @@ class BookingService {
     });
   }
 
-  /// Teknisi tandai pekerjaan selesai → status `done`.
+  /// Teknisi tandai pekerjaan selesai → status `done` + increment totalJobs.
   Future<void> markAsDone(String bookingId) async {
+    final snap = await _db.collection('bookings').doc(bookingId).get();
     await _db.collection('bookings').doc(bookingId).update({
       'status': BookingStatus.done,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    // Increment totalJobs di technicians_online
+    if (snap.exists) {
+      final techId = snap.data()?['technicianId'] as String?;
+      if (techId != null && techId.isNotEmpty) {
+        await _db.collection('technicians_online').doc(techId).update({
+          'totalJobs': FieldValue.increment(1),
+        });
+      }
+    }
   }
 
   /// Customer submit ulasan & rating (1–5 bintang).
@@ -232,6 +244,15 @@ class BookingService {
     await _db.collection('technicians_online').doc(technicianId).update({
       'rating': double.parse(avg.toStringAsFixed(1)),
       'totalRatings': rated.length,
+    });
+  }
+
+  /// Update foto kerusakan setelah booking dibuat.
+  Future<void> updateDamagePhotos(
+      String bookingId, List<String> photoUrls) async {
+    await _db.collection('bookings').doc(bookingId).update({
+      'damagePhotoUrls': photoUrls,
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 

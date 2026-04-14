@@ -25,6 +25,8 @@ enum OrderHistoryStatus {
   success,
   canceled,
   verificationFailed,
+  active,           // pending / confirmed / on_progress
+  awaitingPayment,  // menunggu konfirmasi pembayaran
 }
 
 class CustomerTechnicianDetail {

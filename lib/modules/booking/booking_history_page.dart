@@ -167,21 +167,35 @@ class _HistoryRecordCard extends StatelessWidget {
           const Color(0xFF7B8DEB),
           const Color(0xFF4F5C88),
           Icons.computer_outlined,
-          'SUCCESS',
+          'SELESAI',
         );
       case OrderHistoryStatus.canceled:
         return (
           const Color(0xFF9AA2B4),
           const Color(0xFF6D7486),
           Icons.smartphone_rounded,
-          'CANCELED',
+          'DIBATALKAN',
         );
       case OrderHistoryStatus.verificationFailed:
         return (
           const Color(0xFFD79A2B),
           const Color(0xFFB3671F),
           Icons.ac_unit_rounded,
-          'VERIFICATION FAILED',
+          'VERIF GAGAL',
+        );
+      case OrderHistoryStatus.active:
+        return (
+          const Color(0xFF3B82F6),
+          const Color(0xFF1D4ED8),
+          Icons.autorenew_rounded,
+          'AKTIF',
+        );
+      case OrderHistoryStatus.awaitingPayment:
+        return (
+          const Color(0xFF10B981),
+          const Color(0xFF047857),
+          Icons.payment_rounded,
+          'BAYAR',
         );
     }
   }

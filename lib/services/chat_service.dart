@@ -21,6 +21,8 @@ class ChatService {
     if (!snap.exists) {
       await ref.set({
         'bookingId': bookingId,
+        'customerId': customerId,
+        'technicianId': technicianId,
         'participants': [customerId, technicianId],
         'customerName': customerName,
         'technicianName': technicianName,
@@ -56,6 +58,8 @@ class ChatService {
     if (!snap.exists) {
       await ref.set({
         'bookingId': chatId, // pakai chatId sebagai bookingId placeholder
+        'customerId': customerId,
+        'technicianId': technicianId,
         'participants': [customerId, technicianId],
         'customerName': customerName,
         'technicianName': technicianName,
@@ -116,6 +120,30 @@ class ChatService {
         .map((snap) => snap.docs.map(ChatMessage.fromFirestore).toList());
   }
 
+  // ── Stream inbox ───────────────────────────────────────────────
+  /// Stream semua chat room milik [userId], diurutkan berdasarkan pesan terakhir.
+  /// Sort dilakukan client-side untuk menghindari composite index.
+  Stream<List<ChatRoomData>> streamUserChats(String userId) {
+    return _db
+        .collection('chats')
+        .where('participants', arrayContains: userId)
+        .snapshots()
+        .map((snap) {
+      final rooms = snap.docs
+          .map((d) => ChatRoomData.fromFirestore(d, userId))
+          .toList();
+      rooms.sort((a, b) {
+        final at = a.lastMessageAt;
+        final bt = b.lastMessageAt;
+        if (at == null && bt == null) return 0;
+        if (at == null) return 1;
+        if (bt == null) return -1;
+        return bt.compareTo(at);
+      });
+      return rooms;
+    });
+  }
+
   // ── Mark as read ───────────────────────────────────────────────
   /// Filter senderId di client-side untuk menghindari composite index.
   Future<void> markAsRead(String chatId, String currentUserId) async {
@@ -140,7 +168,65 @@ class ChatService {
   }
 }
 
-// ── Model ──────────────────────────────────────────────────────────────────
+// ── ChatRoomData model ────────────────────────────────────────────────────
+class ChatRoomData {
+  final String chatId;
+  final String customerId;
+  final String technicianId;
+  final String customerName;
+  final String technicianName;
+  final String? customerPhotoUrl;
+  final String? technicianPhotoUrl;
+  final String lastMessage;
+  final DateTime? lastMessageAt;
+  final String lastSenderId;
+  /// true = pre-booking konsultasi, false = booking aktif
+  final bool isPreBooking;
+
+  const ChatRoomData({
+    required this.chatId,
+    required this.customerId,
+    required this.technicianId,
+    required this.customerName,
+    required this.technicianName,
+    required this.lastMessage,
+    required this.lastSenderId,
+    required this.isPreBooking,
+    this.customerPhotoUrl,
+    this.technicianPhotoUrl,
+    this.lastMessageAt,
+  });
+
+  factory ChatRoomData.fromFirestore(DocumentSnapshot doc, String currentUserId) {
+    final data = doc.data() as Map<String, dynamic>;
+    final bookingId = data['bookingId'] as String? ?? '';
+    // pre-booking chatId format: "uid1_uid2" (contains underscore)
+    final isPreBooking = bookingId.contains('_');
+    return ChatRoomData(
+      chatId: doc.id,
+      customerId: data['customerId'] as String? ?? '',
+      technicianId: data['technicianId'] as String? ?? '',
+      customerName: data['customerName'] as String? ?? '',
+      technicianName: data['technicianName'] as String? ?? '',
+      customerPhotoUrl: data['customerPhotoUrl'] as String?,
+      technicianPhotoUrl: data['technicianPhotoUrl'] as String?,
+      lastMessage: data['lastMessage'] as String? ?? '',
+      lastMessageAt: (data['lastMessageAt'] as Timestamp?)?.toDate(),
+      lastSenderId: data['lastSenderId'] as String? ?? '',
+      isPreBooking: isPreBooking,
+    );
+  }
+
+  /// Nama pihak lain (bukan current user).
+  String otherName(String currentUserId) =>
+      currentUserId == customerId ? technicianName : customerName;
+
+  /// Foto pihak lain.
+  String? otherPhotoUrl(String currentUserId) =>
+      currentUserId == customerId ? technicianPhotoUrl : customerPhotoUrl;
+}
+
+// ── ChatMessage model ──────────────────────────────────────────────────────
 class ChatMessage {
   final String id;
   final String senderId;

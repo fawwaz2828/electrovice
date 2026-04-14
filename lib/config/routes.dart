@@ -25,6 +25,8 @@ import '../modules/technician/mapbox_location_picker_page.dart';
 import '../modules/profile/profile_edit_page.dart';
 import '../modules/chat/chat_page.dart';
 import '../modules/chat/chat_controller.dart';
+import '../modules/chat/chat_inbox_page.dart';
+import '../modules/chat/chat_inbox_controller.dart';
 import '../modules/booking/review_page.dart';
 import '../modules/technician/onboarding/onboarding_page.dart';
 import '../modules/technician/onboarding/onboarding_controller.dart';
@@ -36,6 +38,7 @@ import '../modules/technician/repair_approval_page.dart';
 import '../modules/technician/technician_order_history_page.dart';
 import '../modules/booking/pay_service_page.dart';
 import '../modules/booking/booking_detail_page.dart';
+import '../modules/booking/customer_orders_page.dart';
 import '../modules/technician/technician_saved_address_page.dart';
 
 class AppRoutes {
@@ -71,6 +74,8 @@ class AppRoutes {
   static const technicianOrderHistory = '/technician/order-history';
   static const bookingDetail = '/customer/booking-detail';
   static const technicianSavedAddress = '/technician/saved-address';
+  static const customerOrders = '/customer/orders';
+  static const chatInbox = '/chat-inbox';
 
   static final routes = [
     GetPage(
@@ -283,6 +288,21 @@ class AppRoutes {
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(
             () => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: customerOrders,
+      page: () => const CustomerOrdersPage(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<BookingController>()) Get.put(BookingController());
+      }),
+    ),
+    GetPage(
+      name: chatInbox,
+      page: () => const ChatInboxPage(),
+      binding: BindingsBuilder(() {
+        Get.delete<ChatInboxController>(force: true);
+        Get.put(ChatInboxController());
       }),
     ),
   ];

@@ -105,10 +105,10 @@ class _BookingFormPageState extends State<BookingFormPage> {
                     _AddressCard(controller: _addressCtrl, ctrl: _ctrl),
                     const SizedBox(height: 14),
 
-                    // ── 4. Catatan opsional ──────────────────────────────
-                    _SectionLabel(label: 'CATATAN (OPSIONAL)'),
+                    // ── 4. Catatan + Foto kerusakan ──────────────────────
+                    _SectionLabel(label: 'CATATAN & FOTO KERUSAKAN (OPSIONAL)'),
                     const SizedBox(height: 10),
-                    _NotesCard(controller: _notesCtrl),
+                    _NotesAndPhotosCard(notesController: _notesCtrl, ctrl: _ctrl),
                     const SizedBox(height: 14),
 
                     // ── Security note ────────────────────────────────────
@@ -522,80 +522,25 @@ class _AddressCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          // ── Label ──────────────────────────────────────────────
+          const Row(
             children: [
-              const Icon(Icons.location_on_outlined,
-                  size: 18, color: _blue),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'ALAMAT PENJEMPUTAN',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: _muted,
-                    letterSpacing: 0.6,
-                  ),
+              Icon(Icons.location_on_outlined, size: 18, color: _blue),
+              SizedBox(width: 8),
+              Text(
+                'ALAMAT PENJEMPUTAN',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: _muted,
+                  letterSpacing: 0.6,
                 ),
               ),
-              // GPS button
-              Obx(() => GestureDetector(
-                    onTap: ctrl.isDetectingLocation.value
-                        ? null
-                        : ctrl.detectGpsLocation,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: ctrl.latitude.value != null
-                            ? const Color(0xFFECFDF5)
-                            : const Color(0xFFEEF4FF),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: ctrl.latitude.value != null
-                              ? const Color(0xFF10B981)
-                              : _blue,
-                        ),
-                      ),
-                      child: ctrl.isDetectingLocation.value
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: _blue),
-                            )
-                          : Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  ctrl.latitude.value != null
-                                      ? Icons.check_circle_rounded
-                                      : Icons.my_location_rounded,
-                                  size: 13,
-                                  color: ctrl.latitude.value != null
-                                      ? const Color(0xFF10B981)
-                                      : _blue,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  ctrl.latitude.value != null
-                                      ? 'GPS ✓'
-                                      : 'Gunakan GPS',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: ctrl.latitude.value != null
-                                        ? const Color(0xFF10B981)
-                                        : _blue,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  )),
             ],
           ),
           const SizedBox(height: 12),
+
+          // ── Text field alamat ───────────────────────────────────
           TextField(
             controller: controller,
             maxLines: 3,
@@ -614,20 +559,78 @@ class _AddressCard extends StatelessWidget {
               contentPadding: const EdgeInsets.all(14),
             ),
           ),
+          const SizedBox(height: 12),
+
+          // ── Map picker button ───────────────────────────────────
+          Obx(() {
+            final hasPin = ctrl.latitude.value != null;
+            return GestureDetector(
+              onTap: () => ctrl.pickLocationFromMap((addr) {
+                controller.text = addr;
+              }),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: hasPin
+                      ? const Color(0xFFEEF2FF)
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: hasPin
+                        ? _blue.withValues(alpha: 0.4)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      hasPin
+                          ? Icons.location_on_rounded
+                          : Icons.add_location_alt_rounded,
+                      color: hasPin ? _blue : _muted,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        hasPin
+                            ? '${ctrl.latitude.value!.toStringAsFixed(6)}, '
+                                '${ctrl.longitude.value!.toStringAsFixed(6)}'
+                            : 'Pilih lokasi di peta',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: hasPin ? _blue : _muted,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right_rounded,
+                        color: _muted, size: 20),
+                  ],
+                ),
+              ),
+            );
+          }),
+
+          // ── Konfirmasi pin ─────────────────────────────────────
           Obx(() {
             if (ctrl.latitude.value == null) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(top: 8),
+            return const Padding(
+              padding: EdgeInsets.only(top: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.gps_fixed_rounded,
-                      size: 12, color: Color(0xFF10B981)),
-                  const SizedBox(width: 4),
+                  Icon(Icons.check_circle_rounded,
+                      size: 14, color: Color(0xFF16A34A)),
+                  SizedBox(width: 6),
                   Text(
-                    'GPS: ${ctrl.latitude.value!.toStringAsFixed(5)}, '
-                    '${ctrl.longitude.value!.toStringAsFixed(5)}',
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF10B981)),
+                    'Koordinat tersimpan',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF16A34A),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -639,10 +642,12 @@ class _AddressCard extends StatelessWidget {
   }
 }
 
-// ── Notes card ────────────────────────────────────────────────────────────────
-class _NotesCard extends StatelessWidget {
-  final TextEditingController controller;
-  const _NotesCard({required this.controller});
+// ── Notes + Photos card ────────────────────────────────────────────────────────
+class _NotesAndPhotosCard extends StatelessWidget {
+  final TextEditingController notesController;
+  final BookingController ctrl;
+  const _NotesAndPhotosCard(
+      {required this.notesController, required this.ctrl});
 
   @override
   Widget build(BuildContext context) {
@@ -659,23 +664,125 @@ class _NotesCard extends StatelessWidget {
           ),
         ],
       ),
-      child: TextField(
-        controller: controller,
-        maxLines: 3,
-        style: const TextStyle(fontSize: 14, color: _ink),
-        decoration: InputDecoration(
-          hintText:
-              'Contoh: Layar HP retak setelah jatuh, ada garis hitam di kiri...',
-          hintStyle:
-              TextStyle(color: _muted.withValues(alpha: 0.7), fontSize: 13),
-          filled: true,
-          fillColor: const Color(0xFFF8FAFC),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Text area ───────────────────────────────────────────
+          TextField(
+            controller: notesController,
+            maxLines: 3,
+            style: const TextStyle(fontSize: 14, color: _ink),
+            decoration: InputDecoration(
+              hintText:
+                  'Contoh: Layar HP retak setelah jatuh, ada garis hitam di kiri...',
+              hintStyle:
+                  TextStyle(color: _muted.withValues(alpha: 0.7), fontSize: 13),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.all(14),
+            ),
           ),
-          contentPadding: const EdgeInsets.all(14),
-        ),
+          const SizedBox(height: 14),
+          // ── Photo section label ──────────────────────────────────
+          Row(
+            children: [
+              const Icon(Icons.photo_library_outlined, size: 15, color: _muted),
+              const SizedBox(width: 6),
+              const Text(
+                'FOTO KERUSAKAN',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: _muted,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              const Spacer(),
+              Obx(() => Text(
+                    '${ctrl.damagePhotos.length}/3',
+                    style: const TextStyle(fontSize: 11, color: _muted),
+                  )),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // ── Photo tiles ──────────────────────────────────────────
+          Obx(() {
+            final photos = ctrl.damagePhotos;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                // Existing photos
+                ...List.generate(photos.length, (i) {
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.file(
+                          photos[i],
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: GestureDetector(
+                          onTap: () => ctrl.removeDamagePhoto(i),
+                          child: Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close_rounded,
+                                size: 13, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+                // Add button (max 3)
+                if (photos.length < 3)
+                  GestureDetector(
+                    onTap: ctrl.addDamagePhoto,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFFD1D9E6),
+                          style: BorderStyle.solid,
+                        ),
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_a_photo_outlined,
+                              size: 22, color: _muted),
+                          SizedBox(height: 4),
+                          Text(
+                            'Tambah',
+                            style: TextStyle(fontSize: 10, color: _muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }

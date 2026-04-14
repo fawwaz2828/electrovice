@@ -15,7 +15,9 @@ class ChatPage extends StatelessWidget {
       body: Column(
         children: [
           Expanded(child: _MessageList(ctrl: ctrl)),
-          _InputBar(ctrl: ctrl),
+          Obx(() => ctrl.sessionClosed.value
+              ? _ClosedSessionBanner()
+              : _InputBar(ctrl: ctrl)),
         ],
       ),
     );
@@ -390,6 +392,42 @@ class _InputBar extends StatelessWidget {
                 ),
               )),
         ],
+      ),
+    );
+  }
+}
+
+// ── Closed Session Banner ──────────────────────────────────────────────────
+class _ClosedSessionBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.fromLTRB(
+          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F3F7),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_outline_rounded,
+                size: 16, color: Color(0xFF94A3B8)),
+            SizedBox(width: 8),
+            Text(
+              'Sesi chat telah berakhir',
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
