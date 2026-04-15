@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
@@ -64,6 +65,11 @@ class BookingController extends GetxController {
   final Rxn<BookingDocument> activeBooking = Rxn();
   StreamSubscription? _activeSub;
 
+  // ── Real-time technician location (tracking page) ─────────────
+  final RxnDouble technicianLat = RxnDouble();
+  final RxnDouble technicianLng = RxnDouble();
+  StreamSubscription? _techLocationSub;
+
   // ── Booking history ───────────────────────────────────────────
   final RxList<BookingDocument> bookingHistory = <BookingDocument>[].obs;
   final RxBool isLoadingHistory = true.obs;
@@ -82,6 +88,7 @@ class BookingController extends GetxController {
   void onClose() {
     _activeSub?.cancel();
     _historySub?.cancel();
+    _techLocationSub?.cancel();
     super.onClose();
   }
 
@@ -161,6 +168,14 @@ class BookingController extends GetxController {
         final prev = activeBooking.value;
         activeBooking.value = doc;
 
+        // Mulai stream lokasi teknisi saat status `confirmed` (teknisi menuju lokasi)
+        if (doc != null && doc.status == BookingStatus.confirmed) {
+          _startTechLocationStream(doc.technicianId);
+        } else if (prev?.status == BookingStatus.confirmed &&
+            doc?.status != BookingStatus.confirmed) {
+          _stopTechLocationStream();
+        }
+
         // Auto-navigate ke review page saat status berubah ke done & belum dirating
         if (doc != null &&
             doc.status == BookingStatus.done &&
@@ -188,6 +203,34 @@ class BookingController extends GetxController {
         isLoadingHistory.value = false;
       },
     );
+  }
+
+  // ── Technician Live Location (tracking page) ─────────────────
+
+  void _startTechLocationStream(String techId) {
+    // Jangan duplicate stream untuk technician yang sama
+    if (_techLocationSub != null) return;
+    _techLocationSub = FirebaseFirestore.instance
+        .collection('technicians_online')
+        .doc(techId)
+        .snapshots()
+        .listen(
+          (snap) {
+            if (!snap.exists) return;
+            final data = snap.data();
+            final loc = data?['currentLocation'] as Map?;
+            technicianLat.value = (loc?['lat'] as num?)?.toDouble();
+            technicianLng.value = (loc?['lng'] as num?)?.toDouble();
+          },
+          onError: (e) => debugPrint('techLocationSub error: $e'),
+        );
+  }
+
+  void _stopTechLocationStream() {
+    _techLocationSub?.cancel();
+    _techLocationSub = null;
+    technicianLat.value = null;
+    technicianLng.value = null;
   }
 
   // ── Technician Detail Page ────────────────────────────────────

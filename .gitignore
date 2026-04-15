@@ -60,3 +60,6 @@ HANDOVER.md
 REWORK_PLAN.md
 WORKFLOW_BARU.md
 .claude/
+# Firebase Functions
+functions/node_modules/
+functions/lib/

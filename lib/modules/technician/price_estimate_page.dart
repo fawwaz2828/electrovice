@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../config/routes.dart';
+import '../../services/storage_service.dart';
 import 'technician_controller.dart';
 
 class PriceEstimatePage extends StatefulWidget {
@@ -18,6 +21,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
   // [{nameCtrl, priceCtrl}]
   final List<_PartEntry> _parts = [];
 
+  final List<File> _workPhotos = [];
   bool _isSubmitting = false;
 
   static const Color _ink = Color(0xFF0F172A);
@@ -68,6 +72,23 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
     });
   }
 
+  Future<void> _pickWorkPhotos() async {
+    final picked = await ImagePicker().pickMultiImage(
+      imageQuality: 80,
+      maxWidth: 1280,
+    );
+    if (picked.isEmpty) return;
+    setState(() {
+      for (final xf in picked) {
+        if (_workPhotos.length < 5) _workPhotos.add(File(xf.path));
+      }
+    });
+  }
+
+  void _removeWorkPhoto(int index) {
+    setState(() => _workPhotos.removeAt(index));
+  }
+
   void _removePart(int index) {
     setState(() {
       _parts[index].nameCtrl.dispose();
@@ -111,6 +132,11 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
+    if (_workPhotos.isEmpty) {
+      Get.snackbar('Foto Wajib', 'Upload minimal 1 foto bukti pekerjaan',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
 
     setState(() => _isSubmitting = true);
     try {
@@ -124,11 +150,20 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
           .where((p) => (p['name'] as String).isNotEmpty)
           .toList();
 
+      final order = Get.find<TechnicianController>().activeOrder.value;
+      final bookingId = order?.bookingId ?? '';
+      List<String> uploadedUrls = [];
+      if (_workPhotos.isNotEmpty && bookingId.isNotEmpty) {
+        uploadedUrls =
+            await StorageService().uploadWorkPhotos(bookingId, _workPhotos);
+      }
+
       await Get.find<TechnicianController>().submitFinalPrice(
         serviceFee: _serviceFee,
         spareParts: parts,
         note: _noteCtrl.text.trim(),
         diagnosisFee: _diagnosisFee,
+        workPhotoUrls: uploadedUrls,
       );
 
       Get.offNamed(AppRoutes.repairApproval);
@@ -371,6 +406,124 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                             ],
                           ],
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── Work Photos (wajib) ────────────────────────
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'Work Photos',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: _ink,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDC2626),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'Wajib',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '${_workPhotos.length}/5',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: _muted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Upload foto bukti hasil pekerjaan sebelum submit.',
+                      style: TextStyle(fontSize: 12, color: _muted),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 90,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          // Add photo button
+                          if (_workPhotos.length < 5)
+                            GestureDetector(
+                              onTap: _pickWorkPhotos,
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                margin: const EdgeInsets.only(right: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2E8F0),
+                                    style: BorderStyle.solid,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.add_a_photo_outlined,
+                                  color: Color(0xFF94A3B8),
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          // Photo thumbnails
+                          ...List.generate(_workPhotos.length, (i) {
+                            return Stack(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    image: DecorationImage(
+                                      image: FileImage(_workPhotos[i]),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 3,
+                                  right: 11,
+                                  child: GestureDetector(
+                                    onTap: () => _removeWorkPhoto(i),
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.close,
+                                          size: 13, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 24),

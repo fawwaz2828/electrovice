@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
+import '../../config/mapbox_config.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
@@ -58,6 +62,8 @@ class BookingTrackingPage extends GetView<BookingController> {
                   title: tracking.mapTitle,
                   lat: tracking.customerLat,
                   lng: tracking.customerLng,
+                  techLat: controller.technicianLat.value,
+                  techLng: controller.technicianLng.value,
                 ),
                 const SizedBox(height: 14),
                 _StatusCard(tracking: tracking),
@@ -98,11 +104,21 @@ class BookingTrackingPage extends GetView<BookingController> {
 }
 
 class _LiveMapCard extends StatefulWidget {
-  const _LiveMapCard({required this.title, this.lat, this.lng});
+  const _LiveMapCard({
+    required this.title,
+    this.lat,
+    this.lng,
+    this.techLat,
+    this.techLng,
+  });
 
   final String title;
+  // Customer location
   final double? lat;
   final double? lng;
+  // Technician live location
+  final double? techLat;
+  final double? techLng;
 
   @override
   State<_LiveMapCard> createState() => _LiveMapCardState();
@@ -110,79 +126,231 @@ class _LiveMapCard extends StatefulWidget {
 
 class _LiveMapCardState extends State<_LiveMapCard> {
   mapbox.MapboxMap? _map;
-  mapbox.CircleAnnotationManager? _circleManager;
+  mapbox.CircleAnnotationManager? _customerCircleManager;
+  mapbox.CircleAnnotationManager? _techCircleManager;
+  mapbox.PolylineAnnotationManager? _polylineManager;
 
   Future<void> _onMapCreated(mapbox.MapboxMap map) async {
     _map = map;
-    _circleManager = await map.annotations.createCircleAnnotationManager();
-    if (widget.lat != null && widget.lng != null) {
-      await _moveCameraAndPin(widget.lat!, widget.lng!);
-    }
+    _polylineManager = await map.annotations.createPolylineAnnotationManager();
+    _customerCircleManager = await map.annotations.createCircleAnnotationManager();
+    _techCircleManager = await map.annotations.createCircleAnnotationManager();
+    await _updateAnnotations();
   }
 
   @override
   void didUpdateWidget(_LiveMapCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Koordinat berubah (misal dari Obx rebuild) — update peta
-    if (widget.lat != oldWidget.lat || widget.lng != oldWidget.lng) {
-      if (widget.lat != null && widget.lng != null) {
-        _moveCameraAndPin(widget.lat!, widget.lng!);
-      }
+    final coordsChanged = widget.lat != oldWidget.lat ||
+        widget.lng != oldWidget.lng ||
+        widget.techLat != oldWidget.techLat ||
+        widget.techLng != oldWidget.techLng;
+    if (coordsChanged) _updateAnnotations();
+  }
+
+  Future<void> _updateAnnotations() async {
+    if (_map == null) return;
+
+    // ── Customer marker (blue) ───────────────────────────────────
+    await _customerCircleManager?.deleteAll();
+    if (widget.lat != null && widget.lng != null) {
+      await _customerCircleManager?.create(
+        mapbox.CircleAnnotationOptions(
+          geometry: mapbox.Point(
+              coordinates: mapbox.Position(widget.lng!, widget.lat!)),
+          circleRadius: 10.0,
+          circleColor: 0xFF3654FF,
+          circleStrokeWidth: 3.0,
+          circleStrokeColor: 0xFFFFFFFF,
+        ),
+      );
+    }
+
+    // ── Technician marker (orange) ───────────────────────────────
+    await _techCircleManager?.deleteAll();
+    if (widget.techLat != null && widget.techLng != null) {
+      await _techCircleManager?.create(
+        mapbox.CircleAnnotationOptions(
+          geometry: mapbox.Point(
+              coordinates: mapbox.Position(widget.techLng!, widget.techLat!)),
+          circleRadius: 11.0,
+          circleColor: 0xFFF97316, // orange
+          circleStrokeWidth: 3.0,
+          circleStrokeColor: 0xFFFFFFFF,
+        ),
+      );
+    }
+
+    // ── Camera: fit both points or center on customer ────────────
+    final hasBoth = widget.lat != null &&
+        widget.lng != null &&
+        widget.techLat != null &&
+        widget.techLng != null;
+
+    if (hasBoth) {
+      // Fit camera to bounding box of both markers with padding
+      final minLat = min(widget.lat!, widget.techLat!);
+      final maxLat = max(widget.lat!, widget.techLat!);
+      final minLng = min(widget.lng!, widget.techLng!);
+      final maxLng = max(widget.lng!, widget.techLng!);
+      // Midpoint + zoom level that covers the spread
+      final midLat = (minLat + maxLat) / 2;
+      final midLng = (minLng + maxLng) / 2;
+      // Rough zoom based on distance
+      final latSpan = (maxLat - minLat).abs();
+      final lngSpan = (maxLng - minLng).abs();
+      final span = max(latSpan, lngSpan);
+      final zoom = span < 0.005 ? 15.0
+          : span < 0.02 ? 14.0
+          : span < 0.05 ? 13.0
+          : span < 0.1 ? 12.0
+          : 11.0;
+      await _map!.flyTo(
+        mapbox.CameraOptions(
+          center: mapbox.Point(coordinates: mapbox.Position(midLng, midLat)),
+          zoom: zoom,
+        ),
+        mapbox.MapAnimationOptions(duration: 800),
+      );
+      // Draw route between tech and customer
+      _drawRoute();
+    } else if (widget.lat != null && widget.lng != null) {
+      await _map!.flyTo(
+        mapbox.CameraOptions(
+          center: mapbox.Point(
+              coordinates: mapbox.Position(widget.lng!, widget.lat!)),
+          zoom: 15.0,
+        ),
+        mapbox.MapAnimationOptions(duration: 800),
+      );
+      // Clear any stale route
+      await _polylineManager?.deleteAll();
     }
   }
 
-  Future<void> _moveCameraAndPin(double lat, double lng) async {
-    if (_map == null) return;
-    await _map!.flyTo(
-      mapbox.CameraOptions(
-        center: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
-        zoom: 15.0,
-      ),
-      mapbox.MapAnimationOptions(duration: 800),
-    );
-    // Gunakan CircleAnnotation — tidak butuh icon asset eksternal
-    await _circleManager?.deleteAll();
-    await _circleManager?.create(
-      mapbox.CircleAnnotationOptions(
-        geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
-        circleRadius: 10.0,
-        circleColor: 0xFF3654FF,
-        circleStrokeWidth: 3.0,
-        circleStrokeColor: 0xFFFFFFFF,
-      ),
-    );
+  // ── Fetch Mapbox Directions route and draw polyline ────────────
+  Future<void> _drawRoute() async {
+    if (widget.techLat == null || widget.techLng == null ||
+        widget.lat == null || widget.lng == null) return;
+
+    try {
+      final coords = await _fetchRoute(
+        fromLat: widget.techLat!,
+        fromLng: widget.techLng!,
+        toLat: widget.lat!,
+        toLng: widget.lng!,
+      );
+      if (coords == null || coords.isEmpty || _polylineManager == null) return;
+
+      await _polylineManager!.deleteAll();
+      await _polylineManager!.create(
+        mapbox.PolylineAnnotationOptions(
+          geometry: mapbox.LineString(
+            coordinates: coords
+                .map((c) => mapbox.Position(c[0], c[1]))
+                .toList(),
+          ),
+          lineColor: 0xFF4163FF,
+          lineWidth: 4.0,
+        ),
+      );
+    } catch (e) {
+      debugPrint('_drawRoute error: $e');
+    }
+  }
+
+  /// Mapbox Directions API — driving route from [from] to [to].
+  /// Returns list of [lng, lat] coordinate pairs.
+  static Future<List<List<double>>?> _fetchRoute({
+    required double fromLat,
+    required double fromLng,
+    required double toLat,
+    required double toLng,
+  }) async {
+    try {
+      final uri = Uri.parse(
+        'https://api.mapbox.com/directions/v5/mapbox/driving/'
+        '$fromLng,$fromLat;$toLng,$toLat'
+        '?geometries=geojson&overview=simplified'
+        '&access_token=$mapboxPublicToken',
+      );
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 8);
+      final request = await client.getUrl(uri);
+      final response = await request.close();
+      if (response.statusCode != 200) return null;
+      final body = await response.transform(utf8.decoder).join();
+      client.close();
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final routes = json['routes'] as List?;
+      if (routes == null || routes.isEmpty) return null;
+      final rawCoords =
+          (routes[0]['geometry']['coordinates'] as List).cast<List>();
+      return rawCoords
+          .map((c) => [
+                (c[0] as num).toDouble(),
+                (c[1] as num).toDouble(),
+              ])
+          .toList();
+    } catch (e) {
+      debugPrint('_fetchRoute error: $e');
+      return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasCustomer = widget.lat != null && widget.lng != null;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(18)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: const [BoxShadow(color: Color(0x11000000), blurRadius: 10)],
-            ),
-            child: Text(widget.title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x11000000), blurRadius: 10)
+                    ],
+                  ),
+                  child: Text(widget.title,
+                      style: const TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w800)),
+                ),
+              ),
+              // Legend: customer dot + tech dot (only when tech is streaming)
+              if (widget.techLat != null) ...[
+                const SizedBox(width: 8),
+                _MapLegendDot(color: const Color(0xFF3654FF), label: 'Kamu'),
+                const SizedBox(width: 8),
+                _MapLegendDot(
+                    color: const Color(0xFFF97316), label: 'Teknisi'),
+              ],
+            ],
           ),
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: SizedBox(
               height: 205,
-              child: widget.lat != null && widget.lng != null
+              child: hasCustomer
                   ? mapbox.MapWidget(
-                      key: const ValueKey('customer_location_map'),
+                      key: const ValueKey('tracking_map'),
                       onMapCreated: _onMapCreated,
                       cameraOptions: mapbox.CameraOptions(
                         center: mapbox.Point(
-                          coordinates: mapbox.Position(widget.lng!, widget.lat!),
+                          coordinates:
+                              mapbox.Position(widget.lng!, widget.lat!),
                         ),
                         zoom: 15.0,
                       ),
@@ -199,11 +367,13 @@ class _LiveMapCardState extends State<_LiveMapCard> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.location_off_outlined, size: 32, color: Color(0xFF94A3B8)),
+                            Icon(Icons.location_off_outlined,
+                                size: 32, color: Color(0xFF94A3B8)),
                             SizedBox(height: 8),
                             Text(
                               'Lokasi GPS belum diaktifkan',
-                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                              style: TextStyle(
+                                  color: Color(0xFF94A3B8), fontSize: 12),
                             ),
                           ],
                         ),
@@ -213,6 +383,30 @@ class _LiveMapCardState extends State<_LiveMapCard> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MapLegendDot extends StatelessWidget {
+  const _MapLegendDot({required this.color, required this.label});
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(label,
+            style:
+                const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 }

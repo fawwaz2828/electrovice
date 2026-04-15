@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../../services/auth_service.dart';
 import '../../config/routes.dart';
@@ -92,7 +95,29 @@ class AuthController extends GetxController {
     }
   }
 
+  /// Simpan FCM token ke Firestore agar Cloud Functions bisa kirim push.
+  Future<void> _saveFcmToken() async {
+    try {
+      final uid = _authService.currentUser?.uid;
+      if (uid == null) return;
+      // Request permission (Android 13+ dan iOS butuh ini)
+      await FirebaseMessaging.instance.requestPermission();
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null) return;
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .update({'fcmToken': token});
+      debugPrint('FCM token saved: $token');
+    } catch (e) {
+      debugPrint('saveFcmToken error (non-fatal): $e');
+    }
+  }
+
   Future<void> _navigateToHome(String role) async {
+    // Simpan FCM token setiap kali login (token bisa berubah)
+    _saveFcmToken();
+
     if (role == 'technician') {
       // Cek apakah onboarding sudah selesai
       final uid = _authService.currentUser?.uid;

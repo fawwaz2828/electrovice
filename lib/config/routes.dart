@@ -40,6 +40,8 @@ import '../modules/booking/pay_service_page.dart';
 import '../modules/booking/booking_detail_page.dart';
 import '../modules/booking/customer_orders_page.dart';
 import '../modules/technician/technician_saved_address_page.dart';
+import '../modules/notification/notification_controller.dart';
+import '../modules/notification/notification_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -76,6 +78,7 @@ class AppRoutes {
   static const technicianSavedAddress = '/technician/saved-address';
   static const customerOrders = '/customer/orders';
   static const chatInbox = '/chat-inbox';
+  static const notifications = '/notifications';
 
   static final routes = [
     GetPage(
@@ -99,6 +102,7 @@ class AppRoutes {
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
         Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
         Get.lazyPut<BookingController>(() => BookingController(), fenix: true);
+        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
       }),
     ),
     GetPage(
@@ -164,6 +168,7 @@ class AppRoutes {
       page: () => const TechnicianHomePage(),
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
       }),
     ),
     GetPage(
@@ -303,6 +308,13 @@ class AppRoutes {
       binding: BindingsBuilder(() {
         Get.delete<ChatInboxController>(force: true);
         Get.put(ChatInboxController());
+      }),
+    ),
+    GetPage(
+      name: notifications,
+      page: () => const NotificationPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
       }),
     ),
   ];

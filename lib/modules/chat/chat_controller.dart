@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
 import '../../services/chat_service.dart';
+import '../../services/storage_service.dart';
 import '../../models/booking_document.dart';
 
 class ChatController extends GetxController {
@@ -29,6 +32,7 @@ class ChatController extends GetxController {
   String _currentUserName = '';
 
   final TextEditingController inputController = TextEditingController();
+  final RxBool isUploadingPhoto = false.obs;
   StreamSubscription? _msgSub;
   StreamSubscription? _bookingSub;
   String? _bookingId; // non-null hanya untuk booking-attached chat
@@ -167,6 +171,34 @@ class ChatController extends GetxController {
           snackPosition: SnackPosition.BOTTOM);
     } finally {
       isSending.value = false;
+    }
+  }
+
+  Future<void> sendPhoto() async {
+    if (chatId.isEmpty) return;
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 1280,
+      );
+      if (picked == null) return;
+
+      isUploadingPhoto.value = true;
+      final url = await StorageService().uploadChatPhoto(chatId, File(picked.path));
+      await _chatService.sendMessage(
+        chatId: chatId,
+        senderId: currentUserId,
+        senderName: _currentUserName,
+        text: '',
+        imageUrl: url,
+      );
+    } catch (e) {
+      debugPrint('sendPhoto error: $e');
+      Get.snackbar('Gagal', 'Foto tidak bisa dikirim',
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isUploadingPhoto.value = false;
     }
   }
 

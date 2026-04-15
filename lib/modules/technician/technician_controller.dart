@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../models/technician_model.dart';
 import '../../models/booking_document.dart';
 import '../../services/auth_service.dart';
@@ -46,6 +48,10 @@ class TechnicianController extends GetxController {
   StreamSubscription? _authSub;
   bool _ordersStreamActive = false;
 
+  // ── Live location tracking ────────────────────────────────────
+  Timer? _locationTimer;
+  String? _trackingUid;
+
   @override
   void onInit() {
     super.onInit();
@@ -64,6 +70,7 @@ class TechnicianController extends GetxController {
   void onClose() {
     _ordersSub?.cancel();
     _authSub?.cancel();
+    _stopLocationTracking();
     super.onClose();
   }
 
@@ -166,6 +173,7 @@ class TechnicianController extends GetxController {
 
   void _listenToOrders(String technicianId) {
     _ordersStreamActive = true;
+    _trackingUid = technicianId;
     _ordersSub = _bookingService
         .streamTechnicianOrders(technicianId)
         .listen(
@@ -202,6 +210,13 @@ class TechnicianController extends GetxController {
                     o.status == BookingStatus.awaitingPayment)
                 .firstOrNull;
             activeOrder.value = active;
+
+            // Kirim lokasi real-time hanya saat status `confirmed` (menuju lokasi)
+            if (active?.status == BookingStatus.confirmed) {
+              _startLocationTracking(technicianId);
+            } else {
+              _stopLocationTracking();
+            }
 
             // Auto-set selectedOrder ke confirmed order jika belum dipilih
             // Berguna setelah re-login agar verification page bisa lanjut
@@ -294,6 +309,7 @@ class TechnicianController extends GetxController {
     required List<Map<String, dynamic>> spareParts,
     required String note,
     required int diagnosisFee,
+    List<String> workPhotoUrls = const [],
   }) async {
     final order = activeOrder.value ?? selectedOrder.value;
     if (order == null) throw Exception('Tidak ada order aktif');
@@ -306,6 +322,7 @@ class TechnicianController extends GetxController {
       spareParts: spareParts,
       note: note,
       totalAmount: totalAmount,
+      workPhotoUrls: workPhotoUrls,
     );
   }
 
@@ -346,6 +363,61 @@ class TechnicianController extends GetxController {
           ? certifications
           : current.certifications,
     );
+  }
+
+  // ── Live location tracking ────────────────────────────────────
+
+  Future<void> _startLocationTracking(String uid) async {
+    if (_locationTimer != null && _locationTimer!.isActive) return;
+
+    // Request permission jika belum
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      debugPrint('Location permission denied — tracking disabled');
+      return;
+    }
+
+    debugPrint('Starting location tracking for $uid');
+    _locationTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 5),
+        );
+        await FirebaseFirestore.instance
+            .collection('technicians_online')
+            .doc(uid)
+            .set({
+          'currentLocation': {
+            'lat': pos.latitude,
+            'lng': pos.longitude,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+        }, SetOptions(merge: true));
+        debugPrint('Location updated: ${pos.latitude}, ${pos.longitude}');
+      } catch (e) {
+        debugPrint('location update error: $e');
+      }
+    });
+  }
+
+  void _stopLocationTracking() {
+    if (_locationTimer == null) return;
+    debugPrint('Stopping location tracking');
+    _locationTimer?.cancel();
+    _locationTimer = null;
+    // Clear currentLocation dari Firestore agar customer tidak lihat posisi stale
+    if (_trackingUid != null) {
+      FirebaseFirestore.instance
+          .collection('technicians_online')
+          .doc(_trackingUid)
+          .set({'currentLocation': null}, SetOptions(merge: true))
+          .catchError((e) => debugPrint('clear location error: $e'));
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────────

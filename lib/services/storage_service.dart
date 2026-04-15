@@ -44,4 +44,25 @@ class StorageService {
     }
     return urls;
   }
+
+  /// Upload foto bukti kerja teknisi
+  Future<List<String>> uploadWorkPhotos(
+      String bookingId, List<File> files) async {
+    final List<String> urls = [];
+    for (int i = 0; i < files.length; i++) {
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final ref = _storage.ref('bookings/$bookingId/work/img_${ts}_$i.jpg');
+      await ref.putFile(files[i], SettableMetadata(contentType: 'image/jpeg'));
+      urls.add(await ref.getDownloadURL());
+    }
+    return urls;
+  }
+
+  /// Upload foto di chat
+  Future<String> uploadChatPhoto(String chatId, File file) async {
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final ref = _storage.ref('chats/$chatId/img_$ts.jpg');
+    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
+    return await ref.getDownloadURL();
+  }
 }

@@ -90,9 +90,10 @@ class ChatService {
     required String senderId,
     required String senderName,
     required String text,
+    String? imageUrl,
   }) async {
     final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
+    if (trimmed.isEmpty && (imageUrl == null || imageUrl.isEmpty)) return;
 
     final batch = _db.batch();
     final msgRef =
@@ -102,15 +103,16 @@ class ChatService {
       'senderId': senderId,
       'senderName': senderName,
       'text': trimmed,
+      if (imageUrl != null && imageUrl.isNotEmpty) 'imageUrl': imageUrl,
       'createdAt': FieldValue.serverTimestamp(),
       'isRead': false,
     });
 
-    // Upsert metadata di parent doc (set+merge agar tidak gagal jika doc belum ada)
+    final lastMsg = imageUrl != null ? '📷 Foto' : trimmed;
     batch.set(
       _db.collection('chats').doc(chatId),
       {
-        'lastMessage': trimmed,
+        'lastMessage': lastMsg,
         'lastMessageAt': FieldValue.serverTimestamp(),
         'lastSenderId': senderId,
       },
@@ -257,6 +259,7 @@ class ChatMessage {
   final String senderId;
   final String senderName;
   final String text;
+  final String? imageUrl;
   final DateTime createdAt;
   final bool isRead;
 
@@ -266,8 +269,11 @@ class ChatMessage {
     required this.senderName,
     required this.text,
     required this.createdAt,
+    this.imageUrl,
     this.isRead = false,
   });
+
+  bool get isImage => imageUrl != null && imageUrl!.isNotEmpty;
 
   factory ChatMessage.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -276,6 +282,7 @@ class ChatMessage {
       senderId: data['senderId'] as String? ?? '',
       senderName: data['senderName'] as String? ?? '',
       text: data['text'] as String? ?? '',
+      imageUrl: data['imageUrl'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isRead: data['isRead'] as bool? ?? false,
     );

@@ -8,6 +8,7 @@ import '../../models/booking_document.dart';
 import '../../services/technician_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../booking/booking_controller.dart';
+import '../notification/notification_controller.dart';
 import 'home_controller.dart';
 
 class HomePage extends GetView<HomeController> {
@@ -52,9 +53,7 @@ class HomePage extends GetView<HomeController> {
                             onTap: () => Get.toNamed(AppRoutes.chatInbox),
                           ),
                           const SizedBox(width: 8),
-                          const _HeaderIconButton(
-                            icon: Icons.notifications_none_rounded,
-                          ),
+                          _NotifBell(),
                         ],
                       ),
                     ],
@@ -135,6 +134,68 @@ class _HeaderIconButton extends StatelessWidget {
         ),
         child: Icon(icon, color: const Color(0xFF1E293B), size: 20),
       ),
+    );
+  }
+}
+
+// ── Notification Bell with Badge ──────────────────────────────────────────
+class _NotifBell extends StatelessWidget {
+  _NotifBell();
+
+  final _notifCtrl = Get.find<NotificationController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(AppRoutes.notifications),
+      child: Obx(() {
+        final count = _notifCtrl.unreadCount.value;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.notifications_none_rounded,
+                  color: Color(0xFF1E293B), size: 20),
+            ),
+            if (count > 0)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEF4444),
+                    shape: BoxShape.circle,
+                  ),
+                  constraints:
+                      const BoxConstraints(minWidth: 16, minHeight: 16),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      }),
     );
   }
 }
@@ -602,9 +663,9 @@ class _RepairCategories extends StatelessWidget {
             itemCount: _categories.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
-              mainAxisSpacing: 12,
+              mainAxisSpacing: 8,
               crossAxisSpacing: 0,
-              childAspectRatio: 1.1,
+              childAspectRatio: 1.4,
             ),
             itemBuilder: (_, i) {
               final c = _categories[i];
@@ -639,11 +700,11 @@ class _CategoryItem extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -652,9 +713,9 @@ class _CategoryItem extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(icon, color: const Color(0xFF475569), size: 26),
+            child: Icon(icon, color: const Color(0xFF475569), size: 24),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             label,
             style: const TextStyle(

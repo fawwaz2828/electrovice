@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
+import '../notification/notification_controller.dart';
 import 'technician_controller.dart';
 
 class TechnicianHomePage extends StatefulWidget {
@@ -350,6 +351,71 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
 enum _FilterTab { newOrders, activeOrders }
 
 // ─────────────────────────────────────────────────────────────────
+//  NOTIFICATION BELL (technician)
+// ─────────────────────────────────────────────────────────────────
+class _TechNotifBell extends StatelessWidget {
+  _TechNotifBell();
+
+  final _notifCtrl = Get.find<NotificationController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(AppRoutes.notifications),
+      child: Obx(() {
+        final count = _notifCtrl.unreadCount.value;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.notifications_none_rounded,
+                color: Color(0xFF0F172A),
+                size: 20,
+              ),
+            ),
+            if (count > 0)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEF4444),
+                    shape: BoxShape.circle,
+                  ),
+                  constraints:
+                      const BoxConstraints(minWidth: 16, minHeight: 16),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      }),
+    );
+  }
+}
+
 //  HEADER
 // ─────────────────────────────────────────────────────────────────
 class _Header extends StatelessWidget {
@@ -374,6 +440,9 @@ class _Header extends StatelessWidget {
             ),
           ),
         ),
+        // ── Notification bell ──────────────────────────────────
+        _TechNotifBell(),
+        const SizedBox(width: 8),
         // ── Chat icon — ukuran padding sama dengan toggle agar rata ──
         GestureDetector(
           onTap: () => Get.toNamed(AppRoutes.chatInbox),
