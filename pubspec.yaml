@@ -85,27 +85,33 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
 flutter_native_splash:
+  # Light mode: logo biru di background putih
   color: "#FFFFFF"
-  image: assets/images/electrovice_splash.png
+  image: assets/images/electrovice_blue.png
+  # Dark mode: logo putih di background gelap
   color_dark: "#0F172A"
-  image_dark: assets/images/electrovice_splash.png
+  image_dark: assets/images/electrovice_white.png
+  # Tampilkan logo di tengah, tidak di-stretch / di-crop
+  android_gravity: center
+  ios_content_mode: scaleAspectFit
+  web_image_mode: center
   android_12:
-    image: assets/images/electrovice_splash.png
+    image: assets/images/electrovice_blue.png
     color: "#FFFFFF"
-    image_dark: assets/images/electrovice_splash.png
+    image_dark: assets/images/electrovice_white.png
     color_dark: "#0F172A"
   fullscreen: true
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/electrovice_biru.png"
+  image_path: "assets/images/electrovice_blue.png"
   min_sdk_android: 21
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/electrovice_biru.png"
+  adaptive_icon_foreground: "assets/images/electrovice_blue.png"
   web:
     generate: true
-    image_path: "assets/images/electrovice_biru.png"
+    image_path: "assets/images/electrovice_blue.png"
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
