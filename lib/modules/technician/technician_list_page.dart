@@ -31,15 +31,22 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
   // ── Filter state ─────────────────────────────────────────────────────────
   String _searchQuery = '';
   String? _selectedCategory;
+  String _sortBy = 'distance'; // 'distance' | 'rating' | 'jobs'
 
-  static const _filters = [
+  static const _categoryFilters = [
     {'label': 'Semua',     'value': null},
     {'label': 'Handphone', 'value': 'electronic'},
     {'label': 'Kendaraan', 'value': 'vehicle'},
   ];
 
+  static const _sortOptions = [
+    {'label': 'Terdekat',  'icon': Icons.near_me_rounded,       'value': 'distance'},
+    {'label': 'Rating',    'icon': Icons.star_rounded,           'value': 'rating'},
+    {'label': 'Terpopuler','icon': Icons.workspace_premium_rounded,'value': 'jobs'},
+  ];
+
   List<TechnicianOnlineModel> get _filtered {
-    return _all.where((t) {
+    var list = _all.where((t) {
       final q = _searchQuery.toLowerCase();
       final matchQ = q.isEmpty ||
           t.name.toLowerCase().contains(q) ||
@@ -49,6 +56,16 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
           _selectedCategory == null || t.category == _selectedCategory;
       return matchQ && matchCat;
     }).toList();
+
+    switch (_sortBy) {
+      case 'rating':
+        list.sort((a, b) => b.rating.compareTo(a.rating));
+      case 'jobs':
+        list.sort((a, b) => b.totalJobs.compareTo(a.totalJobs));
+      default: // 'distance'
+        list.sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
+    }
+    return list;
   }
 
   // ── Map ──────────────────────────────────────────────────────────────────
@@ -219,11 +236,17 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
                   controller: _searchCtrl,
                   query: _searchQuery,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 _FilterRow(
-                  filters: _filters,
+                  filters: _categoryFilters,
                   selected: _selectedCategory,
                   onSelect: (v) => setState(() => _selectedCategory = v),
+                ),
+                const SizedBox(height: 6),
+                _SortRow(
+                  options: _sortOptions,
+                  selected: _sortBy,
+                  onSelect: (v) => setState(() => _sortBy = v),
                 ),
               ],
             ),
@@ -571,6 +594,84 @@ class _FilterRow extends StatelessWidget {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SORT ROW
+// ════════════════════════════════════════════════════════════════════════════
+class _SortRow extends StatelessWidget {
+  final List<Map<String, dynamic>> options;
+  final String selected;
+  final ValueChanged<String> onSelect;
+
+  const _SortRow({
+    required this.options,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          const Text(
+            'Sort:',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(width: 8),
+          ...options.map((opt) {
+            final val = opt['value'] as String;
+            final isSelected = selected == val;
+            return GestureDetector(
+              onTap: () => onSelect(val),
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF0061FF)
+                      : Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.transparent
+                        : Colors.white.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      opt['icon'] as IconData,
+                      size: 13,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      opt['label'] as String,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

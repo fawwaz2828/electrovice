@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -12,14 +13,16 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
     if (dart.library.html) 'config/mapbox_web_stub.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
 
   if (!kIsWeb) {
-    // Token disimpan di lib/config/mapbox_config.dart (gitignored)
     MapboxOptions.setAccessToken(mapboxPublicToken);
   }
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  FlutterNativeSplash.remove();
   runApp(const MyApp());
 }
 

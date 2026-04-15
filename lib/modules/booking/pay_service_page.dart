@@ -6,6 +6,46 @@ import 'booking_controller.dart';
 class PayServicePage extends GetView<BookingController> {
   const PayServicePage({super.key});
 
+  void _showPhotoViewer(
+      BuildContext context, List<String> urls, int initialIndex) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: PageController(initialPage: initialIndex),
+              itemCount: urls.length,
+              itemBuilder: (_, i) => InteractiveViewer(
+                child: Center(
+                  child: Image.network(urls[i], fit: BoxFit.contain),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: GestureDetector(
+                onTap: () => Get.back(),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _rp(int v) {
     if (v == 0) return 'Rp 0';
     final s = v.toString();
@@ -62,6 +102,58 @@ class PayServicePage extends GetView<BookingController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ── Work Photos ─────────────────────────────────
+                      if ((booking?.workPhotoUrls ?? []).isNotEmpty) ...[
+                        const Text(
+                          'Foto Hasil Pekerjaan',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 110,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: booking!.workPhotoUrls.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 10),
+                            itemBuilder: (context, i) {
+                              return GestureDetector(
+                                onTap: () => _showPhotoViewer(
+                                    context, booking.workPhotoUrls, i),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    booking.workPhotoUrls[i],
+                                    width: 110,
+                                    height: 110,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (_, child, progress) =>
+                                        progress == null
+                                            ? child
+                                            : Container(
+                                                width: 110,
+                                                height: 110,
+                                                color:
+                                                    const Color(0xFFF1F5F9),
+                                                child: const Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2),
+                                                ),
+                                              ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
                       // ── Bill Details ────────────────────────────────
                       const Text(
                         'Bill Details',

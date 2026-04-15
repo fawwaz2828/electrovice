@@ -511,7 +511,14 @@ class _CurrentRepairCard extends GetView<BookingController> {
       final status = booking.status;
 
       return GestureDetector(
-        onTap: () => Get.toNamed(AppRoutes.orderTracking),
+        onTap: () {
+          final s = booking.status;
+          if (s == BookingStatus.done || s == BookingStatus.cancelled) {
+            Get.toNamed(AppRoutes.bookingDetail, arguments: booking);
+          } else {
+            Get.toNamed(AppRoutes.orderTracking);
+          }
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
@@ -656,25 +663,23 @@ class _RepairCategories extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // 2 baris × 3 kolom
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _categories.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 0,
-              childAspectRatio: 1.4,
+          // 1 baris scroll horizontal
+          SizedBox(
+            height: 84,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              itemCount: _categories.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) {
+                final c = _categories[i];
+                return _CategoryItem(
+                  icon: c['icon'] as IconData,
+                  label: c['label'] as String,
+                  category: c['category'] as String,
+                );
+              },
             ),
-            itemBuilder: (_, i) {
-              final c = _categories[i];
-              return _CategoryItem(
-                icon: c['icon'] as IconData,
-                label: c['label'] as String,
-                category: c['category'] as String,
-              );
-            },
           ),
         ],
       ),
@@ -696,7 +701,9 @@ class _CategoryItem extends StatelessWidget {
         AppRoutes.technicianList,
         arguments: {'category': category},
       ),
-      child: Column(
+      child: SizedBox(
+        width: 72,
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
@@ -718,6 +725,7 @@ class _CategoryItem extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             label,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w700,
@@ -726,6 +734,7 @@ class _CategoryItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

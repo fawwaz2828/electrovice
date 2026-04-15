@@ -58,11 +58,14 @@ class StorageService {
     return urls;
   }
 
-  /// Upload foto di chat
+  /// Upload foto di chat.
+  /// Menggunakan readAsBytes + putData agar bisa menangani content URI
+  /// (Android 10+) maupun path reguler tanpa error "not found".
   Future<String> uploadChatPhoto(String chatId, File file) async {
     final ts = DateTime.now().millisecondsSinceEpoch;
     final ref = _storage.ref('chats/$chatId/img_$ts.jpg');
-    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
+    final bytes = await file.readAsBytes();
+    await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
     return await ref.getDownloadURL();
   }
 }

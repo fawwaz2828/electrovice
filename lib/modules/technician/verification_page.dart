@@ -86,15 +86,13 @@ class _VerificationPageState extends State<VerificationPage> {
       bottomNavigationBar: const TechnicianNavBar(selectedItem: AppNavItem.active),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-              // ── Top Bar ─────────────────────────────────────────────
-              Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Top Bar ─────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+              child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
@@ -111,54 +109,72 @@ class _VerificationPageState extends State<VerificationPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              // ── Header Card (Map + Client Info) ────────────────────
-              _ClientSummaryCard(),
+            ),
+            const SizedBox(height: 16),
 
-              const SizedBox(height: 48),
-
-              // ── Verification Section ───────────────────────────────
-              const Center(
+            // ── Scrollable area ──────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '6-Digit Verification Code',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF111111),
-                        letterSpacing: -0.5,
+                    // ── Header Card (Map + Client Info) ───────────────
+                    _ClientSummaryCard(),
+                    const SizedBox(height: 28),
+
+                    // ── Verification Section ──────────────────────────
+                    const Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            '6-Digit Verification Code',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF111111),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            "Enter user's code to start service",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF6F88AE),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 10),
-                    Text(
-                      "Enter user's code to start service",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6F88AE),
-                        fontWeight: FontWeight.w500,
-                      ),
+                    const SizedBox(height: 24),
+
+                    // PIN Display
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(6, (index) => _PinBox(value: _pin[index])),
                     ),
+                    const SizedBox(height: 20),
+
+                    // Numpad
+                    _Numpad(onTap: _onKeyTap, onDelete: _onDelete),
+                    const SizedBox(height: 24),
+
+                    // ── Service Parameters ────────────────────────────
+                    _ServiceParametersCard(),
+                    const SizedBox(height: 120),
                   ],
                 ),
               ),
-              const SizedBox(height: 38),
+            ),
 
-              // PIN Display
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) => _PinBox(value: _pin[index])),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Numpad
-              _Numpad(onTap: _onKeyTap, onDelete: _onDelete),
-
-              const SizedBox(height: 24),
-
-              // Verify Button
-              ElevatedButton(
+            // ── Fixed Verify Button at bottom ────────────────────────
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                24, 8, 24, MediaQuery.of(context).padding.bottom + 16),
+              child: ElevatedButton(
                 onPressed: _isVerifying ? null : _onVerify,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -181,15 +197,8 @@ class _VerificationPageState extends State<VerificationPage> {
                             fontSize: 16, fontWeight: FontWeight.w800),
                       ),
               ),
-
-              const SizedBox(height: 48),
-
-              // ── Service Parameters ─────────────────────────────────
-              _ServiceParametersCard(),
-
-              const SizedBox(height: 120),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

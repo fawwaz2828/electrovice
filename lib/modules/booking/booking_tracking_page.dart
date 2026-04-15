@@ -80,6 +80,13 @@ class BookingTrackingPage extends GetView<BookingController> {
                   imageUrl: tracking.technicianAvatarUrl,
                   bookingDoc: booking,
                 ),
+                // ── Cancel button (pending / confirmed only) ──
+                if (booking.status == BookingStatus.pending ||
+                    booking.status == BookingStatus.confirmed)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _CancelOrderButton(controller: controller),
+                  ),
                 // ── Pay Now banner (awaiting_payment) ─────────
                 if (booking.status == BookingStatus.awaitingPayment)
                   Padding(
@@ -755,6 +762,88 @@ class _PayNowBanner extends StatelessWidget {
             child: const Text('BAYAR SEKARANG', style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Cancel Order Button ────────────────────────────────────────────────────
+class _CancelOrderButton extends StatelessWidget {
+  final BookingController controller;
+  const _CancelOrderButton({required this.controller});
+
+  void _showConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Batalkan Pesanan?',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          'Pesanan yang sudah dibatalkan tidak dapat dikembalikan. Yakin ingin membatalkan?',
+          style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Tidak',
+              style: TextStyle(
+                  color: Color(0xFF64748B), fontWeight: FontWeight.w700),
+            ),
+          ),
+          Obx(() => TextButton(
+                onPressed: controller.isSubmitting.value
+                    ? null
+                    : () => controller.cancelBooking(),
+                child: controller.isSubmitting.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Color(0xFFDC2626)),
+                      )
+                    : const Text(
+                        'Ya, Batalkan',
+                        style: TextStyle(
+                            color: Color(0xFFDC2626),
+                            fontWeight: FontWeight.w800),
+                      ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showConfirmDialog(context),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF1F2),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFCDD2)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cancel_outlined, color: Color(0xFFDC2626), size: 18),
+            SizedBox(width: 8),
+            Text(
+              'Batalkan Pesanan',
+              style: TextStyle(
+                color: Color(0xFFDC2626),
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

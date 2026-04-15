@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
@@ -153,13 +154,20 @@ class BookingController extends GetxController {
   }
 
   Future<void> _initUserStreams() async {
-    int retry = 0;
-    while (_authService.currentUser == null && retry < 6) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      retry++;
+    // Wait for Firebase Auth to restore persisted auth state (handles cold start
+    // where currentUser is null until the SDK finishes reading from disk).
+    String? uid = _authService.currentUser?.uid;
+    if (uid == null) {
+      try {
+        final user = await FirebaseAuth.instance
+            .authStateChanges()
+            .firstWhere((u) => u != null)
+            .timeout(const Duration(seconds: 10));
+        uid = user?.uid;
+      } catch (_) {
+        uid = _authService.currentUser?.uid;
+      }
     }
-
-    final uid = _authService.currentUser?.uid;
     if (uid == null) return;
 
     // Listen to active booking
@@ -453,6 +461,25 @@ class BookingController extends GetxController {
   // ── Checkout Page ─────────────────────────────────────────────
 
   void setPaymentMethod(String method) => paymentMethod.value = method;
+
+  /// Customer batalkan booking (hanya boleh saat pending/confirmed).
+  Future<void> cancelBooking() async {
+    final booking = activeBooking.value;
+    if (booking == null) return;
+    if (booking.status != BookingStatus.pending &&
+        booking.status != BookingStatus.confirmed) return;
+    isSubmitting.value = true;
+    try {
+      await _bookingService.cancelBooking(booking.bookingId);
+      Get.back(); // tutup dialog kalau ada
+      Get.snackbar('Pesanan Dibatalkan', 'Booking berhasil dibatalkan.',
+          snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
 
   /// Customer konfirmasi pembayaran → status done → navigasi ke review
   Future<void> confirmPayment() async {

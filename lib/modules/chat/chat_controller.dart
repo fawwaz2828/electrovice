@@ -109,24 +109,17 @@ class ChatController extends GetxController {
   }
 
   Future<void> _initStream() async {
-    // Dapatkan nama user sekarang
-    final uid = currentUserId;
-    if (uid.isNotEmpty) {
-      final user = await _authService.getUserModel(uid);
-      _currentUserName =
-          user?.name ?? _authService.currentUser?.email ?? 'Saya';
-    }
-
     if (chatId.isEmpty) {
       isLoading.value = false;
       return;
     }
 
+    // Start message stream immediately so messages appear without waiting for
+    // the username Firestore fetch (which can take 1-2 seconds on first open).
     _msgSub = _chatService.streamMessages(chatId).listen(
       (msgs) {
         messages.assignAll(msgs);
         isLoading.value = false;
-        // Mark incoming as read
         _chatService.markAsRead(chatId, currentUserId);
       },
       onError: (e) {
@@ -148,6 +141,14 @@ class ChatController extends GetxController {
         },
         onError: (e) => debugPrint('ChatController booking stream error: $e'),
       );
+    }
+
+    // Fetch username in background — only needed when the user sends a message.
+    final uid = currentUserId;
+    if (uid.isNotEmpty) {
+      final user = await _authService.getUserModel(uid);
+      _currentUserName =
+          user?.name ?? _authService.currentUser?.email ?? 'Saya';
     }
   }
 

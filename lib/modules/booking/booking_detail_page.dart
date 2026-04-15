@@ -7,6 +7,45 @@ import '../../models/booking_document.dart';
 class BookingDetailPage extends StatelessWidget {
   const BookingDetailPage({super.key});
 
+  void _showPhotoViewer(
+      BuildContext context, List<String> urls, int initialIndex) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: PageController(initialPage: initialIndex),
+              itemCount: urls.length,
+              itemBuilder: (_, i) => InteractiveViewer(
+                child: Center(
+                  child: Image.network(urls[i], fit: BoxFit.contain),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 22),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _rp(int v) {
     if (v == 0) return 'Rp 0';
     final s = v.toString();
@@ -298,6 +337,85 @@ class BookingDetailPage extends StatelessWidget {
                         ],
                       ),
                     ),
+                    // ── Work Photos ────────────────────────────────────
+                    if (booking.workPhotoUrls.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.photo_library_outlined,
+                                    size: 18, color: Color(0xFF4163FF)),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Foto Bukti Kerja',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  '${booking.workPhotoUrls.length} foto',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 100,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: booking.workPhotoUrls.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 8),
+                                itemBuilder: (ctx, i) {
+                                  return GestureDetector(
+                                    onTap: () => _showPhotoViewer(
+                                        ctx, booking.workPhotoUrls, i),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.network(
+                                        booking.workPhotoUrls[i],
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (_, child, prog) =>
+                                            prog == null
+                                                ? child
+                                                : Container(
+                                                    width: 100,
+                                                    height: 100,
+                                                    color: const Color(
+                                                        0xFFE2E8F0),
+                                                    child: const Center(
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              strokeWidth: 2),
+                                                    ),
+                                                  ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
 
                     // ── Technician info ────────────────────────────────

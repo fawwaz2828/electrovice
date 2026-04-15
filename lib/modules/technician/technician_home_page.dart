@@ -165,8 +165,9 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
 
               // ── Header ───────────────────────────────────────────────
               Obx(() => _Header(
-                isOnline: _controller.isOnline.value, 
-                onToggle: (v) => _controller.isOnline.value = v,
+                isOnline: _controller.isOnline.value,
+                isToggling: _controller.isTogglingOnline.value,
+                onToggle: (v) => _controller.setOnlineStatus(v),
                 name: _controller.profile.value?.fullName.split(' ').first ?? 'Technician',
               )),
 
@@ -420,9 +421,15 @@ class _TechNotifBell extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 class _Header extends StatelessWidget {
   final bool isOnline;
+  final bool isToggling;
   final ValueChanged<bool> onToggle;
   final String name;
-  const _Header({required this.isOnline, required this.onToggle, required this.name});
+  const _Header({
+    required this.isOnline,
+    required this.onToggle,
+    required this.name,
+    this.isToggling = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -430,20 +437,33 @@ class _Header extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Text(
-            "Hello, $name!\nHere's Today's Summary",
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF0F172A),
-              height: 1.15,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Hello, $name!",
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF0F172A),
+                  height: 1.15,
+                ),
+              ),
+              const Text(
+                "Here's Today's Summary",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
           ),
         ),
         // ── Notification bell ──────────────────────────────────
         _TechNotifBell(),
         const SizedBox(width: 8),
-        // ── Chat icon — ukuran padding sama dengan toggle agar rata ──
+        // ── Chat icon ──────────────────────────────────────────
         GestureDetector(
           onTap: () => Get.toNamed(AppRoutes.chatInbox),
           child: Container(
@@ -468,43 +488,69 @@ class _Header extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         // ── Online toggle ──────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+        GestureDetector(
+          onTap: isToggling ? null : () => onToggle(!isOnline),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isOnline
+                  ? const Color(0xFFEEF9F0)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: isOnline
+                    ? const Color(0xFF22C55E)
+                    : const Color(0xFFE2E8F0),
+                width: 1.5,
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'STATUS:\n${isOnline ? 'ONLINE' : 'OFFLINE'}',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.4,
-                  color: isOnline
-                      ? const Color(0xFF0061FF)
-                      : const Color(0xFF94A3B8),
-                  height: 1.4,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Switch.adaptive(
-                value: isOnline,
-                onChanged: onToggle,
-                activeThumbColor: Colors.white,
-                activeTrackColor: const Color(0xFF0061FF),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ],
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isToggling)
+                  const SizedBox(
+                    width: 10,
+                    height: 10,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      color: Color(0xFF22C55E),
+                    ),
+                  )
+                else
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isOnline
+                          ? const Color(0xFF22C55E)
+                          : const Color(0xFF94A3B8),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                const SizedBox(width: 6),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 250),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.4,
+                    color: isOnline
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFF94A3B8),
+                  ),
+                  child: Text(isOnline ? 'ONLINE' : 'OFFLINE'),
+                ),
+              ],
+            ),
           ),
         ),
       ],

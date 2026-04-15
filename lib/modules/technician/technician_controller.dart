@@ -16,7 +16,8 @@ class TechnicianController extends GetxController {
   final TechnicianService _techService = TechnicianService();
 
   final Rxn<TechnicianProfileData> profile = Rxn<TechnicianProfileData>();
-  final RxBool isOnline = true.obs;
+  final RxBool isOnline = false.obs;
+  final RxBool isTogglingOnline = false.obs;
 
   // ── Booking state (Firestore) ─────────────────────────────────
 
@@ -107,6 +108,7 @@ class TechnicianController extends GetxController {
       _listenToOrders(user.uid);
       _loadServices(user.uid);
       loadCompletedOrders();
+      _loadOnlineStatus(user.uid);
       // Sync rating rata-rata + totalJobs ke technicians_online.
       // Dilakukan sisi teknisi karena customer tidak punya izin tulis ke sana.
       _bookingService.syncTechnicianStats(user.uid);
@@ -140,6 +142,40 @@ class TechnicianController extends GetxController {
       debugPrint('_loadServices error: $e');
     } finally {
       isLoadingServices.value = false;
+    }
+  }
+
+  // ── Online / Offline status ───────────────────────────────────
+
+  Future<void> _loadOnlineStatus(String uid) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('technicians_online')
+          .doc(uid)
+          .get();
+      if (doc.exists) {
+        isOnline.value = doc.data()?['isOnline'] as bool? ?? false;
+      }
+    } catch (e) {
+      debugPrint('_loadOnlineStatus error: $e');
+    }
+  }
+
+  /// Toggle online/offline dan persist ke Firestore.
+  Future<void> setOnlineStatus(bool online) async {
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
+    isTogglingOnline.value = true;
+    try {
+      await FirebaseFirestore.instance
+          .collection('technicians_online')
+          .doc(uid)
+          .set({'isOnline': online}, SetOptions(merge: true));
+      isOnline.value = online;
+    } catch (e) {
+      debugPrint('setOnlineStatus error: $e');
+    } finally {
+      isTogglingOnline.value = false;
     }
   }
 

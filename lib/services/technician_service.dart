@@ -120,6 +120,7 @@ class TechnicianService {
 
       result = snapshots
           .where((doc) => doc.data() != null)
+          .where((doc) => doc.data()!['isOnline'] != false)
           .map((doc) {
             final data = doc.data()!;
             double distKm = 0;
@@ -143,6 +144,7 @@ class TechnicianService {
 
       result = snapshot.docs
           .where((d) => d.data().isNotEmpty)
+          .where((d) => d.data()['isOnline'] != false)
           .map((d) {
             final data = d.data();
             double distKm = 0;
