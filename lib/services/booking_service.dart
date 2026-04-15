@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/booking_document.dart';
 
 class BookingService {
@@ -61,7 +62,7 @@ class BookingService {
   /// Teknisi accept order → status `confirmed` + generate kode verifikasi.
   Future<void> acceptBooking(String bookingId) async {
     final code = _generateCode();
-    final expiry = DateTime.now().add(const Duration(hours: 2));
+    final expiry = DateTime.now().add(const Duration(hours: 24));
     await _db.collection('bookings').doc(bookingId).update({
       'status': BookingStatus.confirmed,
       'verificationCode': code,
@@ -148,11 +149,19 @@ class BookingService {
     if (booking.status != BookingStatus.confirmed) {
       throw Exception('Booking tidak dalam status confirmed');
     }
+    if (booking.isCodeExpired) {
+      // Kode kadaluarsa → generate ulang agar customer bisa lihat kode baru
+      final newCode = _generateCode();
+      final newExpiry = DateTime.now().add(const Duration(hours: 24));
+      await _db.collection('bookings').doc(bookingId).update({
+        'verificationCode': newCode,
+        'codeExpiryAt': Timestamp.fromDate(newExpiry),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      throw Exception('Kode sudah kadaluarsa dan telah diperbarui.\nMinta pelanggan lihat kode baru di halaman tracking.');
+    }
     if (booking.verificationCode != enteredCode) {
       throw Exception('Kode verifikasi salah');
-    }
-    if (booking.isCodeExpired) {
-      throw Exception('Kode sudah kadaluarsa');
     }
 
     await _db.collection('bookings').doc(bookingId).update({
@@ -215,36 +224,77 @@ class BookingService {
     String review = '',
     bool recommend = true,
   }) async {
-    // 1. Simpan rating ke booking doc
+    // Customer hanya menyimpan rating ke booking miliknya — tidak lebih.
+    // Kalkulasi rata-rata dan update technicians_online dilakukan sisi teknisi
+    // via syncTechnicianStats() saat mereka membuka aplikasi.
     await _db.collection('bookings').doc(bookingId).update({
       'customerRating': rating,
       'customerReview': review,
       'customerRecommend': recommend,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+  }
 
-    // 2. Recalculate rating rata-rata teknisi dari semua booking yang sudah dirating
-    final snap = await _db
-        .collection('bookings')
-        .where('technicianId', isEqualTo: technicianId)
-        .where('status', isEqualTo: BookingStatus.done)
-        .get();
+  /// Hitung ulang rating rata-rata + totalJobs dari bookings teknisi,
+  /// lalu sync ke technicians_online dan technicians.
+  /// Harus dipanggil dari sisi TEKNISI (bukan customer) karena:
+  ///   - teknisi punya izin query bookings miliknya sendiri
+  ///   - teknisi punya izin tulis ke technicians_online/{uid} miliknya sendiri
+  Future<void> syncTechnicianStats(String technicianId) async {
+    try {
+      // Query semua booking selesai milik teknisi ini
+      final snap = await _db
+          .collection('bookings')
+          .where('technicianId', isEqualTo: technicianId)
+          .where('status', isEqualTo: BookingStatus.done)
+          .get();
 
-    final rated = snap.docs
-        .where((d) => d['customerRating'] != null)
-        .toList();
+      final totalJobs = snap.docs.length;
 
-    if (rated.isEmpty) return;
+      final rated = snap.docs
+          .where((d) => d['customerRating'] != null)
+          .toList();
 
-    final avg = rated
-            .map((d) => (d['customerRating'] as num).toDouble())
-            .reduce((a, b) => a + b) /
-        rated.length;
+      final double avgRating = rated.isEmpty
+          ? 0.0
+          : rated
+                  .map((d) => (d['customerRating'] as num).toDouble())
+                  .reduce((a, b) => a + b) /
+              rated.length;
 
-    await _db.collection('technicians_online').doc(technicianId).update({
-      'rating': double.parse(avg.toStringAsFixed(1)),
-      'totalRatings': rated.length,
-    });
+      final roundedRating = double.parse(avgRating.toStringAsFixed(1));
+
+      final statsData = {
+        'rating': roundedRating,
+        'totalRatings': rated.length,
+        'totalJobs': totalJobs,
+      };
+
+      // 1. technicians_online — tampilan di home/detail customer
+      await _db
+          .collection('technicians_online')
+          .doc(technicianId)
+          .set(statsData, SetOptions(merge: true));
+
+      // 2. technicians — profil teknisi (backup)
+      await _db
+          .collection('technicians')
+          .doc(technicianId)
+          .set(statsData, SetOptions(merge: true));
+
+      // 3. users.technicianProfile.rating — dibaca oleh TechnicianController
+      //    untuk ditampilkan di halaman profil teknisi sendiri
+      await _db.collection('users').doc(technicianId).update({
+        'technicianProfile.rating': roundedRating,
+        'technicianProfile.totalRatings': rated.length,
+        'technicianProfile.totalJobs': totalJobs,
+      });
+
+      debugPrint(
+          'syncTechnicianStats: rating=$roundedRating totalJobs=$totalJobs');
+    } catch (e) {
+      debugPrint('syncTechnicianStats error: $e');
+    }
   }
 
   /// Update foto kerusakan setelah booking dibuat.

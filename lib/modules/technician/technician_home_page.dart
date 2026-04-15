@@ -374,15 +374,14 @@ class _Header extends StatelessWidget {
             ),
           ),
         ),
-        // ── Chat icon ──────────────────────────────────────────
+        // ── Chat icon — ukuran padding sama dengan toggle agar rata ──
         GestureDetector(
           onTap: () => Get.toNamed(AppRoutes.chatInbox),
           child: Container(
-            width: 40,
-            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white,
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.06),
@@ -394,7 +393,7 @@ class _Header extends StatelessWidget {
             child: const Icon(
               Icons.chat_bubble_outline_rounded,
               color: Color(0xFF0F172A),
-              size: 18,
+              size: 20,
             ),
           ),
         ),

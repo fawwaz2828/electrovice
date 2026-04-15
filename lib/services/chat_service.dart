@@ -70,6 +70,17 @@ class ChatService {
         'lastSenderId': '',
         'createdAt': FieldValue.serverTimestamp(),
       });
+    } else {
+      // Migrate dokumen lama yang mungkin belum punya field customerId/technicianId.
+      // Tanpa field ini, otherName() tidak bisa menentukan siapa pihak lain.
+      await ref.set({
+        'customerId': customerId,
+        'technicianId': technicianId,
+        'customerName': customerName,
+        'technicianName': technicianName,
+        'customerPhotoUrl': customerPhotoUrl,
+        'technicianPhotoUrl': technicianPhotoUrl,
+      }, SetOptions(merge: true));
     }
   }
 
@@ -182,6 +193,8 @@ class ChatRoomData {
   final String lastSenderId;
   /// true = pre-booking konsultasi, false = booking aktif
   final bool isPreBooking;
+  /// Urutan asli dari Firestore: [customerId, technicianId]
+  final List<String> participants;
 
   const ChatRoomData({
     required this.chatId,
@@ -192,6 +205,7 @@ class ChatRoomData {
     required this.lastMessage,
     required this.lastSenderId,
     required this.isPreBooking,
+    required this.participants,
     this.customerPhotoUrl,
     this.technicianPhotoUrl,
     this.lastMessageAt,
@@ -202,6 +216,7 @@ class ChatRoomData {
     final bookingId = data['bookingId'] as String? ?? '';
     // pre-booking chatId format: "uid1_uid2" (contains underscore)
     final isPreBooking = bookingId.contains('_');
+    final parts = (data['participants'] as List?)?.cast<String>() ?? [];
     return ChatRoomData(
       chatId: doc.id,
       customerId: data['customerId'] as String? ?? '',
@@ -214,16 +229,26 @@ class ChatRoomData {
       lastMessageAt: (data['lastMessageAt'] as Timestamp?)?.toDate(),
       lastSenderId: data['lastSenderId'] as String? ?? '',
       isPreBooking: isPreBooking,
+      participants: parts,
     );
   }
 
   /// Nama pihak lain (bukan current user).
-  String otherName(String currentUserId) =>
-      currentUserId == customerId ? technicianName : customerName;
+  /// Jika customerId tersedia, gunakan itu. Jika tidak (dokumen lama),
+  /// gunakan participants[0] sebagai customerId (urutan penyimpanan selalu
+  /// [customerId, technicianId] di ensureChatExists & ensurePreChatExists).
+  String otherName(String currentUserId) {
+    final custId = customerId.isNotEmpty ? customerId
+        : (participants.isNotEmpty ? participants[0] : '');
+    return currentUserId == custId ? technicianName : customerName;
+  }
 
   /// Foto pihak lain.
-  String? otherPhotoUrl(String currentUserId) =>
-      currentUserId == customerId ? technicianPhotoUrl : customerPhotoUrl;
+  String? otherPhotoUrl(String currentUserId) {
+    final custId = customerId.isNotEmpty ? customerId
+        : (participants.isNotEmpty ? participants[0] : '');
+    return currentUserId == custId ? technicianPhotoUrl : customerPhotoUrl;
+  }
 }
 
 // ── ChatMessage model ──────────────────────────────────────────────────────

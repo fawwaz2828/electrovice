@@ -55,10 +55,11 @@ class _VerificationPageState extends State<VerificationPage> {
         _isVerifying = false;
       });
       if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const _VerificationResultDialog(success: false),
+        builder: (_) => _VerificationResultDialog(success: false, message: msg),
       );
     }
   }
@@ -517,7 +518,8 @@ class _Numpad extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 class _VerificationResultDialog extends StatelessWidget {
   final bool success;
-  const _VerificationResultDialog({required this.success});
+  final String? message;
+  const _VerificationResultDialog({required this.success, this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -576,11 +578,15 @@ class _VerificationResultDialog extends StatelessWidget {
 
             // ── Subtitle ────────────────────────────────────────────
             Text(
-              success ? 'Verification Code Received' : 'Enter the right Code',
+              success
+                  ? 'Verification Code Received'
+                  : (message ?? 'Enter the right Code'),
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 28),

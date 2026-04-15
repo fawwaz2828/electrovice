@@ -232,7 +232,7 @@ class _HeroCTACardState extends State<_HeroCTACard> {
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.technicianList),
       child: Container(
-        height: 175,
+        height: 190,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: const Color(0xFF0D1117),

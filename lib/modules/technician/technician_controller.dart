@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/technician_model.dart';
@@ -42,16 +43,27 @@ class TechnicianController extends GetxController {
   final RxList<TechnicianJobRecord> incomingRequests = <TechnicianJobRecord>[].obs;
 
   StreamSubscription? _ordersSub;
+  StreamSubscription? _authSub;
+  bool _ordersStreamActive = false;
 
   @override
   void onInit() {
     super.onInit();
     _loadUserData();
+    // Re-subscribe streams if Firebase Auth fires a sign-out/sign-in cycle
+    // (can happen during token refresh — causes Firestore PERMISSION_DENIED)
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null && !_ordersStreamActive) {
+        _ordersSub?.cancel();
+        _listenToOrders(user.uid);
+      }
+    });
   }
 
   @override
   void onClose() {
     _ordersSub?.cancel();
+    _authSub?.cancel();
     super.onClose();
   }
 
@@ -88,6 +100,9 @@ class TechnicianController extends GetxController {
       _listenToOrders(user.uid);
       _loadServices(user.uid);
       loadCompletedOrders();
+      // Sync rating rata-rata + totalJobs ke technicians_online.
+      // Dilakukan sisi teknisi karena customer tidak punya izin tulis ke sana.
+      _bookingService.syncTechnicianStats(user.uid);
     } catch (e) {
       debugPrint('TechnicianController._loadUserData error: $e');
       // Set minimal profile so UI doesn't stay in skeleton forever
@@ -150,6 +165,7 @@ class TechnicianController extends GetxController {
   }
 
   void _listenToOrders(String technicianId) {
+    _ordersStreamActive = true;
     _ordersSub = _bookingService
         .streamTechnicianOrders(technicianId)
         .listen(
@@ -207,9 +223,11 @@ class TechnicianController extends GetxController {
             isLoadingOrders.value = false;
           },
           onError: (e) {
+            _ordersStreamActive = false;
             debugPrint('TechnicianController orders stream error: $e');
             isLoadingOrders.value = false;
           },
+          onDone: () => _ordersStreamActive = false,
         );
   }
 
