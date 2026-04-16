@@ -91,6 +91,7 @@ class ChatController extends GetxController {
         _chatService.ensurePreChatExists(
           customerId: customerId,
           customerName: customerName ?? 'Customer',
+          customerPhotoUrl: args['customerPhotoUrl'] as String?,
           technicianId: techId,
           technicianName: otherPartyName,
           technicianPhotoUrl: otherPartyPhotoUrl,

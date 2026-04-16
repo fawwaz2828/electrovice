@@ -344,11 +344,15 @@ class AdminVerificationPage extends StatelessWidget {
 
   Widget _buildJadwalSection(
       List<String> days, String openTime, String closeTime) {
-    const allDays = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'];
+    // Key di Firestore: mon, tue, wed, thu, fri, sat, sun
+    const dayKeys   = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    const dayLabels = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'];
     final dayMap = <String, String>{};
-    for (final d in allDays) {
-      dayMap[d] = days.contains(d) ? '$openTime–$closeTime' : 'Tutup';
+    for (int i = 0; i < dayKeys.length; i++) {
+      dayMap[dayLabels[i]] =
+          days.contains(dayKeys[i]) ? '$openTime–$closeTime' : 'Tutup';
     }
+    const allDays = dayLabels;
 
     final rows = <Widget>[];
     for (int i = 0; i < allDays.length - 1; i += 2) {

@@ -1,11 +1,34 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onChatMessageCreated = exports.onBookingStatusChanged = void 0;
+exports.onChatMessageCreated = exports.onBookingStatusChanged = exports.onBookingCreated = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const v2_1 = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
+// ─────────────────────────────────────────────────────────────────
+//  Trigger: booking baru dibuat (status: pending)
+//  → kirim notif ke teknisi bahwa ada order masuk
+// ─────────────────────────────────────────────────────────────────
+exports.onBookingCreated = (0, firestore_1.onDocumentCreated)("bookings/{bookingId}", async (event) => {
+    var _a, _b, _c, _d;
+    const data = (_a = event.data) === null || _a === void 0 ? void 0 : _a.data();
+    if (!data)
+        return;
+    // Hanya proses jika status awal adalah 'pending'
+    if (data.status !== "pending")
+        return;
+    const bookingId = event.params.bookingId;
+    const technicianId = (_b = data.technicianId) !== null && _b !== void 0 ? _b : "";
+    const userName = (_c = data.userName) !== null && _c !== void 0 ? _c : "Customer";
+    const category = (_d = data.category) !== null && _d !== void 0 ? _d : "";
+    await _sendNotif(technicianId, {
+        title: "Pesanan Masuk!",
+        body: `${userName} membutuhkan bantuan servis ${category}.`,
+        type: "new_order",
+        bookingId,
+    });
+});
 // ─────────────────────────────────────────────────────────────────
 //  Trigger: booking status berubah
 //  → tulis in-app notification ke Firestore

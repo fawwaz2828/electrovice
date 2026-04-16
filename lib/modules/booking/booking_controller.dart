@@ -323,10 +323,11 @@ class BookingController extends GetxController {
     final user = await _authService.getUserModel(uid);
     final name = user?.name ?? _authService.currentUser?.email ?? 'Customer';
     Get.toNamed(AppRoutes.chat, arguments: {
-      'customerId':      uid,
-      'customerName':    name,
-      'technicianId':    t.uid,
-      'otherPartyName':  t.name,
+      'customerId':         uid,
+      'customerName':       name,
+      'customerPhotoUrl':   user?.photoUrl,
+      'technicianId':       t.uid,
+      'otherPartyName':     t.name,
       'otherPartyPhotoUrl': t.photoUrl,
     });
   }

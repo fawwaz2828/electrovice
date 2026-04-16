@@ -104,11 +104,7 @@ class FcmHandler {
 
       // ── Customer: tagihan siap dibayar ─────────────────────────
       case 'awaiting_payment':
-        if (bookingId.isEmpty) {
-          Get.toNamed(AppRoutes.customerOrders);
-        } else {
-          Get.toNamed(AppRoutes.bookingDetail, arguments: bookingId);
-        }
+        Get.toNamed(AppRoutes.customerOrders);
         break;
 
       // ── Teknisi: pembayaran diterima ────────────────────────────

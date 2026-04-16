@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
@@ -31,9 +30,6 @@ class _TechnicianProfileEditPageState
   final _workshopAddressController = TextEditingController();
   final _diagnosisFeeController = TextEditingController();
   final _newAccreditationController = TextEditingController();
-  final _newServiceController = TextEditingController();
-  final _newMinPriceController = TextEditingController();
-  final _newMaxPriceController = TextEditingController();
 
   // State
   String _category = 'electronic';
@@ -232,29 +228,6 @@ class _TechnicianProfileEditPageState
     }
   }
 
-  void _addServiceEstimate() {
-    final service = _newServiceController.text.trim();
-    final minPrice = int.tryParse(_newMinPriceController.text) ?? 0;
-    final maxPrice = int.tryParse(_newMaxPriceController.text) ?? 0;
-
-    if (service.isEmpty) {
-      Get.snackbar('Oops', 'Nama layanan tidak boleh kosong',
-          snackPosition: SnackPosition.TOP);
-      return;
-    }
-
-    setState(() {
-      _serviceEstimates.add({
-        'service': service,
-        'minPrice': minPrice,
-        'maxPrice': maxPrice == 0 ? minPrice : maxPrice,
-      });
-      _newServiceController.clear();
-      _newMinPriceController.clear();
-      _newMaxPriceController.clear();
-    });
-  }
-
   void _removeServiceEstimate(int index) {
     setState(() => _serviceEstimates.removeAt(index));
   }
@@ -268,9 +241,6 @@ class _TechnicianProfileEditPageState
     _workshopAddressController.dispose();
     _diagnosisFeeController.dispose();
     _newAccreditationController.dispose();
-    _newServiceController.dispose();
-    _newMinPriceController.dispose();
-    _newMaxPriceController.dispose();
     super.dispose();
   }
 
@@ -696,126 +666,6 @@ class _TechnicianProfileEditPageState
           const SizedBox(height: 16),
         ],
 
-        // Add new service
-        const Text(
-          'Tambah Layanan',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: _muted,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _newServiceController,
-          style: const TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w600),
-          decoration: InputDecoration(
-            hintText: 'Nama layanan (contoh: LCD Screen Replacement)',
-            hintStyle: TextStyle(
-              color: _muted.withOpacity(0.5),
-              fontWeight: FontWeight.w400,
-              fontSize: 13,
-            ),
-            filled: true,
-            fillColor: const Color(0xFFF8F9FB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 12),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _newMinPriceController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly
-                ],
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  hintText: 'Harga min',
-                  hintStyle: TextStyle(
-                    color: _muted.withOpacity(0.5),
-                    fontWeight: FontWeight.w400,
-                    fontSize: 13,
-                  ),
-                  prefixText: 'Rp',
-                  prefixStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _ink,
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFF8F9FB),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text('—',
-                style: TextStyle(color: _muted, fontSize: 16)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: _newMaxPriceController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly
-                ],
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  hintText: 'Harga max',
-                  hintStyle: TextStyle(
-                    color: _muted.withOpacity(0.5),
-                    fontWeight: FontWeight.w400,
-                    fontSize: 13,
-                  ),
-                  prefixText: 'Rp',
-                  prefixStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _ink,
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFF8F9FB),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            GestureDetector(
-              onTap: _addServiceEstimate,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _accent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.add_rounded,
-                    color: Colors.white, size: 22),
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }

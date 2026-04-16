@@ -2,12 +2,9 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/booking_document.dart';
-import '../models/notification_model.dart';
-import 'notification_service.dart';
 
 class BookingService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final NotificationService _notif = NotificationService();
 
   // ── Create ─────────────────────────────────────────────────────
   /// Buat booking baru (cash only untuk MVP).
@@ -60,15 +57,8 @@ class BookingService {
 
     await ref.set(booking.toFirestore());
 
-    // Kirim notif ke teknisi: ada order masuk
-    await _notif.send(
-      toUserId: technicianId,
-      title: 'Pesanan Masuk',
-      body: '$userName membutuhkan bantuan servis $category.',
-      type: NotifType.newOrder,
-      bookingId: ref.id,
-      fromName: userName,
-    );
+    // Notif ke teknisi dikirim oleh Cloud Function onBookingCreated
+    // (client tidak boleh menulis ke notif milik user lain).
 
     return ref.id;
   }
@@ -83,18 +73,7 @@ class BookingService {
       'codeExpiryAt': Timestamp.fromDate(expiry),
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    // Notif ke customer
-    final meta = await _getMeta(bookingId);
-    if (meta != null) {
-      await _notif.send(
-        toUserId: meta['userId'] as String,
-        title: 'Pesanan Diterima!',
-        body: '${meta['technicianName']} sedang dalam perjalanan ke lokasi kamu.',
-        type: NotifType.orderAccepted,
-        bookingId: bookingId,
-        fromName: meta['technicianName'] as String?,
-      );
-    }
+    // Notif ke customer dikirim oleh Cloud Function onBookingStatusChanged.
   }
 
   /// Teknisi decline order → status `cancelled`.
@@ -198,18 +177,7 @@ class BookingService {
       'codeVerifiedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    // Notif ke customer: teknisi sudah tiba & mulai kerja
-    final meta = await _getMeta(bookingId);
-    if (meta != null) {
-      await _notif.send(
-        toUserId: meta['userId'] as String,
-        title: 'Teknisi Sudah Tiba!',
-        body: '${meta['technicianName']} mulai mengerjakan perangkat kamu.',
-        type: NotifType.onProgress,
-        bookingId: bookingId,
-        fromName: meta['technicianName'] as String?,
-      );
-    }
+    // Notif ke customer dikirim oleh Cloud Function onBookingStatusChanged.
   }
 
   /// Teknisi submit harga final → status `awaiting_payment`.
@@ -230,39 +198,16 @@ class BookingService {
       'status': BookingStatus.awaitingPayment,
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    // Notif ke customer: tagihan siap dibayar
-    final meta = await _getMeta(bookingId);
-    if (meta != null) {
-      final rp = _formatRp(totalAmount);
-      await _notif.send(
-        toUserId: meta['userId'] as String,
-        title: 'Tagihan Siap Dibayar',
-        body: 'Perbaikan selesai. Total pembayaran: $rp. Silakan konfirmasi.',
-        type: NotifType.awaitingPayment,
-        bookingId: bookingId,
-        fromName: meta['technicianName'] as String?,
-      );
-    }
+    // Notif ke customer dikirim oleh Cloud Function onBookingStatusChanged.
   }
 
   /// Customer konfirmasi pembayaran tunai → status `done`.
   Future<void> confirmPayment(String bookingId) async {
-    final meta = await _getMeta(bookingId);
     await _db.collection('bookings').doc(bookingId).update({
       'status': BookingStatus.done,
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    // Notif ke teknisi: pembayaran dikonfirmasi
-    if (meta != null) {
-      await _notif.send(
-        toUserId: meta['technicianId'] as String,
-        title: 'Pembayaran Diterima',
-        body: '${meta['userName']} telah mengkonfirmasi pembayaran. Pekerjaan selesai!',
-        type: NotifType.paymentConfirmed,
-        bookingId: bookingId,
-        fromName: meta['userName'] as String?,
-      );
-    }
+    // Notif ke teknisi dikirim oleh Cloud Function onBookingStatusChanged.
   }
 
   /// Teknisi tandai pekerjaan selesai → status `done` + increment totalJobs.
@@ -376,22 +321,12 @@ class BookingService {
 
   /// Cancel booking.
   Future<void> cancelBooking(String bookingId) async {
-    final meta = await _getMeta(bookingId);
     await _db.collection('bookings').doc(bookingId).update({
       'status': BookingStatus.cancelled,
+      'cancelledBy': 'customer',
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    // Notif ke teknisi: customer membatalkan pesanan
-    if (meta != null) {
-      await _notif.send(
-        toUserId: meta['technicianId'] as String,
-        title: 'Pesanan Dibatalkan',
-        body: '${meta['userName']} membatalkan pesanan servis.',
-        type: NotifType.orderCancelled,
-        bookingId: bookingId,
-        fromName: meta['userName'] as String?,
-      );
-    }
+    // Notif ke teknisi dikirim oleh Cloud Function onBookingStatusChanged.
   }
 
   /// Ambil ulasan terbaru untuk teknisi (dari booking done yang sudah dirating).
@@ -401,13 +336,13 @@ class BookingService {
         .collection('bookings')
         .where('technicianId', isEqualTo: technicianId)
         .where('status', isEqualTo: BookingStatus.done)
-        .orderBy('updatedAt', descending: true)
-        .limit(10)
         .get();
-    return snap.docs
+    final results = snap.docs
         .map(BookingDocument.fromFirestore)
         .where((b) => b.customerRating != null)
         .toList();
+    results.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return results.take(10).toList();
   }
 
   /// Ambil riwayat order selesai (done) milik teknisi tertentu.
@@ -460,31 +395,4 @@ class BookingService {
     return (100000 + rand.nextInt(900000)).toString();
   }
 
-  /// Ambil field penting booking tanpa parse full model.
-  Future<Map<String, dynamic>?> _getMeta(String bookingId) async {
-    try {
-      final snap = await _db.collection('bookings').doc(bookingId).get();
-      if (!snap.exists) return null;
-      final d = snap.data()!;
-      return {
-        'userId': d['userId'],
-        'userName': d['userName'],
-        'technicianId': d['technicianId'],
-        'technicianName': d['technicianName'],
-      };
-    } catch (e) {
-      debugPrint('_getMeta error: $e');
-      return null;
-    }
-  }
-
-  String _formatRp(int value) {
-    final s = value.toString();
-    final buf = StringBuffer('Rp ');
-    for (int i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
-      buf.write(s[i]);
-    }
-    return buf.toString();
-  }
 }

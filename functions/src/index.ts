@@ -7,6 +7,33 @@ admin.initializeApp();
 const db = admin.firestore();
 
 // ─────────────────────────────────────────────────────────────────
+//  Trigger: booking baru dibuat (status: pending)
+//  → kirim notif ke teknisi bahwa ada order masuk
+// ─────────────────────────────────────────────────────────────────
+export const onBookingCreated = onDocumentCreated(
+  "bookings/{bookingId}",
+  async (event) => {
+    const data = event.data?.data();
+    if (!data) return;
+
+    // Hanya proses jika status awal adalah 'pending'
+    if (data.status !== "pending") return;
+
+    const bookingId = event.params.bookingId;
+    const technicianId: string = data.technicianId ?? "";
+    const userName: string = data.userName ?? "Customer";
+    const category: string = data.category ?? "";
+
+    await _sendNotif(technicianId, {
+      title: "Pesanan Masuk!",
+      body: `${userName} membutuhkan bantuan servis ${category}.`,
+      type: "new_order",
+      bookingId,
+    });
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────
 //  Trigger: booking status berubah
 //  → tulis in-app notification ke Firestore
 //  → kirim FCM push notification ke device (jika token tersedia)

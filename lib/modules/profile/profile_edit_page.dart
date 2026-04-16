@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
 import 'profile_controller.dart';
 
 class ProfileEditPage extends StatefulWidget {
@@ -12,9 +15,14 @@ class ProfileEditPage extends StatefulWidget {
 
 class _ProfileEditPageState extends State<ProfileEditPage> {
   final _authService = AuthService();
+  final _storageService = StorageService();
+  final _imagePicker = ImagePicker();
 
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  String? _currentPhotoUrl;
+  File? _newPhotoFile;
 
   bool _isLoading = false;
   bool _isFetching = true;
@@ -40,8 +48,19 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     setState(() {
       _nameController.text = userModel.name;
       _phoneController.text = userModel.phone ?? '';
+      _currentPhotoUrl = userModel.photoUrl;
       _isFetching = false;
     });
+  }
+
+  Future<void> _pickPhoto() async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (picked != null) {
+      setState(() => _newPhotoFile = File(picked.path));
+    }
   }
 
   Future<void> _save() async {
@@ -57,6 +76,12 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     setState(() => _isLoading = true);
 
     try {
+      if (_newPhotoFile != null) {
+        final newUrl =
+            await _storageService.uploadProfilePhoto(user.uid, _newPhotoFile!);
+        await _authService.updateUserPhoto(user.uid, newUrl);
+      }
+
       await _authService.updateUserProfile(
         user.uid,
         name: _nameController.text.trim(),
@@ -135,51 +160,54 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Avatar placeholder ─────────────────────────
+                  // ── Avatar with upload ─────────────────────────
                   Center(
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(
-                            Icons.person_rounded,
-                            color: Color(0xFF94A3B8),
-                            size: 52,
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -4,
-                          right: -4,
-                          child: Container(
-                            width: 32,
-                            height: 32,
+                    child: GestureDetector(
+                      onTap: _pickPhoto,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
                             decoration: BoxDecoration(
-                              color: _accent,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: Colors.white, width: 2),
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            child: const Icon(Icons.camera_alt_rounded,
-                                color: Colors.white, size: 15),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: _newPhotoFile != null
+                                  ? Image.file(_newPhotoFile!,
+                                      fit: BoxFit.cover)
+                                  : (_currentPhotoUrl != null &&
+                                          _currentPhotoUrl!.isNotEmpty)
+                                      ? Image.network(_currentPhotoUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(Icons.person_rounded,
+                                                  color: Color(0xFF94A3B8),
+                                                  size: 52))
+                                      : const Icon(Icons.person_rounded,
+                                          color: Color(0xFF94A3B8), size: 52),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Center(
-                    child: Text(
-                      'Upload foto segera hadir',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _muted,
-                        fontWeight: FontWeight.w500,
+                          Positioned(
+                            bottom: -4,
+                            right: -4,
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: _accent,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.camera_alt_rounded,
+                                  color: Colors.white, size: 15),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
