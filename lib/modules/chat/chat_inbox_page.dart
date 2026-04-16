@@ -63,13 +63,18 @@ class _ChatRoomTile extends StatelessWidget {
     final lastMsg = room.lastMessage.isEmpty ? 'Belum ada pesan' : room.lastMessage;
     final timeLabel = room.lastMessageAt != null ? _formatTime(room.lastMessageAt!) : '';
 
+    // Ada pesan belum dibaca jika pesan terakhir bukan dari current user
+    final hasUnread = room.lastMessage.isNotEmpty &&
+        room.lastSenderId.isNotEmpty &&
+        room.lastSenderId != currentUserId;
+
     return GestureDetector(
       onTap: _openChat,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: hasUnread ? const Color(0xFFF5F7FF) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -92,9 +97,11 @@ class _ChatRoomTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: hasUnread
+                                ? FontWeight.w800
+                                : FontWeight.w700,
                             color: Colors.black,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -102,9 +109,14 @@ class _ChatRoomTile extends StatelessWidget {
                       ),
                       Text(
                         timeLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF94A3B8),
+                          color: hasUnread
+                              ? const Color(0xFF4163FF)
+                              : const Color(0xFF94A3B8),
+                          fontWeight: hasUnread
+                              ? FontWeight.w700
+                              : FontWeight.w400,
                         ),
                       ),
                     ],
@@ -115,15 +127,30 @@ class _ChatRoomTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           lastMsg,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF6B7280),
+                            color: hasUnread
+                                ? const Color(0xFF0F172A)
+                                : const Color(0xFF6B7280),
+                            fontWeight: hasUnread
+                                ? FontWeight.w600
+                                : FontWeight.w400,
                           ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
                       ),
                       const SizedBox(width: 6),
+                      if (hasUnread)
+                        Container(
+                          width: 10,
+                          height: 10,
+                          margin: const EdgeInsets.only(right: 6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF4163FF),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 3),

@@ -33,6 +33,23 @@ class ChatService {
         'lastSenderId': '',
         'createdAt': FieldValue.serverTimestamp(),
       });
+    } else {
+      // Update foto jika sebelumnya tidak ada (migrasi chat room lama)
+      final data = snap.data() ?? {};
+      final updates = <String, dynamic>{};
+      if (customerPhotoUrl != null &&
+          customerPhotoUrl.isNotEmpty &&
+          (data['customerPhotoUrl'] == null ||
+              (data['customerPhotoUrl'] as String).isEmpty)) {
+        updates['customerPhotoUrl'] = customerPhotoUrl;
+      }
+      if (technicianPhotoUrl != null &&
+          technicianPhotoUrl.isNotEmpty &&
+          (data['technicianPhotoUrl'] == null ||
+              (data['technicianPhotoUrl'] as String).isEmpty)) {
+        updates['technicianPhotoUrl'] = technicianPhotoUrl;
+      }
+      if (updates.isNotEmpty) await ref.update(updates);
     }
   }
 

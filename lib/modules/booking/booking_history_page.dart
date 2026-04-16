@@ -61,7 +61,7 @@ class BookingHistoryPage extends GetView<BookingController> {
                                 AppRoutes.bookingDetail,
                                 arguments: doc,
                               ),
-                      child: _HistoryRecordCard(item: item),
+                      child: _HistoryRecordCard(item: item, category: doc?.category ?? ''),
                     ),
                   );
                 }),
@@ -86,13 +86,14 @@ class BookingHistoryPage extends GetView<BookingController> {
 }
 
 class _HistoryRecordCard extends StatelessWidget {
-  const _HistoryRecordCard({required this.item});
+  const _HistoryRecordCard({required this.item, this.category = ''});
 
   final OrderHistoryRecord item;
+  final String category;
 
   @override
   Widget build(BuildContext context) {
-    final badge = _badge(item.status);
+    final badge = _badge(item.status, category);
 
     return Container(
       width: double.infinity,
@@ -160,27 +161,40 @@ class _HistoryRecordCard extends StatelessWidget {
     );
   }
 
-  (Color, Color, IconData, String) _badge(OrderHistoryStatus status) {
+  IconData _categoryIcon(String cat) {
+    switch (cat.toLowerCase()) {
+      case 'vehicle':
+      case 'kendaraan':
+        return Icons.two_wheeler_rounded;
+      case 'ac':
+        return Icons.ac_unit_rounded;
+      default:
+        return Icons.devices_rounded;
+    }
+  }
+
+  (Color, Color, IconData, String) _badge(OrderHistoryStatus status, String cat) {
+    final icon = _categoryIcon(cat);
     switch (status) {
       case OrderHistoryStatus.success:
         return (
           const Color(0xFF7B8DEB),
           const Color(0xFF4F5C88),
-          Icons.computer_outlined,
+          icon,
           'SELESAI',
         );
       case OrderHistoryStatus.canceled:
         return (
           const Color(0xFF9AA2B4),
           const Color(0xFF6D7486),
-          Icons.smartphone_rounded,
+          icon,
           'DIBATALKAN',
         );
       case OrderHistoryStatus.verificationFailed:
         return (
           const Color(0xFFD79A2B),
           const Color(0xFFB3671F),
-          Icons.ac_unit_rounded,
+          icon,
           'VERIF GAGAL',
         );
       case OrderHistoryStatus.active:

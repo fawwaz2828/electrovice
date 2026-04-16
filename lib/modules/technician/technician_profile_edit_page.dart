@@ -44,6 +44,8 @@ class _TechnicianProfileEditPageState
   /// New photo files to upload (null = keep existing URL, if any)
   List<File?> _certNewFiles = [];
   List<Map<String, dynamic>> _serviceEstimates = [];
+  String? _currentPhotoUrl;
+  File? _newPhotoFile;
   bool _isLoading = false;
   bool _isFetching = true;
 
@@ -76,6 +78,7 @@ class _TechnicianProfileEditPageState
     setState(() {
       _nameController.text = userModel.name;
       _phoneController.text = userModel.phone ?? '';
+      _currentPhotoUrl = userModel.photoUrl;
       _specialtyController.text = tp?.specialty ?? '';
       _bioController.text = tp?.bio ?? '';
       _category = tp?.category ?? 'electronic';
@@ -133,6 +136,13 @@ class _TechnicianProfileEditPageState
       final diagFee = int.tryParse(
               _diagnosisFeeController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
           0;
+
+      // Upload profile photo jika ada yang baru
+      if (_newPhotoFile != null) {
+        final newUrl =
+            await _storageService.uploadProfilePhoto(user.uid, _newPhotoFile!);
+        await _authService.updateUserPhoto(user.uid, newUrl);
+      }
 
       // Upload any new cert photos and build final URL list
       final List<String> finalCertUrls = [];
@@ -193,6 +203,16 @@ class _TechnicianProfileEditPageState
         _lat = result['lat'] as double;
         _lng = result['lng'] as double;
       });
+    }
+  }
+
+  Future<void> _pickProfilePhoto() async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (picked != null) {
+      setState(() => _newPhotoFile = File(picked.path));
     }
   }
 
@@ -294,6 +314,59 @@ class _TechnicianProfileEditPageState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── FOTO PROFIL ────────────────────────────────
+                  Center(
+                    child: GestureDetector(
+                      onTap: _pickProfilePhoto,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: _newPhotoFile != null
+                                  ? Image.file(_newPhotoFile!,
+                                      fit: BoxFit.cover)
+                                  : (_currentPhotoUrl != null &&
+                                          _currentPhotoUrl!.isNotEmpty)
+                                      ? Image.network(_currentPhotoUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(Icons.person_rounded,
+                                                  color: Color(0xFF94A3B8),
+                                                  size: 52))
+                                      : const Icon(Icons.person_rounded,
+                                          color: Color(0xFF94A3B8), size: 52),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -4,
+                            right: -4,
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: _accent,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.camera_alt_rounded,
+                                  color: Colors.white, size: 15),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   // ── IDENTITAS ──────────────────────────────────
                   _buildSection('IDENTITAS', [
                     _buildField(

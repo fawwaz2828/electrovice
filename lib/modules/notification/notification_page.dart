@@ -72,31 +72,31 @@ class NotificationPage extends GetView<NotificationController> {
     // Mark as read
     if (!item.isRead) controller.markAsRead(item.id);
 
-    // Navigate berdasarkan tipe notif
+    Get.back();
+
+    // Routing berdasarkan siapa penerima notif:
+    //   Teknisi menerima: newOrder, orderCancelled, paymentConfirmed
+    //   Customer menerima: orderAccepted, orderDeclined, onProgress, awaitingPayment
     switch (item.type) {
+      // ── Teknisi ──────────────────────────────────────────────────
       case NotifType.newOrder:
-      case NotifType.orderAccepted:
-      case NotifType.orderDeclined:
-      case NotifType.onProgress:
-      case NotifType.awaitingPayment:
-      case NotifType.paymentConfirmed:
-        Get.back();
-        if (item.bookingId != null) {
-          // Customer → tracking page; Technician → active orders
-          // Kita navigate ke tracking page sebagai default (customer).
-          // Technician akan diarahkan ke active orders.
-          if (item.type == NotifType.newOrder ||
-              item.type == NotifType.paymentConfirmed) {
-            Get.toNamed(AppRoutes.activeOrders);
-          } else {
-            Get.toNamed(AppRoutes.orderTracking);
-          }
-        }
-        break;
       case NotifType.orderCancelled:
-        Get.back();
+      case NotifType.paymentConfirmed:
         Get.toNamed(AppRoutes.activeOrders);
         break;
+
+      // ── Customer: order masih bisa di-track ──────────────────────
+      case NotifType.orderAccepted:
+      case NotifType.onProgress:
+      case NotifType.awaitingPayment:
+        Get.toNamed(AppRoutes.orderTracking);
+        break;
+
+      // ── Customer: order sudah ditolak → ke list pesanan ──────────
+      case NotifType.orderDeclined:
+        Get.toNamed(AppRoutes.customerOrders);
+        break;
+
       default:
         break;
     }

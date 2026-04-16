@@ -277,10 +277,25 @@ class BookingService {
 
       final roundedRating = double.parse(avgRating.toStringAsFixed(1));
 
+      // Sortir rated desc by updatedAt, ambil 10 terbaru untuk snippets
+      final ratedSorted = List.of(rated);
+      ratedSorted.sort((a, b) {
+        final aT = (a['updatedAt'] as Timestamp?)?.toDate() ?? DateTime(0);
+        final bT = (b['updatedAt'] as Timestamp?)?.toDate() ?? DateTime(0);
+        return bT.compareTo(aT);
+      });
+      final reviewSnippets = ratedSorted.take(10).map((d) => {
+        'reviewerName': d['userName'] as String? ?? 'Pengguna',
+        'rating': (d['customerRating'] as num?)?.toInt() ?? 0,
+        'comment': d['customerReview'] as String? ?? '',
+        'date': (d['updatedAt'] as Timestamp?)?.toDate().toIso8601String() ?? '',
+      }).toList();
+
       final statsData = {
         'rating': roundedRating,
         'totalRatings': rated.length,
         'totalJobs': totalJobs,
+        'reviewSnippets': reviewSnippets,
       };
 
       // 1. technicians_online — tampilan di home/detail customer
@@ -289,13 +304,7 @@ class BookingService {
           .doc(technicianId)
           .set(statsData, SetOptions(merge: true));
 
-      // 2. technicians — profil teknisi (backup)
-      await _db
-          .collection('technicians')
-          .doc(technicianId)
-          .set(statsData, SetOptions(merge: true));
-
-      // 3. users.technicianProfile.rating — dibaca oleh TechnicianController
+      // 2. users.technicianProfile.rating — dibaca oleh TechnicianController
       //    untuk ditampilkan di halaman profil teknisi sendiri
       await _db.collection('users').doc(technicianId).update({
         'technicianProfile.rating': roundedRating,

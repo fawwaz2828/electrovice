@@ -139,6 +139,25 @@ class BookingController extends GetxController {
   Future<void> _loadTechnicianReviews(String techId) async {
     isLoadingReviews.value = true;
     try {
+      // Prioritas 1: baca reviewSnippets dari technicians_online.
+      // Field ini ada setelah teknisi buka app (syncTechnicianStats menulis ke sana).
+      // technicians_online bisa dibaca oleh semua user yang login.
+      final snippets =
+          await TechnicianService().getTechnicianReviewSnippets(techId);
+
+      if (snippets.isNotEmpty) {
+        technicianReviews.assignAll(snippets.map((s) => {
+          'reviewerName': s['reviewerName'] ?? '',
+          'rating': (s['rating'] as num?)?.toInt() ?? 0,
+          'comment': s['comment'] ?? '',
+          'date': s['date'] ?? '',
+        }).toList());
+        return;
+      }
+
+      // Prioritas 2 (fallback): query bookings langsung.
+      // Ini hanya berhasil jika current user adalah teknisi itu sendiri
+      // (rules: boleh baca booking jika technicianId == uid).
       final docs = await _bookingService.fetchTechnicianReviews(techId);
       technicianReviews.assignAll(docs.map((b) => {
         'reviewerName': b.userName,

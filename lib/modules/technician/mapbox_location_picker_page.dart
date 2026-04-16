@@ -14,8 +14,8 @@ class MapboxLocationPickerPage extends StatefulWidget {
 
 class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
   MapboxMap? _mapboxMap;
-  PointAnnotationManager? _annotationManager;
-  PointAnnotation? _currentAnnotation;
+  CircleAnnotationManager? _annotationManager;
+  CircleAnnotation? _currentAnnotation;
   Point? _selectedPoint;
 
   // Fallback koordinat — Makassar
@@ -242,7 +242,7 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
 
     // Buat annotation manager untuk marker tap
     _annotationManager =
-        await mapboxMap.annotations.createPointAnnotationManager();
+        await mapboxMap.annotations.createCircleAnnotationManager();
 
     // Kalau lokasi user sudah ready sebelum map siap, fly ke sana sekarang
     if (_pendingLat != null && _pendingLng != null) {
@@ -275,16 +275,12 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
 
     // Buat marker baru di titik yang di-tap
     _currentAnnotation = await _annotationManager!.create(
-      PointAnnotationOptions(
+      CircleAnnotationOptions(
         geometry: tappedPoint,
-        iconSize: 1.5,
-        iconImage: 'marker-default',  // built-in Mapbox marker
-        textField: 'Workshop',
-        textOffset: [0.0, -2.5],
-        textColor: 0xFF3254FF,
-        textSize: 12.0,
-        textHaloColor: 0xFFFFFFFF,
-        textHaloWidth: 1.5,
+        circleRadius: 10.0,
+        circleColor: const Color(0xFF3254FF).toARGB32(),
+        circleStrokeWidth: 3.0,
+        circleStrokeColor: Colors.white.toARGB32(),
       ),
     );
   }

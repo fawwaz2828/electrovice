@@ -22,6 +22,10 @@ class CustomerOrdersPage extends GetView<BookingController> {
               .where((b) => b.isActive)
               .toList();
 
+          final doneOrders = controller.bookingHistory
+              .where((b) => b.status == BookingStatus.done)
+              .toList();
+
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -48,12 +52,12 @@ class CustomerOrdersPage extends GetView<BookingController> {
                   ),
                 ),
               ),
-              if (activeOrders.isEmpty)
+              if (activeOrders.isEmpty && doneOrders.isEmpty)
                 const SliverFillRemaining(
-                    hasScrollBody: false, child: _EmptyOrdersState())
-              else
+                    hasScrollBody: false, child: _EmptyOrdersState()),
+              if (activeOrders.isNotEmpty)
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (ctx, i) => Padding(
@@ -67,6 +71,52 @@ class CustomerOrdersPage extends GetView<BookingController> {
                     ),
                   ),
                 ),
+              if (doneOrders.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Row(
+                      children: [
+                        const Text(
+                          'Riwayat',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(width: 8),
+                        if (doneOrders.any((b) => b.customerRating == null))
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF7ED),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${doneOrders.where((b) => b.customerRating == null).length} belum direview',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFEA580C),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (ctx, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _DoneOrderCard(booking: doneOrders[i]),
+                      ),
+                      childCount: doneOrders.length,
+                    ),
+                  ),
+                ),
+              ],
             ],
           );
         }),
@@ -193,6 +243,161 @@ class _OrderCard extends StatelessWidget {
         'vehicle' => Icons.two_wheeler_rounded,
         _ => Icons.devices_rounded,
       };
+
+  String _damageTypeLabel(String type) => switch (type) {
+        'screen' => 'Kerusakan Layar',
+        'battery' => 'Masalah Baterai',
+        'hardware' => 'Kerusakan Hardware',
+        'water' => 'Water Damage',
+        'camera' => 'Masalah Kamera',
+        _ => 'Perbaikan Umum',
+      };
+
+  String _formatDateTime(DateTime dt) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+    ];
+    final h = dt.hour.toString().padLeft(2, '0');
+    return '${dt.day} ${months[dt.month - 1]}, $h.00';
+  }
+
+  String _formatPrice(int price) {
+    final str = price.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
+      buf.write(str[i]);
+    }
+    return buf.toString();
+  }
+}
+
+// ── Done Order Card (Riwayat) ──────────────────────────────────────────────
+class _DoneOrderCard extends StatelessWidget {
+  final BookingDocument booking;
+  const _DoneOrderCard({required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    final needsReview = booking.customerRating == null;
+
+    return GestureDetector(
+      onTap: needsReview
+          ? () => Get.toNamed(AppRoutes.review, arguments: booking)
+          : null,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F3F7),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    booking.category == 'vehicle'
+                        ? Icons.two_wheeler_rounded
+                        : Icons.devices_rounded,
+                    color: const Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _damageTypeLabel(booking.damageType),
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        booking.technicianName,
+                        style: const TextStyle(
+                            fontSize: 13, color: Color(0xFF6B7280)),
+                      ),
+                    ],
+                  ),
+                ),
+                if (needsReview)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'TULIS ULASAN',
+                      style: TextStyle(
+                        color: Color(0xFFEA580C),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                      ),
+                    ),
+                  )
+                else
+                  Row(
+                    children: List.generate(
+                      5,
+                      (i) => Icon(
+                        Icons.star_rounded,
+                        size: 14,
+                        color: i < (booking.customerRating ?? 0)
+                            ? const Color(0xFFFBBF24)
+                            : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const Divider(height: 22),
+            Row(
+              children: [
+                const Icon(Icons.schedule_rounded,
+                    size: 14, color: Color(0xFF9CA3AF)),
+                const SizedBox(width: 4),
+                Text(
+                  _formatDateTime(booking.scheduledAt),
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF6B7280)),
+                ),
+                const Spacer(),
+                Text(
+                  booking.finalTotalAmount != null
+                      ? 'Rp ${_formatPrice(booking.finalTotalAmount!)}'
+                      : booking.estimatedPrice > 0
+                          ? 'Rp ${_formatPrice(booking.estimatedPrice)}'
+                          : 'Selesai',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   String _damageTypeLabel(String type) => switch (type) {
         'screen' => 'Kerusakan Layar',

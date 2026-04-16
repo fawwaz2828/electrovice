@@ -69,15 +69,19 @@ class ChatController extends GetxController {
             bookingDoc.status == BookingStatus.cancelled) {
           sessionClosed.value = true;
         }
-        _chatService.ensureChatExists(
-          chatId: chatId,
-          bookingId: bookingDoc.bookingId,
-          customerId: bookingDoc.userId,
-          customerName: bookingDoc.userName,
-          technicianId: bookingDoc.technicianId,
-          technicianName: bookingDoc.technicianName,
-          technicianPhotoUrl: bookingDoc.technicianPhotoUrl,
-        );
+        // Fetch customer photo di background dan ensure chat exists
+        _authService.getUserModel(bookingDoc.userId).then((user) {
+          _chatService.ensureChatExists(
+            chatId: chatId,
+            bookingId: bookingDoc.bookingId,
+            customerId: bookingDoc.userId,
+            customerName: bookingDoc.userName,
+            technicianId: bookingDoc.technicianId,
+            technicianName: bookingDoc.technicianName,
+            technicianPhotoUrl: bookingDoc.technicianPhotoUrl,
+            customerPhotoUrl: user?.photoUrl,
+          );
+        });
         return;
       }
 

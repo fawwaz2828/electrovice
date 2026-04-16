@@ -4,11 +4,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/mapbox_config.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
+import '../../services/auth_service.dart';
 import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
@@ -592,7 +594,7 @@ class _SecurityCodeCard extends StatelessWidget {
   }
 }
 
-class _TechnicianContactCard extends StatelessWidget {
+class _TechnicianContactCard extends StatefulWidget {
   const _TechnicianContactCard({
     required this.name,
     required this.role,
@@ -606,6 +608,34 @@ class _TechnicianContactCard extends StatelessWidget {
   final String partnerLabel;
   final String? imageUrl;
   final BookingDocument? bookingDoc;
+
+  @override
+  State<_TechnicianContactCard> createState() => _TechnicianContactCardState();
+}
+
+class _TechnicianContactCardState extends State<_TechnicianContactCard> {
+  bool _isCalling = false;
+
+  Future<void> _callTechnician() async {
+    final techId = widget.bookingDoc?.technicianId;
+    if (techId == null || techId.isEmpty) return;
+    setState(() => _isCalling = true);
+    try {
+      final user = await AuthService().getUserModel(techId);
+      final phone = (user?.phone ?? '').trim();
+      if (phone.isEmpty) {
+        Get.snackbar('Tidak tersedia', 'Nomor HP teknisi tidak terdaftar',
+            snackPosition: SnackPosition.TOP);
+        return;
+      }
+      await launchUrl(Uri(scheme: 'tel', path: phone));
+    } catch (e) {
+      Get.snackbar('Gagal', 'Tidak dapat membuka aplikasi telepon',
+          snackPosition: SnackPosition.TOP);
+    } finally {
+      if (mounted) setState(() => _isCalling = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -635,11 +665,11 @@ class _TechnicianContactCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    Text(widget.name, style: const TextStyle(fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
-                    Text(role, style: const TextStyle(color: Color(0xFF727B8B), fontSize: 12)),
+                    Text(widget.role, style: const TextStyle(color: Color(0xFF727B8B), fontSize: 12)),
                     const SizedBox(height: 4),
-                    Text(partnerLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                    Text(widget.partnerLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                   ],
                 ),
               ),
@@ -650,15 +680,15 @@ class _TechnicianContactCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: bookingDoc == null
+                  onPressed: widget.bookingDoc == null
                       ? null
                       : () => Get.toNamed(
                             '/chat',
                             arguments: {
-                              'chatId': bookingDoc!.bookingId,
-                              'otherPartyName': bookingDoc!.technicianName,
-                              'otherPartyPhotoUrl': bookingDoc!.technicianPhotoUrl,
-                              'bookingDoc': bookingDoc,
+                              'chatId': widget.bookingDoc!.bookingId,
+                              'otherPartyName': widget.bookingDoc!.technicianName,
+                              'otherPartyPhotoUrl': widget.bookingDoc!.technicianPhotoUrl,
+                              'bookingDoc': widget.bookingDoc,
                             },
                           ),
                   style: FilledButton.styleFrom(
@@ -672,10 +702,30 @@ class _TechnicianContactCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
+              // ── Call Technician ──────────────────────────────────
+              GestureDetector(
+                onTap: _isCalling ? null : _callTechnician,
+                child: Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F4F8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: _isCalling
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.phone_outlined, color: Color(0xFF4163FF)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // ── Navigate ─────────────────────────────────────────
               GestureDetector(
                 onTap: () {
-                  final lat = bookingDoc?.latitude;
-                  final lng = bookingDoc?.longitude;
+                  final lat = widget.bookingDoc?.latitude;
+                  final lng = widget.bookingDoc?.longitude;
                   if (lat != null && lng != null) {
                     MapsLauncher.navigateTo(lat: lat, lng: lng);
                   } else {

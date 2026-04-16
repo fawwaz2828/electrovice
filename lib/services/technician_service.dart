@@ -235,6 +235,19 @@ class TechnicianService {
       SetOptions(merge: true),
     );
   }
+
+  /// Baca review snippets dari technicians_online (bisa dibaca customer).
+  /// Snippets ditulis oleh syncTechnicianStats saat teknisi buka app.
+  Future<List<Map<String, dynamic>>> getTechnicianReviewSnippets(
+      String techId) async {
+    final doc =
+        await _firestore.collection('technicians_online').doc(techId).get();
+    if (!doc.exists) return [];
+    return (doc.data()?['reviewSnippets'] as List<dynamic>? ?? [])
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  }
 }
 
 // ── MODELS ────────────────────────────────────────────────────────

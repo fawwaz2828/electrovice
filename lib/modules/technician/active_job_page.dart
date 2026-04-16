@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
+import '../../services/auth_service.dart';
+import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../technician/technician_controller.dart';
 
@@ -15,8 +18,31 @@ class ActiveJobPage extends StatefulWidget {
 
 class _ActiveJobPageState extends State<ActiveJobPage> {
   bool _isCompleting = false;
+  bool _isCalling = false;
   Timer? _timer;
   Duration _elapsed = Duration.zero;
+
+  Future<void> _callCustomer() async {
+    final ctrl = Get.find<TechnicianController>();
+    final order = ctrl.activeOrder.value ?? ctrl.selectedOrder.value;
+    if (order == null) return;
+    setState(() => _isCalling = true);
+    try {
+      final user = await AuthService().getUserModel(order.userId);
+      final phone = (user?.phone ?? '').trim();
+      if (phone.isEmpty) {
+        Get.snackbar('Tidak tersedia', 'Nomor HP customer tidak terdaftar',
+            snackPosition: SnackPosition.TOP);
+        return;
+      }
+      await launchUrl(Uri(scheme: 'tel', path: phone));
+    } catch (e) {
+      Get.snackbar('Gagal', 'Tidak dapat membuka aplikasi telepon',
+          snackPosition: SnackPosition.TOP);
+    } finally {
+      if (mounted) setState(() => _isCalling = false);
+    }
+  }
 
   @override
   void initState() {
@@ -72,7 +98,7 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Obx(() {
-            final order = controller.activeOrder.value;
+            final order = controller.activeOrder.value ?? controller.selectedOrder.value;
             return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -86,6 +112,8 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                 userAddress: order?.userAddress ?? 'Alamat tidak tersedia',
                 status: order?.status ?? BookingStatus.onProgress,
                 elapsedLabel: _elapsedLabel,
+                lat: order?.latitude,
+                lng: order?.longitude,
               ),
 
               const SizedBox(height: 24),
@@ -98,6 +126,7 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                       icon: Icons.phone_in_talk_rounded,
                       label: 'CALL CLIENT',
                       sublabel: order?.userName ?? '-',
+                      onTap: _isCalling ? null : _callCustomer,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -229,6 +258,8 @@ class _WorkOrderHeader extends StatelessWidget {
   final String userAddress;
   final String status;
   final String elapsedLabel;
+  final double? lat;
+  final double? lng;
 
   const _WorkOrderHeader({
     required this.bookingId,
@@ -237,6 +268,8 @@ class _WorkOrderHeader extends StatelessWidget {
     required this.userAddress,
     required this.status,
     required this.elapsedLabel,
+    this.lat,
+    this.lng,
   });
 
   @override
@@ -314,7 +347,7 @@ class _WorkOrderHeader extends StatelessWidget {
           // Nested Cards
           _TimeElapsedCard(elapsedLabel: elapsedLabel),
           const SizedBox(height: 12),
-          _LocationCard(address: userAddress),
+          _LocationCard(address: userAddress, lat: lat, lng: lng),
 
           const SizedBox(height: 24),
           const _TaskProgressSection(),
@@ -379,9 +412,12 @@ class _TimeElapsedCard extends StatelessWidget {
 
 class _LocationCard extends StatelessWidget {
   final String address;
-  const _LocationCard({required this.address});
+  final double? lat;
+  final double? lng;
+  const _LocationCard({required this.address, this.lat, this.lng});
   @override
   Widget build(BuildContext context) {
+    final hasCoords = lat != null && lng != null;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -404,33 +440,43 @@ class _LocationCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             address,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1E293B),
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(
-                Icons.near_me_rounded,
-                size: 16,
-                color: Color(0xFF111111),
+          if (hasCoords) ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => MapsLauncher.navigateTo(
+                lat: lat!,
+                lng: lng!,
+                label: address,
               ),
-              const SizedBox(width: 8),
-              const Text(
-                'Map View',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111111),
-                  decoration: TextDecoration.underline,
-                ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.navigation_rounded,
+                    size: 16,
+                    color: Color(0xFF3254FF),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Navigasi ke Lokasi',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF3254FF),
+                      decoration: TextDecoration.underline,
+                      decorationColor: Color(0xFF3254FF),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );
