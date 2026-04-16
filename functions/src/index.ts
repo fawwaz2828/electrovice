@@ -1,4 +1,4 @@
-import { onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { onDocumentUpdated, onDocumentCreated } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 
@@ -26,6 +26,7 @@ export const onBookingStatusChanged = onDocumentUpdated(
     const technicianId: string = after.technicianId ?? "";
     const technicianName: string = after.technicianName ?? "Teknisi";
     const userName: string = after.userName ?? "Customer";
+    const cancelledBy: string = after.cancelledBy ?? "";
 
     switch (after.status as string) {
       case "pending":
@@ -47,19 +48,29 @@ export const onBookingStatusChanged = onDocumentUpdated(
         break;
 
       case "cancelled":
-        // Kirim ke kedua pihak karena tidak bisa tahu siapa yang cancel dari server
-        await _sendNotif(userId, {
-          title: "Pesanan Dibatalkan",
-          body: "Pesanan servis telah dibatalkan.",
-          type: "order_cancelled",
-          bookingId,
-        });
-        await _sendNotif(technicianId, {
-          title: "Pesanan Dibatalkan",
-          body: "Pesanan servis telah dibatalkan.",
-          type: "order_cancelled",
-          bookingId,
-        });
+        if (cancelledBy === "technician") {
+          // Teknisi decline → hanya notify customer dengan pesan spesifik
+          await _sendNotif(userId, {
+            title: "Pesanan Ditolak",
+            body: `${technicianName} tidak bisa menerima pesananmu kali ini.`,
+            type: "order_declined",
+            bookingId,
+          });
+        } else {
+          // Customer cancel → notify kedua pihak
+          await _sendNotif(userId, {
+            title: "Pesanan Dibatalkan",
+            body: "Pesanan servis telah dibatalkan.",
+            type: "order_cancelled",
+            bookingId,
+          });
+          await _sendNotif(technicianId, {
+            title: "Pesanan Dibatalkan",
+            body: `${userName} membatalkan pesanan servis.`,
+            type: "order_cancelled",
+            bookingId,
+          });
+        }
         break;
 
       case "on_progress":
@@ -91,6 +102,74 @@ export const onBookingStatusChanged = onDocumentUpdated(
 
       default:
         return;
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────
+//  Trigger: pesan chat baru masuk
+//  → kirim FCM push ke pihak lain (bukan sender)
+//  → tidak tulis in-app notif (chat sudah realtime di ChatPage)
+// ─────────────────────────────────────────────────────────────────
+export const onChatMessageCreated = onDocumentCreated(
+  "chats/{chatId}/messages/{messageId}",
+  async (event) => {
+    const message = event.data?.data();
+    if (!message) return;
+
+    const chatId = event.params.chatId;
+    const senderId: string = message.senderId ?? "";
+    const senderName: string = message.senderName ?? "Someone";
+    const text: string = message.text ?? "";
+    const imageUrl: string = message.imageUrl ?? "";
+
+    if (!senderId) return;
+
+    // Ambil data chat room untuk tahu siapa penerima
+    const chatSnap = await db.collection("chats").doc(chatId).get();
+    const chatData = chatSnap.data();
+    if (!chatData) return;
+
+    const participants: string[] = chatData.participants ?? [];
+    const recipientId = participants.find((id: string) => id !== senderId);
+    if (!recipientId) return;
+
+    // Ambil FCM token penerima
+    const userSnap = await db.collection("users").doc(recipientId).get();
+    const fcmToken: string | undefined = userSnap.data()?.fcmToken;
+    if (!fcmToken) return;
+
+    // Susun preview pesan
+    const body = imageUrl ? "📷 mengirim foto" : (text.length > 80 ? text.substring(0, 80) + "…" : text);
+
+    try {
+      await admin.messaging().send({
+        token: fcmToken,
+        notification: {
+          title: senderName,
+          body,
+        },
+        android: {
+          notification: {
+            channelId: "electrovice_notifications",
+            priority: "high",
+            sound: "default",
+          },
+        },
+        apns: {
+          payload: {
+            aps: { sound: "default", badge: 1 },
+          },
+        },
+        data: {
+          type: "chat",
+          chatId,
+          senderId,
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+      });
+    } catch (e) {
+      logger.warn("FCM chat send failed", { recipientId, error: e });
     }
   }
 );

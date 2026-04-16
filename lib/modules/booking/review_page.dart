@@ -50,12 +50,12 @@ class _ReviewPageState extends State<ReviewPage> {
       Get.snackbar(
         'Terima Kasih!',
         'Ulasan kamu sudah tersimpan',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFF22C55E),
         colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

@@ -169,7 +169,7 @@ class ChatController extends GetxController {
     } catch (e) {
       debugPrint('sendMessage error: $e');
       Get.snackbar('Gagal', 'Pesan tidak terkirim',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       isSending.value = false;
     }
@@ -197,7 +197,7 @@ class ChatController extends GetxController {
     } catch (e) {
       debugPrint('sendPhoto error: $e');
       Get.snackbar('Gagal', 'Foto tidak bisa dikirim',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       isUploadingPhoto.value = false;
     }

@@ -399,7 +399,7 @@ class BookingController extends GetxController {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         Get.snackbar('GPS Mati', 'Aktifkan layanan lokasi di pengaturan perangkat',
-            snackPosition: SnackPosition.BOTTOM);
+            snackPosition: SnackPosition.TOP);
         return;
       }
       LocationPermission permission = await Geolocator.checkPermission();
@@ -410,7 +410,7 @@ class BookingController extends GetxController {
       if (permission == LocationPermission.deniedForever) {
         Get.snackbar('Izin Ditolak',
             'Aktifkan izin lokasi di Pengaturan > Aplikasi > Electrovice',
-            snackPosition: SnackPosition.BOTTOM);
+            snackPosition: SnackPosition.TOP);
         return;
       }
       final pos = await Geolocator.getCurrentPosition(
@@ -420,12 +420,12 @@ class BookingController extends GetxController {
       latitude.value = pos.latitude;
       longitude.value = pos.longitude;
       Get.snackbar('Lokasi Terdeteksi', 'Koordinat GPS berhasil disimpan',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           duration: const Duration(seconds: 2));
     } catch (e) {
       debugPrint('GPS error: $e');
       Get.snackbar('Gagal', 'Tidak bisa mendapatkan lokasi GPS',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       isDetectingLocation.value = false;
     }
@@ -436,7 +436,7 @@ class BookingController extends GetxController {
   Future<void> addDamagePhoto() async {
     if (damagePhotos.length >= 3) {
       Get.snackbar('Maksimal 3 foto', 'Hapus foto yang ada untuk menambah yang baru',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
     try {
@@ -448,7 +448,7 @@ class BookingController extends GetxController {
       if (picked != null) damagePhotos.add(File(picked.path));
     } catch (e) {
       Get.snackbar('Gagal', 'Tidak bisa membuka galeri',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     }
   }
 
@@ -473,9 +473,9 @@ class BookingController extends GetxController {
       await _bookingService.cancelBooking(booking.bookingId);
       Get.back(); // tutup dialog kalau ada
       Get.snackbar('Pesanan Dibatalkan', 'Booking berhasil dibatalkan.',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } catch (e) {
-      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       isSubmitting.value = false;
     }
@@ -490,7 +490,7 @@ class BookingController extends GetxController {
       await _bookingService.confirmPayment(booking.bookingId);
       Get.offNamed(AppRoutes.review, arguments: booking);
     } catch (e) {
-      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       isSubmitting.value = false;
     }
@@ -535,21 +535,21 @@ class BookingController extends GetxController {
   Future<void> submitBooking() async {
     if (!isFormValid) {
       Get.snackbar('Oops', 'Deskripsi keluhan tidak boleh kosong',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
     final user = _authService.currentUser;
     if (user == null) {
       Get.snackbar('Error', 'Sesi habis, silakan login ulang',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
     final tech = selectedTechnician.value;
     if (tech == null) {
       Get.snackbar('Error', 'Data teknisi tidak ditemukan',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -603,7 +603,7 @@ class BookingController extends GetxController {
       Get.offNamed(AppRoutes.orderTracking);
     } catch (e) {
       Get.snackbar('Gagal membuat booking', e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       isSubmitting.value = false;
     }

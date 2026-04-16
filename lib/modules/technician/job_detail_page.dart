@@ -501,7 +501,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                                 Get.toNamed(AppRoutes.verification);
                               } catch (e) {
                                 Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
-                                    snackPosition: SnackPosition.BOTTOM);
+                                    snackPosition: SnackPosition.TOP);
                               } finally {
                                 if (mounted) setState(() => _isAccepting = false);
                               }
@@ -540,7 +540,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                                 Get.back();
                               } catch (e) {
                                 Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
-                                    snackPosition: SnackPosition.BOTTOM);
+                                    snackPosition: SnackPosition.TOP);
                               } finally {
                                 if (mounted) setState(() => _isDeclining = false);
                               }

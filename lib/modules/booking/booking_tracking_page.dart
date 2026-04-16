@@ -682,7 +682,7 @@ class _TechnicianContactCard extends StatelessWidget {
                     Get.snackbar(
                       'Lokasi tidak tersedia',
                       'Customer belum mengaktifkan GPS',
-                      snackPosition: SnackPosition.BOTTOM,
+                      snackPosition: SnackPosition.TOP,
                     );
                   }
                 },

@@ -975,7 +975,7 @@ class _AboutTab extends GetView<BookingController> {
                           Get.snackbar(
                             'Lokasi tidak tersedia',
                             'Teknisi belum mengisi alamat workshop',
-                            snackPosition: SnackPosition.BOTTOM,
+                            snackPosition: SnackPosition.TOP,
                           );
                         }
                       },
@@ -1004,7 +1004,7 @@ class _AboutTab extends GetView<BookingController> {
                         Get.snackbar(
                           'Tersalin',
                           'Alamat disalin ke clipboard',
-                          snackPosition: SnackPosition.BOTTOM,
+                          snackPosition: SnackPosition.TOP,
                           duration: const Duration(seconds: 2),
                         );
                       },

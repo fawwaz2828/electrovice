@@ -486,7 +486,7 @@ class BookingDetailPage extends StatelessWidget {
                       onPressed: () => Get.snackbar(
                         'Coming soon',
                         'PDF invoice will be available soon',
-                        snackPosition: SnackPosition.BOTTOM,
+                        snackPosition: SnackPosition.TOP,
                       ),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 52),
@@ -508,7 +508,7 @@ class BookingDetailPage extends StatelessWidget {
                       onPressed: () => Get.snackbar(
                         'Coming soon',
                         'Share feature will be available soon',
-                        snackPosition: SnackPosition.BOTTOM,
+                        snackPosition: SnackPosition.TOP,
                       ),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 52),

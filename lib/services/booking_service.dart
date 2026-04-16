@@ -99,22 +99,13 @@ class BookingService {
 
   /// Teknisi decline order → status `cancelled`.
   Future<void> declineBooking(String bookingId) async {
-    final meta = await _getMeta(bookingId);
     await _db.collection('bookings').doc(bookingId).update({
       'status': BookingStatus.cancelled,
+      'cancelledBy': 'technician',
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    // Notif ke customer
-    if (meta != null) {
-      await _notif.send(
-        toUserId: meta['userId'] as String,
-        title: 'Pesanan Ditolak',
-        body: '${meta['technicianName']} tidak bisa menerima pesanan kali ini.',
-        type: NotifType.orderDeclined,
-        bookingId: bookingId,
-        fromName: meta['technicianName'] as String?,
-      );
-    }
+    // Notif dikirim oleh Cloud Function (onBookingStatusChanged)
+    // yang membaca cancelledBy untuk bedakan declined vs cancelled.
   }
 
   // ── Streams ────────────────────────────────────────────────────

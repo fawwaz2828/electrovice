@@ -33,7 +33,7 @@ class MapsLauncher {
     Get.snackbar(
       'Tidak Bisa Membuka Maps',
       'Pastikan aplikasi Maps sudah terpasang',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
     );
   }
 
@@ -50,7 +50,7 @@ class MapsLauncher {
     Get.snackbar(
       'Tidak Bisa Membuka Maps',
       'Periksa koneksi internet',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
     );
   }
 }

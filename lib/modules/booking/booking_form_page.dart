@@ -43,7 +43,7 @@ class _BookingFormPageState extends State<BookingFormPage> {
   void _onConfirm() {
     if (_addressCtrl.text.trim().isEmpty) {
       Get.snackbar('Alamat belum diisi', 'Masukkan alamat lengkap kamu',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
     _ctrl.setUserAddress(_addressCtrl.text.trim());

@@ -121,13 +121,13 @@ class _TechnicianProfileEditPageState
 
     if (_nameController.text.trim().isEmpty) {
       Get.snackbar('Oops', 'Nama tidak boleh kosong',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
     if (_lat == null || _lng == null) {
       Get.snackbar('Oops', 'Pilih lokasi workshop di peta dulu',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -181,10 +181,10 @@ class _TechnicianProfileEditPageState
 
       Get.back();
       Get.snackbar('Berhasil', 'Profil berhasil disimpan',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('Error', e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -239,7 +239,7 @@ class _TechnicianProfileEditPageState
 
     if (service.isEmpty) {
       Get.snackbar('Oops', 'Nama layanan tidak boleh kosong',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 

@@ -50,7 +50,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     if (_nameController.text.trim().isEmpty) {
       Get.snackbar('Oops', 'Nama tidak boleh kosong',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -70,10 +70,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
       Get.back();
       Get.snackbar('Berhasil', 'Profil berhasil diperbarui',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('Error', e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       setState(() => _isLoading = false);
     }

@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -7,6 +8,7 @@ import 'firebase_options.dart';
 import 'config/routes.dart';
 import 'config/theme.dart';
 import 'config/mapbox_config.dart';
+import 'services/fcm_handler.dart';
 
 // mapbox_maps_flutter hanya support Android & iOS
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
@@ -21,6 +23,12 @@ void main() async {
   }
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Daftarkan background handler SEBELUM runApp
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Setup FCM listeners & navigasi deep link
+  await FcmHandler.init();
 
   FlutterNativeSplash.remove();
   runApp(const MyApp());

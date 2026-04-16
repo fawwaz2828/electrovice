@@ -301,7 +301,7 @@ class TechnicianOnboardingController extends GetxController {
         'certificationUrls': certUrls,
         'accreditations': certificationNames.map((n) => n.trim()).where((n) => n.isNotEmpty).toList(),
         'diagnosisFee': fee,
-        'verificationStatus': 'verified', // auto-verified sementara
+        'verificationStatus': 'pending', // menunggu verifikasi admin
         'isAvailable': false,
         'rating': 0.0,
         'totalRatings': 0,
@@ -354,7 +354,7 @@ class TechnicianOnboardingController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      Get.offAllNamed(AppRoutes.technicianHome);
+      Get.offAllNamed(AppRoutes.technicianPending);
     } catch (e) {
       submitError.value = e.toString();
     } finally {

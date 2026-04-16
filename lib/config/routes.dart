@@ -42,6 +42,9 @@ import '../modules/booking/customer_orders_page.dart';
 import '../modules/technician/technician_saved_address_page.dart';
 import '../modules/notification/notification_controller.dart';
 import '../modules/notification/notification_page.dart';
+import '../modules/technician/technician_pending_page.dart';
+import '../admin/admin_home_page.dart';
+import '../admin/admin_verification_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -79,6 +82,9 @@ class AppRoutes {
   static const customerOrders = '/customer/orders';
   static const chatInbox = '/chat-inbox';
   static const notifications = '/notifications';
+  static const technicianPending = '/technician/pending';
+  static const adminHome = '/admin-home';
+  static const adminVerification = '/admin-verification';
 
   static final routes = [
     GetPage(
@@ -316,6 +322,22 @@ class AppRoutes {
       binding: BindingsBuilder(() {
         Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
       }),
+    ),
+
+    // ── Admin ────────────────────────────────────────────────────
+    GetPage(
+      name: adminHome,
+      page: () => const AdminHomePage(),
+    ),
+    GetPage(
+      name: adminVerification,
+      page: () => const AdminVerificationPage(),
+    ),
+
+    // ── Technician Pending ───────────────────────────────────────
+    GetPage(
+      name: technicianPending,
+      page: () => const TechnicianPendingPage(),
     ),
   ];
 }

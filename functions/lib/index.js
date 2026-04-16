@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onBookingStatusChanged = void 0;
+exports.onChatMessageCreated = exports.onBookingStatusChanged = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const v2_1 = require("firebase-functions/v2");
 const admin = require("firebase-admin");
@@ -12,7 +12,7 @@ const db = admin.firestore();
 //  → kirim FCM push notification ke device (jika token tersedia)
 // ─────────────────────────────────────────────────────────────────
 exports.onBookingStatusChanged = (0, firestore_1.onDocumentUpdated)("bookings/{bookingId}", async (event) => {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     const before = (_a = event.data) === null || _a === void 0 ? void 0 : _a.before.data();
     const after = (_b = event.data) === null || _b === void 0 ? void 0 : _b.after.data();
     if (!before || !after)
@@ -25,11 +25,12 @@ exports.onBookingStatusChanged = (0, firestore_1.onDocumentUpdated)("bookings/{b
     const technicianId = (_d = after.technicianId) !== null && _d !== void 0 ? _d : "";
     const technicianName = (_e = after.technicianName) !== null && _e !== void 0 ? _e : "Teknisi";
     const userName = (_f = after.userName) !== null && _f !== void 0 ? _f : "Customer";
+    const cancelledBy = (_g = after.cancelledBy) !== null && _g !== void 0 ? _g : "";
     switch (after.status) {
         case "pending":
             await _sendNotif(technicianId, {
                 title: "Pesanan Masuk!",
-                body: `${userName} membutuhkan bantuan servis ${(_g = after.category) !== null && _g !== void 0 ? _g : ""}.`,
+                body: `${userName} membutuhkan bantuan servis ${(_h = after.category) !== null && _h !== void 0 ? _h : ""}.`,
                 type: "new_order",
                 bookingId,
             });
@@ -43,19 +44,30 @@ exports.onBookingStatusChanged = (0, firestore_1.onDocumentUpdated)("bookings/{b
             });
             break;
         case "cancelled":
-            // Kirim ke kedua pihak karena tidak bisa tahu siapa yang cancel dari server
-            await _sendNotif(userId, {
-                title: "Pesanan Dibatalkan",
-                body: "Pesanan servis telah dibatalkan.",
-                type: "order_cancelled",
-                bookingId,
-            });
-            await _sendNotif(technicianId, {
-                title: "Pesanan Dibatalkan",
-                body: "Pesanan servis telah dibatalkan.",
-                type: "order_cancelled",
-                bookingId,
-            });
+            if (cancelledBy === "technician") {
+                // Teknisi decline → hanya notify customer dengan pesan spesifik
+                await _sendNotif(userId, {
+                    title: "Pesanan Ditolak",
+                    body: `${technicianName} tidak bisa menerima pesananmu kali ini.`,
+                    type: "order_declined",
+                    bookingId,
+                });
+            }
+            else {
+                // Customer cancel → notify kedua pihak
+                await _sendNotif(userId, {
+                    title: "Pesanan Dibatalkan",
+                    body: "Pesanan servis telah dibatalkan.",
+                    type: "order_cancelled",
+                    bookingId,
+                });
+                await _sendNotif(technicianId, {
+                    title: "Pesanan Dibatalkan",
+                    body: `${userName} membatalkan pesanan servis.`,
+                    type: "order_cancelled",
+                    bookingId,
+                });
+            }
             break;
         case "on_progress":
             await _sendNotif(userId, {
@@ -83,6 +95,70 @@ exports.onBookingStatusChanged = (0, firestore_1.onDocumentUpdated)("bookings/{b
             break;
         default:
             return;
+    }
+});
+// ─────────────────────────────────────────────────────────────────
+//  Trigger: pesan chat baru masuk
+//  → kirim FCM push ke pihak lain (bukan sender)
+//  → tidak tulis in-app notif (chat sudah realtime di ChatPage)
+// ─────────────────────────────────────────────────────────────────
+exports.onChatMessageCreated = (0, firestore_1.onDocumentCreated)("chats/{chatId}/messages/{messageId}", async (event) => {
+    var _a, _b, _c, _d, _e, _f, _g;
+    const message = (_a = event.data) === null || _a === void 0 ? void 0 : _a.data();
+    if (!message)
+        return;
+    const chatId = event.params.chatId;
+    const senderId = (_b = message.senderId) !== null && _b !== void 0 ? _b : "";
+    const senderName = (_c = message.senderName) !== null && _c !== void 0 ? _c : "Someone";
+    const text = (_d = message.text) !== null && _d !== void 0 ? _d : "";
+    const imageUrl = (_e = message.imageUrl) !== null && _e !== void 0 ? _e : "";
+    if (!senderId)
+        return;
+    // Ambil data chat room untuk tahu siapa penerima
+    const chatSnap = await db.collection("chats").doc(chatId).get();
+    const chatData = chatSnap.data();
+    if (!chatData)
+        return;
+    const participants = (_f = chatData.participants) !== null && _f !== void 0 ? _f : [];
+    const recipientId = participants.find((id) => id !== senderId);
+    if (!recipientId)
+        return;
+    // Ambil FCM token penerima
+    const userSnap = await db.collection("users").doc(recipientId).get();
+    const fcmToken = (_g = userSnap.data()) === null || _g === void 0 ? void 0 : _g.fcmToken;
+    if (!fcmToken)
+        return;
+    // Susun preview pesan
+    const body = imageUrl ? "📷 mengirim foto" : (text.length > 80 ? text.substring(0, 80) + "…" : text);
+    try {
+        await admin.messaging().send({
+            token: fcmToken,
+            notification: {
+                title: senderName,
+                body,
+            },
+            android: {
+                notification: {
+                    channelId: "electrovice_notifications",
+                    priority: "high",
+                    sound: "default",
+                },
+            },
+            apns: {
+                payload: {
+                    aps: { sound: "default", badge: 1 },
+                },
+            },
+            data: {
+                type: "chat",
+                chatId,
+                senderId,
+                click_action: "FLUTTER_NOTIFICATION_CLICK",
+            },
+        });
+    }
+    catch (e) {
+        v2_1.logger.warn("FCM chat send failed", { recipientId, error: e });
     }
 });
 // ─────────────────────────────────────────────────────────────────

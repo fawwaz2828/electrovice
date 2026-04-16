@@ -87,7 +87,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
       Get.snackbar(
         'Error',
         'Gagal menyimpan service: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );

@@ -77,12 +77,12 @@ class _TechnicianSavedAddressPageState
 
     if (_addressCtrl.text.trim().isEmpty) {
       Get.snackbar('Oops', 'Alamat tidak boleh kosong',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
     if (_lat == null || _lng == null) {
       Get.snackbar('Oops', 'Pilih lokasi di peta terlebih dahulu',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -97,10 +97,10 @@ class _TechnicianSavedAddressPageState
       );
       Get.back();
       Get.snackbar('Berhasil', 'Alamat workshop berhasil disimpan',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('Error', e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

@@ -149,7 +149,7 @@ class _TechnicianEditProfilePageState extends State<TechnicianEditProfilePage> {
               Get.snackbar(
                 'Success',
                 'Profile updated successfully',
-                snackPosition: SnackPosition.BOTTOM,
+                snackPosition: SnackPosition.TOP,
                 backgroundColor: const Color(0xFF10B981),
                 colorText: Colors.white,
               );

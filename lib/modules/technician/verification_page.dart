@@ -30,7 +30,7 @@ class _VerificationPageState extends State<VerificationPage> {
     final code = _pin.join();
     if (code.length < 6 || _pin.contains('')) {
       Get.snackbar('Oops', 'Masukkan 6 digit kode verifikasi',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 

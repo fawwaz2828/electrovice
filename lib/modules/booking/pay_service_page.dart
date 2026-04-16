@@ -239,7 +239,7 @@ class PayServicePage extends GetView<BookingController> {
                         onTap: () => Get.snackbar(
                           'Coming soon',
                           'Payment gateway will be available soon',
-                          snackPosition: SnackPosition.BOTTOM,
+                          snackPosition: SnackPosition.TOP,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -277,7 +277,7 @@ class PayServicePage extends GetView<BookingController> {
                                   color: const Color(0xFF4C3494),
                                   onTap: () => Get.snackbar('Coming soon',
                                       'OVO integration coming soon',
-                                      snackPosition: SnackPosition.BOTTOM),
+                                      snackPosition: SnackPosition.TOP),
                                 ),
                                 const SizedBox(width: 12),
                                 _EWalletBadge(
@@ -285,7 +285,7 @@ class PayServicePage extends GetView<BookingController> {
                                   color: const Color(0xFF00AED6),
                                   onTap: () => Get.snackbar('Coming soon',
                                       'GoPay integration coming soon',
-                                      snackPosition: SnackPosition.BOTTOM),
+                                      snackPosition: SnackPosition.TOP),
                                 ),
                                 const SizedBox(width: 12),
                                 _EWalletBadge(
@@ -293,7 +293,7 @@ class PayServicePage extends GetView<BookingController> {
                                   color: const Color(0xFFEE4D2D),
                                   onTap: () => Get.snackbar('Coming soon',
                                       'ShopeePay integration coming soon',
-                                      snackPosition: SnackPosition.BOTTOM),
+                                      snackPosition: SnackPosition.TOP),
                                 ),
                               ],
                             ),

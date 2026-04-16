@@ -129,12 +129,12 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
   Future<void> _confirm() async {
     if (_serviceFee == 0 && _partsTotal == 0) {
       Get.snackbar('Oops', 'Masukkan minimal service fee atau spare part',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
     if (_workPhotos.isEmpty) {
       Get.snackbar('Foto Wajib', 'Upload minimal 1 foto bukti pekerjaan',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -169,7 +169,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
       Get.offNamed(AppRoutes.repairApproval);
     } catch (e) {
       Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

@@ -55,7 +55,7 @@ class AuthController extends GetxController {
         role == 'technician'
             ? 'Akun dibuat! Lengkapi profil teknisimu.'
             : 'Akun berhasil dibuat.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
     } catch (e) {
       errorMessage.value = _parseError(e.toString());
@@ -85,7 +85,7 @@ class AuthController extends GetxController {
         Get.snackbar(
           'Akun Dibuat!',
           'Pendaftaran Google berhasil.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
         );
       }
     } catch (e) {
@@ -118,15 +118,32 @@ class AuthController extends GetxController {
     // Simpan FCM token setiap kali login (token bisa berubah)
     _saveFcmToken();
 
+    if (role == 'admin') {
+      Get.offAllNamed(AppRoutes.adminHome);
+      return;
+    }
+
     if (role == 'technician') {
-      // Cek apakah onboarding sudah selesai
       final uid = _authService.currentUser?.uid;
       if (uid != null) {
         final data = await _authService.getUserData(uid);
-        final techProfile = data?['technicianProfile'];
-        if (techProfile == null ||
-            (techProfile as Map)['verificationStatus'] == null) {
+        final techProfile = data?['technicianProfile'] as Map?;
+
+        // Belum onboarding
+        if (techProfile == null || techProfile['verificationStatus'] == null) {
           Get.offAllNamed(AppRoutes.technicianOnboarding);
+          return;
+        }
+
+        final status = techProfile['verificationStatus'] as String? ?? 'pending';
+
+        if (status == 'pending') {
+          Get.offAllNamed(AppRoutes.technicianPending);
+          return;
+        }
+        if (status == 'declined') {
+          Get.offAllNamed(AppRoutes.technicianPending,
+              arguments: {'declined': true});
           return;
         }
       }
