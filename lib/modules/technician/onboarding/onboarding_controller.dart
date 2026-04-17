@@ -288,7 +288,7 @@ class TechnicianOnboardingController extends GetxController {
         'yearsExperience': yearsExperience.value,
         'certificationUrls': certUrls,
         'diagnosisFee': fee,
-        'verificationStatus': 'verified', // auto-verified sementara
+        'verificationStatus': 'pending',
         'isAvailable': false,
         'rating': 0.0,
         'totalRatings': 0,
@@ -340,7 +340,7 @@ class TechnicianOnboardingController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      Get.offAllNamed(AppRoutes.technicianHome);
+      Get.offAllNamed(AppRoutes.verificationPending);
     } catch (e) {
       submitError.value = e.toString();
     } finally {

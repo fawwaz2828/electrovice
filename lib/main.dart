@@ -15,11 +15,24 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb) {
-    // Token disimpan di lib/config/mapbox_config.dart (gitignored)
     MapboxOptions.setAccessToken(mapboxPublicToken);
   }
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e) {
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text('Firebase init error: $e',
+              style: const TextStyle(color: Colors.red)),
+        ),
+      ),
+    ));
+    return;
+  }
+
   runApp(const MyApp());
 }
 

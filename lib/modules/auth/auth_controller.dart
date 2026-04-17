@@ -96,18 +96,28 @@ class AuthController extends GetxController {
     if (role == 'admin') {
       Get.offAllNamed(AppRoutes.adminHome);
     } else if (role == 'technician') {
-      // Cek apakah onboarding sudah selesai
       final uid = _authService.currentUser?.uid;
       if (uid != null) {
         final data = await _authService.getUserData(uid);
-        final techProfile = data?['technicianProfile'];
-        if (techProfile == null ||
-            (techProfile as Map)['verificationStatus'] == null) {
+        final techProfile = data?['technicianProfile'] as Map?;
+
+        // Belum onboarding
+        if (techProfile == null) {
           Get.offAllNamed(AppRoutes.technicianOnboarding);
           return;
         }
+
+        final status = techProfile['verificationStatus'] as String? ?? 'pending';
+
+        switch (status) {
+          case 'verified':
+            Get.offAllNamed(AppRoutes.technicianHome);
+          case 'declined':
+            Get.offAllNamed(AppRoutes.verificationDeclined);
+          default: // pending
+            Get.offAllNamed(AppRoutes.verificationPending);
+        }
       }
-      Get.offAllNamed(AppRoutes.technicianHome);
     } else {
       Get.offAllNamed(AppRoutes.home);
     }

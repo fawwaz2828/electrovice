@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../config/routes.dart';
+import 'admin_controller.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -12,6 +13,7 @@ class AdminHomePage extends StatefulWidget {
 class _AdminHomePageState extends State<AdminHomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late AdminController _controller;
 
   static const Color _primary = Color(0xFF1A1A2E);
   static const Color _accent = Color(0xFF00A8E8);
@@ -20,102 +22,11 @@ class _AdminHomePageState extends State<AdminHomePage>
   static const Color _colorDeclined = Color(0xFFEF4444);
   static const Color _bg = Color(0xFFF3F4F6);
 
-  // ─── HARDCODED DATA (ganti dengan Firebase nanti) ────────────────────────────
-  final List<Map<String, dynamic>> _technicians = [
-    {
-      'id': '1',
-      'name': 'Ahmad Rizki Pratama',
-      'initials': 'AR',
-      'city': 'Yogyakarta',
-      'workshop': 'Tempat Servis Apalah',
-      'categories': ['Laptop', 'Smartphone'],
-      'submitted': '11 Apr 2026, 14:30',
-      'status': 'PENDING',
-    },
-    {
-      'id': '2',
-      'name': 'Sari Putri Handayani',
-      'initials': 'SP',
-      'city': 'Jakarta Selatan',
-      'workshop': 'Sari AC Expert',
-      'categories': ['AC & Cooling'],
-      'submitted': '10 Apr 2026, 09:15',
-      'status': 'PENDING',
-    },
-    {
-      'id': '3',
-      'name': 'Budi Wicaksono',
-      'initials': 'BW',
-      'city': 'Bandung',
-      'workshop': 'Budi Elektronik',
-      'categories': ['TV & Display', 'Home Appliance'],
-      'submitted': '11 Apr 2026, 08:42',
-      'status': 'PENDING',
-    },
-    {
-      'id': '4',
-      'name': 'Dedi Kurniawan',
-      'initials': 'DK',
-      'city': 'Surabaya',
-      'workshop': 'Dedi Motor Service',
-      'categories': ['Vehicles'],
-      'submitted': '9 Apr 2026, 16:20',
-      'status': 'PENDING',
-    },
-    {
-      'id': '5',
-      'name': 'Lisa Handayani',
-      'initials': 'LH',
-      'city': 'Semarang',
-      'workshop': 'Tanpa workshop',
-      'categories': ['Laptop', 'Smartphone'],
-      'submitted': '11 Apr 2026, 11:05',
-      'status': 'PENDING',
-    },
-    {
-      'id': '6',
-      'name': 'Rizky Firmansyah',
-      'initials': 'RF',
-      'city': 'Medan',
-      'workshop': 'RF Tech',
-      'categories': ['Smartphone'],
-      'submitted': '5 Apr 2026, 10:00',
-      'status': 'VERIFIED',
-    },
-    {
-      'id': '7',
-      'name': 'Dewi Lestari',
-      'initials': 'DL',
-      'city': 'Makassar',
-      'workshop': 'Dewi Service Center',
-      'categories': ['Laptop', 'Printer'],
-      'submitted': '3 Apr 2026, 14:00',
-      'status': 'VERIFIED',
-    },
-    {
-      'id': '8',
-      'name': 'Hendra Gunawan',
-      'initials': 'HG',
-      'city': 'Palembang',
-      'workshop': 'Hendra Elektronik',
-      'categories': ['TV & Display'],
-      'submitted': '1 Apr 2026, 09:30',
-      'status': 'DECLINED',
-    },
-  ];
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  List<Map<String, dynamic>> get pendingList =>
-      _technicians.where((t) => t['status'] == 'PENDING').toList();
-  List<Map<String, dynamic>> get verifiedList =>
-      _technicians.where((t) => t['status'] == 'VERIFIED').toList();
-  List<Map<String, dynamic>> get declinedList =>
-      _technicians.where((t) => t['status'] == 'DECLINED').toList();
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _controller = Get.put(AdminController());
   }
 
   @override
@@ -129,22 +40,45 @@ class _AdminHomePageState extends State<AdminHomePage>
     return Scaffold(
       backgroundColor: _bg,
       appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          _buildStatsSection(),
-          _buildTabBar(),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
+      body: Obx(() {
+        if (_controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (_controller.error.value.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buildList(pendingList, 'PENDING'),
-                _buildList(verifiedList, 'VERIFIED'),
-                _buildList(declinedList, 'DECLINED'),
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 12),
+                Text(_controller.error.value,
+                    style: const TextStyle(color: Colors.black54)),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _controller.fetchTechnicians,
+                  child: const Text('Coba lagi'),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
+          );
+        }
+        return Column(
+          children: [
+            _buildStatsSection(),
+            _buildTabBar(),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildList(_controller.pendingList, 'PENDING'),
+                  _buildList(_controller.verifiedList, 'VERIFIED'),
+                  _buildList(_controller.declinedList, 'DECLINED'),
+                ],
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 
@@ -161,18 +95,16 @@ class _AdminHomePageState extends State<AdminHomePage>
                 TextSpan(
                   text: '● ELEc',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16),
                 ),
                 TextSpan(
                   text: 'TROVICE',
                   style: TextStyle(
-                    color: _accent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                      color: _accent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16),
                 ),
               ],
             ),
@@ -181,31 +113,26 @@ class _AdminHomePageState extends State<AdminHomePage>
           const Text(
             'ADMIN',
             style: TextStyle(
-              color: Colors.white54,
-              fontSize: 11,
-              letterSpacing: 1.2,
-            ),
+                color: Colors.white54, fontSize: 11, letterSpacing: 1.2),
           ),
         ],
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh, color: Colors.white70),
+          onPressed: _controller.fetchTechnicians,
+        ),
         Container(
           margin: const EdgeInsets.only(right: 16),
           width: 36,
           height: 36,
-          decoration: const BoxDecoration(
-            color: _accent,
-            shape: BoxShape.circle,
-          ),
+          decoration: const BoxDecoration(color: _accent, shape: BoxShape.circle),
           child: const Center(
-            child: Text(
-              'SA',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
+            child: Text('SA',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13)),
           ),
         ),
       ],
@@ -218,11 +145,11 @@ class _AdminHomePageState extends State<AdminHomePage>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          _buildStatCard('PENDING', pendingList.length, _colorPending),
+          _buildStatCard('PENDING', _controller.pendingList.length, _colorPending),
           const SizedBox(width: 10),
-          _buildStatCard('VERIFIED', verifiedList.length, _colorVerified),
+          _buildStatCard('VERIFIED', _controller.verifiedList.length, _colorVerified),
           const SizedBox(width: 10),
-          _buildStatCard('DECLINED', declinedList.length, _colorDeclined),
+          _buildStatCard('DECLINED', _controller.declinedList.length, _colorDeclined),
         ],
       ),
     );
@@ -240,24 +167,16 @@ class _AdminHomePageState extends State<AdminHomePage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.black45,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-            ),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5)),
             const SizedBox(height: 4),
-            Text(
-              '$count',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
+            Text('$count',
+                style: TextStyle(
+                    fontSize: 24, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
       ),
@@ -274,79 +193,70 @@ class _AdminHomePageState extends State<AdminHomePage>
         indicatorColor: _accent,
         indicatorWeight: 2.5,
         labelStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
-        ),
+            fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
         tabs: [
-          Tab(text: 'PENDING  ${pendingList.length}'),
-          Tab(text: 'VERIFIED  ${verifiedList.length}'),
-          Tab(text: 'DECLINED  ${declinedList.length}'),
+          Tab(text: 'PENDING  ${_controller.pendingList.length}'),
+          Tab(text: 'VERIFIED  ${_controller.verifiedList.length}'),
+          Tab(text: 'DECLINED  ${_controller.declinedList.length}'),
         ],
       ),
     );
   }
 
-  Widget _buildList(List<Map<String, dynamic>> items, String type) {
+  Widget _buildList(List<TechnicianVerificationModel> items, String type) {
     if (items.isEmpty) return _buildEmptyState(type);
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) => _buildTechnicianCard(items[index]),
+    return RefreshIndicator(
+      onRefresh: _controller.fetchTechnicians,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, index) => _buildCard(items[index]),
+      ),
     );
   }
 
   Widget _buildEmptyState(String type) {
     final String emoji;
     final String message;
-
     if (type == 'DECLINED') {
       emoji = '📋';
       message = 'Tidak ada yang di-decline';
     } else if (type == 'VERIFIED') {
       emoji = '✅';
-      message = 'Semua teknisi terverifikasi';
+      message = 'Belum ada teknisi terverifikasi';
     } else {
       emoji = '🎉';
       message = 'Tidak ada pending verifikasi';
     }
-
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(emoji, style: const TextStyle(fontSize: 48)),
           const SizedBox(height: 12),
-          Text(
-            message,
-            style: const TextStyle(
-              color: Colors.black45,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text(message,
+              style: const TextStyle(
+                  color: Colors.black45,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 
-  Widget _buildTechnicianCard(Map<String, dynamic> tech) {
-    final status = tech['status'] as String;
+  Widget _buildCard(TechnicianVerificationModel tech) {
     final Color statusColor;
-    if (status == 'VERIFIED') {
+    if (tech.verificationStatus == 'verified') {
       statusColor = _colorVerified;
-    } else if (status == 'DECLINED') {
+    } else if (tech.verificationStatus == 'declined') {
       statusColor = _colorDeclined;
     } else {
       statusColor = _colorPending;
     }
 
-    final List<String> categories = List<String>.from(tech['categories']);
-
     return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.adminVerification),
+      onTap: () => Get.toNamed(AppRoutes.adminVerification, arguments: tech),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -357,74 +267,85 @@ class _AdminHomePageState extends State<AdminHomePage>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: const Color(0xFF374151),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  tech['initials'],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ),
+            _buildAvatar(tech),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    tech['name'],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
+                  Text(tech.name,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14)),
                   const SizedBox(height: 2),
-                  Text(
-                    '${tech['city']}  ·  ${tech['workshop']}',
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
+                  Text('${tech.city}  ·  ${tech.workshopName}',
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.black54)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 4,
-                    children: categories.map(_buildChip).toList(),
+                    children:
+                        tech.deviceCategories.map(_buildChip).toList(),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Submitted: ${tech['submitted']}',
-                    style: const TextStyle(fontSize: 11, color: Colors.black38),
-                  ),
+                  Text('Submitted: ${tech.submittedLabel}',
+                      style: const TextStyle(
+                          fontSize: 11, color: Colors.black38)),
                 ],
               ),
             ),
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: statusColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                status,
+                tech.verificationStatus.toUpperCase(),
                 style: TextStyle(
-                  color: statusColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                  letterSpacing: 0.5,
-                ),
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                    letterSpacing: 0.5),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(TechnicianVerificationModel tech) {
+    if (tech.photoUrl != null && tech.photoUrl!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          tech.photoUrl!,
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildInitialsAvatar(tech.initials),
+        ),
+      );
+    }
+    return _buildInitialsAvatar(tech.initials);
+  }
+
+  Widget _buildInitialsAvatar(String initials) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+          color: const Color(0xFF374151),
+          borderRadius: BorderRadius.circular(10)),
+      child: Center(
+        child: Text(initials,
+            style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 15)),
       ),
     );
   }
@@ -440,21 +361,15 @@ class _AdminHomePageState extends State<AdminHomePage>
       'Printer': const Color(0xFF6B7280),
     };
     final color = colorMap[label] ?? const Color(0xFF6B7280);
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      child: Text(label,
+          style: TextStyle(
+              color: color, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 }

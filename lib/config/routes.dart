@@ -32,6 +32,9 @@ import '../modules/technician/my_service_page.dart';
 import '../modules/technician/service_detail_page.dart';
 import '../admin/admin_verification_page.dart';
 import '../admin/admin_home_page.dart';
+import '../admin/admin_controller.dart';
+import '../modules/technician/verification_pending_page.dart';
+import '../modules/technician/verification_declined_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -61,6 +64,8 @@ class AppRoutes {
   static const serviceDetail = '/technician/service-detail';
   static const String adminVerification = '/admin-verification';
   static const String adminHome = '/admin-home';
+  static const String verificationPending = '/technician/verification-pending';
+  static const String verificationDeclined = '/technician/verification-declined';
 
   static final routes = [
     GetPage(
@@ -234,6 +239,17 @@ class AppRoutes {
     GetPage(
       name: adminHome,
       page: () => const AdminHomePage(),
+      binding: BindingsBuilder(() {
+        Get.put(AdminController());
+      }),
+    ),
+    GetPage(
+      name: verificationPending,
+      page: () => const VerificationPendingPage(),
+    ),
+    GetPage(
+      name: verificationDeclined,
+      page: () => const VerificationDeclinedPage(),
     ),
   ];
 }
