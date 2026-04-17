@@ -112,6 +112,13 @@ class AuthService {
       });
     }
 
+    Future<void> updateUserPhoto(String uid, String photoUrl) async {
+      await _firestore.collection('users').doc(uid).update({
+        'photoUrl': photoUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
     Future<String?> getUserRole(String uid) async {
         final doc = await _firestore.collection('users').doc(uid).get();
         return doc.data()?['role'];

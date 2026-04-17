@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../models/technician_model.dart';
 import '../../models/booking_document.dart';
 import '../../services/auth_service.dart';
@@ -13,13 +16,18 @@ class TechnicianController extends GetxController {
   final TechnicianService _techService = TechnicianService();
 
   final Rxn<TechnicianProfileData> profile = Rxn<TechnicianProfileData>();
-  final RxBool isOnline = true.obs;
+  final RxBool isOnline = false.obs;
+  final RxBool isTogglingOnline = false.obs;
 
   // ── Booking state (Firestore) ─────────────────────────────────
 
   /// Semua incoming orders (confirmed + on_progress)
   final RxList<BookingDocument> incomingOrders = <BookingDocument>[].obs;
   final RxBool isLoadingOrders = true.obs;
+
+  /// Order yang sudah selesai (done) — untuk history page
+  final RxList<BookingDocument> completedOrders = <BookingDocument>[].obs;
+  final RxBool isLoadingCompleted = false.obs;
 
   /// Booking yang sedang aktif dikerjakan (on_progress)
   final Rxn<BookingDocument> activeOrder = Rxn<BookingDocument>();
@@ -38,18 +46,38 @@ class TechnicianController extends GetxController {
   final RxList<TechnicianJobRecord> incomingRequests = <TechnicianJobRecord>[].obs;
 
   StreamSubscription? _ordersSub;
+  StreamSubscription? _authSub;
+  bool _ordersStreamActive = false;
+
+  // ── Live location tracking ────────────────────────────────────
+  Timer? _locationTimer;
+  String? _trackingUid;
 
   @override
   void onInit() {
     super.onInit();
     _loadUserData();
+    // Re-subscribe streams if Firebase Auth fires a sign-out/sign-in cycle
+    // (can happen during token refresh — causes Firestore PERMISSION_DENIED)
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null && !_ordersStreamActive) {
+        _ordersSub?.cancel();
+        _listenToOrders(user.uid);
+      }
+    });
   }
 
   @override
   void onClose() {
     _ordersSub?.cancel();
+    _authSub?.cancel();
+    _stopLocationTracking();
     super.onClose();
   }
+
+  /// Total earnings dari semua order selesai
+  int get totalEarnings => completedOrders.fold(
+      0, (sum, o) => sum + (o.finalTotalAmount ?? o.estimatedPrice));
 
   Future<void> _loadUserData() async {
     try {
@@ -79,6 +107,11 @@ class TechnicianController extends GetxController {
 
       _listenToOrders(user.uid);
       _loadServices(user.uid);
+      loadCompletedOrders();
+      _loadOnlineStatus(user.uid);
+      // Sync rating rata-rata + totalJobs ke technicians_online.
+      // Dilakukan sisi teknisi karena customer tidak punya izin tulis ke sana.
+      _bookingService.syncTechnicianStats(user.uid);
     } catch (e) {
       debugPrint('TechnicianController._loadUserData error: $e');
       // Set minimal profile so UI doesn't stay in skeleton forever
@@ -112,6 +145,40 @@ class TechnicianController extends GetxController {
     }
   }
 
+  // ── Online / Offline status ───────────────────────────────────
+
+  Future<void> _loadOnlineStatus(String uid) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('technicians_online')
+          .doc(uid)
+          .get();
+      if (doc.exists) {
+        isOnline.value = doc.data()?['isOnline'] as bool? ?? false;
+      }
+    } catch (e) {
+      debugPrint('_loadOnlineStatus error: $e');
+    }
+  }
+
+  /// Toggle online/offline dan persist ke Firestore.
+  Future<void> setOnlineStatus(bool online) async {
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
+    isTogglingOnline.value = true;
+    try {
+      await FirebaseFirestore.instance
+          .collection('technicians_online')
+          .doc(uid)
+          .set({'isOnline': online}, SetOptions(merge: true));
+      isOnline.value = online;
+    } catch (e) {
+      debugPrint('setOnlineStatus error: $e');
+    } finally {
+      isTogglingOnline.value = false;
+    }
+  }
+
   // ── Service CRUD ──────────────────────────────────────────────
 
   Future<void> addService(ServiceEstimate s) async {
@@ -141,6 +208,8 @@ class TechnicianController extends GetxController {
   }
 
   void _listenToOrders(String technicianId) {
+    _ordersStreamActive = true;
+    _trackingUid = technicianId;
     _ordersSub = _bookingService
         .streamTechnicianOrders(technicianId)
         .listen(
@@ -169,15 +238,21 @@ class TechnicianController extends GetxController {
                   .toList(),
             );
 
-            // activeOrder = confirmed (sudah accept, belum verif) ATAU on_progress
-            // confirmed: teknisi sudah terima, menuju lokasi, belum input kode
-            // on_progress: kode sudah diverifikasi, sedang dikerjakan
+            // activeOrder = confirmed / on_progress / awaiting_payment
             final active = orders
                 .where((o) =>
                     o.status == BookingStatus.confirmed ||
-                    o.status == BookingStatus.onProgress)
+                    o.status == BookingStatus.onProgress ||
+                    o.status == BookingStatus.awaitingPayment)
                 .firstOrNull;
             activeOrder.value = active;
+
+            // Kirim lokasi real-time hanya saat status `confirmed` (menuju lokasi)
+            if (active?.status == BookingStatus.confirmed) {
+              _startLocationTracking(technicianId);
+            } else {
+              _stopLocationTracking();
+            }
 
             // Auto-set selectedOrder ke confirmed order jika belum dipilih
             // Berguna setelah re-login agar verification page bisa lanjut
@@ -199,10 +274,27 @@ class TechnicianController extends GetxController {
             isLoadingOrders.value = false;
           },
           onError: (e) {
+            _ordersStreamActive = false;
             debugPrint('TechnicianController orders stream error: $e');
             isLoadingOrders.value = false;
           },
+          onDone: () => _ordersStreamActive = false,
         );
+  }
+
+  /// Muat riwayat order selesai dari Firestore
+  Future<void> loadCompletedOrders() async {
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
+    isLoadingCompleted.value = true;
+    try {
+      final orders = await _bookingService.fetchDoneOrders(uid);
+      completedOrders.assignAll(orders);
+    } catch (e) {
+      debugPrint('loadCompletedOrders error: $e');
+    } finally {
+      isLoadingCompleted.value = false;
+    }
   }
 
   // ── Actions ───────────────────────────────────────────────────
@@ -247,6 +339,29 @@ class TechnicianController extends GetxController {
     await _bookingService.verifyCode(order.bookingId, enteredCode);
   }
 
+  /// Teknisi submit harga final → status awaiting_payment
+  Future<void> submitFinalPrice({
+    required int serviceFee,
+    required List<Map<String, dynamic>> spareParts,
+    required String note,
+    required int diagnosisFee,
+    List<String> workPhotoUrls = const [],
+  }) async {
+    final order = activeOrder.value ?? selectedOrder.value;
+    if (order == null) throw Exception('Tidak ada order aktif');
+    final partsTotal = spareParts.fold<int>(
+        0, (sum, p) => sum + ((p['price'] as num?)?.toInt() ?? 0));
+    final totalAmount = serviceFee + partsTotal + diagnosisFee;
+    await _bookingService.submitFinalPrice(
+      bookingId: order.bookingId,
+      serviceFee: serviceFee,
+      spareParts: spareParts,
+      note: note,
+      totalAmount: totalAmount,
+      workPhotoUrls: workPhotoUrls,
+    );
+  }
+
   /// Tandai pekerjaan selesai — return order untuk ditampilkan di JobSummaryPage
   Future<BookingDocument> completeJob() async {
     final order = activeOrder.value;
@@ -284,6 +399,61 @@ class TechnicianController extends GetxController {
           ? certifications
           : current.certifications,
     );
+  }
+
+  // ── Live location tracking ────────────────────────────────────
+
+  Future<void> _startLocationTracking(String uid) async {
+    if (_locationTimer != null && _locationTimer!.isActive) return;
+
+    // Request permission jika belum
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      debugPrint('Location permission denied — tracking disabled');
+      return;
+    }
+
+    debugPrint('Starting location tracking for $uid');
+    _locationTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 5),
+        );
+        await FirebaseFirestore.instance
+            .collection('technicians_online')
+            .doc(uid)
+            .set({
+          'currentLocation': {
+            'lat': pos.latitude,
+            'lng': pos.longitude,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+        }, SetOptions(merge: true));
+        debugPrint('Location updated: ${pos.latitude}, ${pos.longitude}');
+      } catch (e) {
+        debugPrint('location update error: $e');
+      }
+    });
+  }
+
+  void _stopLocationTracking() {
+    if (_locationTimer == null) return;
+    debugPrint('Stopping location tracking');
+    _locationTimer?.cancel();
+    _locationTimer = null;
+    // Clear currentLocation dari Firestore agar customer tidak lihat posisi stale
+    if (_trackingUid != null) {
+      FirebaseFirestore.instance
+          .collection('technicians_online')
+          .doc(_trackingUid)
+          .set({'currentLocation': null}, SetOptions(merge: true))
+          .catchError((e) => debugPrint('clear location error: $e'));
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────────

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/routes.dart';
+import '../../services/auth_service.dart';
+import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../technician/technician_controller.dart';
 
@@ -15,6 +18,45 @@ class JobDetailPage extends StatefulWidget {
 class _JobDetailPageState extends State<JobDetailPage> {
   bool _isAccepting = false;
   bool _isDeclining = false;
+  bool _isCalling = false;
+  String? _customerPhotoUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomerInfo();
+  }
+
+  Future<void> _loadCustomerInfo() async {
+    final order = Get.find<TechnicianController>().selectedOrder.value;
+    if (order == null) return;
+    final user = await AuthService().getUserModel(order.userId);
+    if (mounted) {
+      setState(() => _customerPhotoUrl = user?.photoUrl);
+    }
+  }
+
+  Future<void> _callCustomer() async {
+    final order = Get.find<TechnicianController>().selectedOrder.value;
+    if (order == null) return;
+
+    setState(() => _isCalling = true);
+    try {
+      final user = await AuthService().getUserModel(order.userId);
+      final phone = (user?.phone ?? '').trim();
+      if (phone.isEmpty) {
+        Get.snackbar('Tidak tersedia', 'Nomor HP customer tidak terdaftar',
+            snackPosition: SnackPosition.TOP);
+        return;
+      }
+      await launchUrl(Uri(scheme: 'tel', path: phone));
+    } catch (e) {
+      Get.snackbar('Gagal', 'Tidak dapat membuka aplikasi telepon',
+          snackPosition: SnackPosition.TOP);
+    } finally {
+      if (mounted) setState(() => _isCalling = false);
+    }
+  }
 
   String _damageLabel(String type) => switch (type) {
         'screen' => 'Kerusakan Layar',
@@ -174,7 +216,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const _AvatarCard(imageUrl: null),
+                        _AvatarCard(imageUrl: _customerPhotoUrl),
                         const SizedBox(width: 20),
                         Expanded(
                           child: Column(
@@ -246,6 +288,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                             label: 'CALL',
                             color: const Color(0xFFF5F6FA),
                             textColor: const Color(0xFF111111),
+                            onTap: _isCalling ? null : _callCustomer,
                           ),
                         ),
                       ],
@@ -288,6 +331,41 @@ class _JobDetailPageState extends State<JobDetailPage> {
                               ],
                             ),
                           ),
+                  ),
+                );
+              }),
+
+              // ── Navigate Button ────────────────────────────────────
+              Obx(() {
+                final order = controller.selectedOrder.value;
+                final lat = order?.latitude;
+                final lng = order?.longitude;
+                if (lat == null || lng == null) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => MapsLauncher.navigateTo(
+                        lat: lat,
+                        lng: lng,
+                        label: order?.userAddress,
+                      ),
+                      icon: const Icon(Icons.navigation_rounded, size: 18),
+                      label: const Text(
+                        'Navigasi ke Lokasi',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w800),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 52),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                    ),
                   ),
                 );
               }),
@@ -465,7 +543,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                                 Get.toNamed(AppRoutes.verification);
                               } catch (e) {
                                 Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
-                                    snackPosition: SnackPosition.BOTTOM);
+                                    snackPosition: SnackPosition.TOP);
                               } finally {
                                 if (mounted) setState(() => _isAccepting = false);
                               }
@@ -504,7 +582,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                                 Get.back();
                               } catch (e) {
                                 Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
-                                    snackPosition: SnackPosition.BOTTOM);
+                                    snackPosition: SnackPosition.TOP);
                               } finally {
                                 if (mounted) setState(() => _isDeclining = false);
                               }
@@ -603,7 +681,16 @@ class _AvatarCard extends StatelessWidget {
           ),
         ],
       ),
-      child: const _AvatarPlaceholder(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(13),
+        child: (imageUrl != null && imageUrl!.isNotEmpty)
+            ? Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const _AvatarPlaceholder(),
+              )
+            : const _AvatarPlaceholder(),
+      ),
     );
   }
 }

@@ -1,38 +1,36 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'config/routes.dart';
 import 'config/theme.dart';
 import 'config/mapbox_config.dart';
+import 'services/fcm_handler.dart';
 
 // mapbox_maps_flutter hanya support Android & iOS
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
     if (dart.library.html) 'config/mapbox_web_stub.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
 
   if (!kIsWeb) {
     MapboxOptions.setAccessToken(mapboxPublicToken);
   }
 
-  try {
-    await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
-  } catch (e) {
-    runApp(MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Firebase init error: $e',
-              style: const TextStyle(color: Colors.red)),
-        ),
-      ),
-    ));
-    return;
-  }
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // Daftarkan background handler SEBELUM runApp
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Setup FCM listeners & navigasi deep link
+  await FcmHandler.init();
+
+  FlutterNativeSplash.remove();
   runApp(const MyApp());
 }
 
@@ -45,7 +43,7 @@ class MyApp extends StatelessWidget {
       title: 'Electrovice',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.register,
+      initialRoute: AppRoutes.splash,
       getPages: AppRoutes.routes,
       defaultTransition: Transition.noTransition,
     );

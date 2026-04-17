@@ -1,10 +1,17 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../config/mapbox_config.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
+import '../../services/auth_service.dart';
+import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
 
@@ -20,6 +27,20 @@ class BookingTrackingPage extends GetView<BookingController> {
       bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.order),
       body: SafeArea(
         child: Obx(() {
+          final booking = controller.activeBooking.value;
+
+          // ── No active booking state ──────────────────────────
+          if (booking == null) {
+            // Masih loading (history stream belum selesai)
+            if (controller.isLoadingHistory.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return _NoActiveOrderState(
+              onGoToHistory: () =>
+                  Get.toNamed(AppRoutes.orderHistory),
+            );
+          }
+
           final OrderTrackingData tracking = controller.trackingData;
 
           return SingleChildScrollView(
@@ -43,14 +64,15 @@ class BookingTrackingPage extends GetView<BookingController> {
                   title: tracking.mapTitle,
                   lat: tracking.customerLat,
                   lng: tracking.customerLng,
+                  techLat: controller.technicianLat.value,
+                  techLng: controller.technicianLng.value,
                 ),
                 const SizedBox(height: 14),
                 _StatusCard(tracking: tracking),
                 const SizedBox(height: 14),
                 _SecurityCodeCard(
                   code: tracking.securityCode,
-                  isPending: controller.activeBooking.value?.status ==
-                      BookingStatus.pending,
+                  isPending: booking.status == BookingStatus.pending,
                 ),
                 const SizedBox(height: 14),
                 _TechnicianContactCard(
@@ -58,17 +80,27 @@ class BookingTrackingPage extends GetView<BookingController> {
                   role: tracking.technicianRole,
                   partnerLabel: tracking.partnerLabel,
                   imageUrl: tracking.technicianAvatarUrl,
-                  bookingDoc: controller.activeBooking.value,
+                  bookingDoc: booking,
                 ),
-                // ── Review prompt saat done ────────────────────
-                if (controller.activeBooking.value?.status ==
-                        BookingStatus.done &&
-                    controller.activeBooking.value?.customerRating == null)
+                // ── Cancel button (pending / confirmed only) ──
+                if (booking.status == BookingStatus.pending ||
+                    booking.status == BookingStatus.confirmed)
                   Padding(
                     padding: const EdgeInsets.only(top: 14),
-                    child: _ReviewBanner(
-                      booking: controller.activeBooking.value!,
-                    ),
+                    child: _CancelOrderButton(controller: controller),
+                  ),
+                // ── Pay Now banner (awaiting_payment) ─────────
+                if (booking.status == BookingStatus.awaitingPayment)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _PayNowBanner(booking: booking),
+                  ),
+                // ── Review prompt saat done ────────────────────
+                if (booking.status == BookingStatus.done &&
+                    booking.customerRating == null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _ReviewBanner(booking: booking),
                   ),
               ],
             ),
@@ -81,11 +113,21 @@ class BookingTrackingPage extends GetView<BookingController> {
 }
 
 class _LiveMapCard extends StatefulWidget {
-  const _LiveMapCard({required this.title, this.lat, this.lng});
+  const _LiveMapCard({
+    required this.title,
+    this.lat,
+    this.lng,
+    this.techLat,
+    this.techLng,
+  });
 
   final String title;
+  // Customer location
   final double? lat;
   final double? lng;
+  // Technician live location
+  final double? techLat;
+  final double? techLng;
 
   @override
   State<_LiveMapCard> createState() => _LiveMapCardState();
@@ -93,79 +135,231 @@ class _LiveMapCard extends StatefulWidget {
 
 class _LiveMapCardState extends State<_LiveMapCard> {
   mapbox.MapboxMap? _map;
-  mapbox.CircleAnnotationManager? _circleManager;
+  mapbox.CircleAnnotationManager? _customerCircleManager;
+  mapbox.CircleAnnotationManager? _techCircleManager;
+  mapbox.PolylineAnnotationManager? _polylineManager;
 
   Future<void> _onMapCreated(mapbox.MapboxMap map) async {
     _map = map;
-    _circleManager = await map.annotations.createCircleAnnotationManager();
-    if (widget.lat != null && widget.lng != null) {
-      await _moveCameraAndPin(widget.lat!, widget.lng!);
-    }
+    _polylineManager = await map.annotations.createPolylineAnnotationManager();
+    _customerCircleManager = await map.annotations.createCircleAnnotationManager();
+    _techCircleManager = await map.annotations.createCircleAnnotationManager();
+    await _updateAnnotations();
   }
 
   @override
   void didUpdateWidget(_LiveMapCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Koordinat berubah (misal dari Obx rebuild) — update peta
-    if (widget.lat != oldWidget.lat || widget.lng != oldWidget.lng) {
-      if (widget.lat != null && widget.lng != null) {
-        _moveCameraAndPin(widget.lat!, widget.lng!);
-      }
+    final coordsChanged = widget.lat != oldWidget.lat ||
+        widget.lng != oldWidget.lng ||
+        widget.techLat != oldWidget.techLat ||
+        widget.techLng != oldWidget.techLng;
+    if (coordsChanged) _updateAnnotations();
+  }
+
+  Future<void> _updateAnnotations() async {
+    if (_map == null) return;
+
+    // ── Customer marker (blue) ───────────────────────────────────
+    await _customerCircleManager?.deleteAll();
+    if (widget.lat != null && widget.lng != null) {
+      await _customerCircleManager?.create(
+        mapbox.CircleAnnotationOptions(
+          geometry: mapbox.Point(
+              coordinates: mapbox.Position(widget.lng!, widget.lat!)),
+          circleRadius: 10.0,
+          circleColor: 0xFF3654FF,
+          circleStrokeWidth: 3.0,
+          circleStrokeColor: 0xFFFFFFFF,
+        ),
+      );
+    }
+
+    // ── Technician marker (orange) ───────────────────────────────
+    await _techCircleManager?.deleteAll();
+    if (widget.techLat != null && widget.techLng != null) {
+      await _techCircleManager?.create(
+        mapbox.CircleAnnotationOptions(
+          geometry: mapbox.Point(
+              coordinates: mapbox.Position(widget.techLng!, widget.techLat!)),
+          circleRadius: 11.0,
+          circleColor: 0xFFF97316, // orange
+          circleStrokeWidth: 3.0,
+          circleStrokeColor: 0xFFFFFFFF,
+        ),
+      );
+    }
+
+    // ── Camera: fit both points or center on customer ────────────
+    final hasBoth = widget.lat != null &&
+        widget.lng != null &&
+        widget.techLat != null &&
+        widget.techLng != null;
+
+    if (hasBoth) {
+      // Fit camera to bounding box of both markers with padding
+      final minLat = min(widget.lat!, widget.techLat!);
+      final maxLat = max(widget.lat!, widget.techLat!);
+      final minLng = min(widget.lng!, widget.techLng!);
+      final maxLng = max(widget.lng!, widget.techLng!);
+      // Midpoint + zoom level that covers the spread
+      final midLat = (minLat + maxLat) / 2;
+      final midLng = (minLng + maxLng) / 2;
+      // Rough zoom based on distance
+      final latSpan = (maxLat - minLat).abs();
+      final lngSpan = (maxLng - minLng).abs();
+      final span = max(latSpan, lngSpan);
+      final zoom = span < 0.005 ? 15.0
+          : span < 0.02 ? 14.0
+          : span < 0.05 ? 13.0
+          : span < 0.1 ? 12.0
+          : 11.0;
+      await _map!.flyTo(
+        mapbox.CameraOptions(
+          center: mapbox.Point(coordinates: mapbox.Position(midLng, midLat)),
+          zoom: zoom,
+        ),
+        mapbox.MapAnimationOptions(duration: 800),
+      );
+      // Draw route between tech and customer
+      _drawRoute();
+    } else if (widget.lat != null && widget.lng != null) {
+      await _map!.flyTo(
+        mapbox.CameraOptions(
+          center: mapbox.Point(
+              coordinates: mapbox.Position(widget.lng!, widget.lat!)),
+          zoom: 15.0,
+        ),
+        mapbox.MapAnimationOptions(duration: 800),
+      );
+      // Clear any stale route
+      await _polylineManager?.deleteAll();
     }
   }
 
-  Future<void> _moveCameraAndPin(double lat, double lng) async {
-    if (_map == null) return;
-    await _map!.flyTo(
-      mapbox.CameraOptions(
-        center: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
-        zoom: 15.0,
-      ),
-      mapbox.MapAnimationOptions(duration: 800),
-    );
-    // Gunakan CircleAnnotation — tidak butuh icon asset eksternal
-    await _circleManager?.deleteAll();
-    await _circleManager?.create(
-      mapbox.CircleAnnotationOptions(
-        geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
-        circleRadius: 10.0,
-        circleColor: 0xFF3654FF,
-        circleStrokeWidth: 3.0,
-        circleStrokeColor: 0xFFFFFFFF,
-      ),
-    );
+  // ── Fetch Mapbox Directions route and draw polyline ────────────
+  Future<void> _drawRoute() async {
+    if (widget.techLat == null || widget.techLng == null ||
+        widget.lat == null || widget.lng == null) return;
+
+    try {
+      final coords = await _fetchRoute(
+        fromLat: widget.techLat!,
+        fromLng: widget.techLng!,
+        toLat: widget.lat!,
+        toLng: widget.lng!,
+      );
+      if (coords == null || coords.isEmpty || _polylineManager == null) return;
+
+      await _polylineManager!.deleteAll();
+      await _polylineManager!.create(
+        mapbox.PolylineAnnotationOptions(
+          geometry: mapbox.LineString(
+            coordinates: coords
+                .map((c) => mapbox.Position(c[0], c[1]))
+                .toList(),
+          ),
+          lineColor: 0xFF4163FF,
+          lineWidth: 4.0,
+        ),
+      );
+    } catch (e) {
+      debugPrint('_drawRoute error: $e');
+    }
+  }
+
+  /// Mapbox Directions API — driving route from [from] to [to].
+  /// Returns list of [lng, lat] coordinate pairs.
+  static Future<List<List<double>>?> _fetchRoute({
+    required double fromLat,
+    required double fromLng,
+    required double toLat,
+    required double toLng,
+  }) async {
+    try {
+      final uri = Uri.parse(
+        'https://api.mapbox.com/directions/v5/mapbox/driving/'
+        '$fromLng,$fromLat;$toLng,$toLat'
+        '?geometries=geojson&overview=simplified'
+        '&access_token=$mapboxPublicToken',
+      );
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 8);
+      final request = await client.getUrl(uri);
+      final response = await request.close();
+      if (response.statusCode != 200) return null;
+      final body = await response.transform(utf8.decoder).join();
+      client.close();
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final routes = json['routes'] as List?;
+      if (routes == null || routes.isEmpty) return null;
+      final rawCoords =
+          (routes[0]['geometry']['coordinates'] as List).cast<List>();
+      return rawCoords
+          .map((c) => [
+                (c[0] as num).toDouble(),
+                (c[1] as num).toDouble(),
+              ])
+          .toList();
+    } catch (e) {
+      debugPrint('_fetchRoute error: $e');
+      return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasCustomer = widget.lat != null && widget.lng != null;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(18)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: const [BoxShadow(color: Color(0x11000000), blurRadius: 10)],
-            ),
-            child: Text(widget.title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x11000000), blurRadius: 10)
+                    ],
+                  ),
+                  child: Text(widget.title,
+                      style: const TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w800)),
+                ),
+              ),
+              // Legend: customer dot + tech dot (only when tech is streaming)
+              if (widget.techLat != null) ...[
+                const SizedBox(width: 8),
+                _MapLegendDot(color: const Color(0xFF3654FF), label: 'Kamu'),
+                const SizedBox(width: 8),
+                _MapLegendDot(
+                    color: const Color(0xFFF97316), label: 'Teknisi'),
+              ],
+            ],
           ),
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: SizedBox(
               height: 205,
-              child: widget.lat != null && widget.lng != null
+              child: hasCustomer
                   ? mapbox.MapWidget(
-                      key: const ValueKey('customer_location_map'),
+                      key: const ValueKey('tracking_map'),
                       onMapCreated: _onMapCreated,
                       cameraOptions: mapbox.CameraOptions(
                         center: mapbox.Point(
-                          coordinates: mapbox.Position(widget.lng!, widget.lat!),
+                          coordinates:
+                              mapbox.Position(widget.lng!, widget.lat!),
                         ),
                         zoom: 15.0,
                       ),
@@ -182,11 +376,13 @@ class _LiveMapCardState extends State<_LiveMapCard> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.location_off_outlined, size: 32, color: Color(0xFF94A3B8)),
+                            Icon(Icons.location_off_outlined,
+                                size: 32, color: Color(0xFF94A3B8)),
                             SizedBox(height: 8),
                             Text(
                               'Lokasi GPS belum diaktifkan',
-                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                              style: TextStyle(
+                                  color: Color(0xFF94A3B8), fontSize: 12),
                             ),
                           ],
                         ),
@@ -196,6 +392,30 @@ class _LiveMapCardState extends State<_LiveMapCard> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MapLegendDot extends StatelessWidget {
+  const _MapLegendDot({required this.color, required this.label});
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(label,
+            style:
+                const TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 }
@@ -374,7 +594,7 @@ class _SecurityCodeCard extends StatelessWidget {
   }
 }
 
-class _TechnicianContactCard extends StatelessWidget {
+class _TechnicianContactCard extends StatefulWidget {
   const _TechnicianContactCard({
     required this.name,
     required this.role,
@@ -388,6 +608,34 @@ class _TechnicianContactCard extends StatelessWidget {
   final String partnerLabel;
   final String? imageUrl;
   final BookingDocument? bookingDoc;
+
+  @override
+  State<_TechnicianContactCard> createState() => _TechnicianContactCardState();
+}
+
+class _TechnicianContactCardState extends State<_TechnicianContactCard> {
+  bool _isCalling = false;
+
+  Future<void> _callTechnician() async {
+    final techId = widget.bookingDoc?.technicianId;
+    if (techId == null || techId.isEmpty) return;
+    setState(() => _isCalling = true);
+    try {
+      final user = await AuthService().getUserModel(techId);
+      final phone = (user?.phone ?? '').trim();
+      if (phone.isEmpty) {
+        Get.snackbar('Tidak tersedia', 'Nomor HP teknisi tidak terdaftar',
+            snackPosition: SnackPosition.TOP);
+        return;
+      }
+      await launchUrl(Uri(scheme: 'tel', path: phone));
+    } catch (e) {
+      Get.snackbar('Gagal', 'Tidak dapat membuka aplikasi telepon',
+          snackPosition: SnackPosition.TOP);
+    } finally {
+      if (mounted) setState(() => _isCalling = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -417,11 +665,11 @@ class _TechnicianContactCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    Text(widget.name, style: const TextStyle(fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
-                    Text(role, style: const TextStyle(color: Color(0xFF727B8B), fontSize: 12)),
+                    Text(widget.role, style: const TextStyle(color: Color(0xFF727B8B), fontSize: 12)),
                     const SizedBox(height: 4),
-                    Text(partnerLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                    Text(widget.partnerLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                   ],
                 ),
               ),
@@ -432,15 +680,15 @@ class _TechnicianContactCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: bookingDoc == null
+                  onPressed: widget.bookingDoc == null
                       ? null
                       : () => Get.toNamed(
                             '/chat',
                             arguments: {
-                              'chatId': bookingDoc!.bookingId,
-                              'otherPartyName': bookingDoc!.technicianName,
-                              'otherPartyPhotoUrl': bookingDoc!.technicianPhotoUrl,
-                              'bookingDoc': bookingDoc,
+                              'chatId': widget.bookingDoc!.bookingId,
+                              'otherPartyName': widget.bookingDoc!.technicianName,
+                              'otherPartyPhotoUrl': widget.bookingDoc!.technicianPhotoUrl,
+                              'bookingDoc': widget.bookingDoc,
                             },
                           ),
                   style: FilledButton.styleFrom(
@@ -454,18 +702,275 @@ class _TechnicianContactCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F4F8),
-                  borderRadius: BorderRadius.circular(12),
+              // ── Call Technician ──────────────────────────────────
+              GestureDetector(
+                onTap: _isCalling ? null : _callTechnician,
+                child: Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F4F8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: _isCalling
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.phone_outlined, color: Color(0xFF4163FF)),
                 ),
-                child: const Icon(Icons.call_outlined),
+              ),
+              const SizedBox(width: 10),
+              // ── Navigate ─────────────────────────────────────────
+              GestureDetector(
+                onTap: () {
+                  final lat = widget.bookingDoc?.latitude;
+                  final lng = widget.bookingDoc?.longitude;
+                  if (lat != null && lng != null) {
+                    MapsLauncher.navigateTo(lat: lat, lng: lng);
+                  } else {
+                    Get.snackbar(
+                      'Lokasi tidak tersedia',
+                      'Customer belum mengaktifkan GPS',
+                      snackPosition: SnackPosition.TOP,
+                    );
+                  }
+                },
+                child: Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F4F8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.navigation_rounded,
+                      color: Color(0xFF4163FF)),
+                ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Pay Now Banner ────────────────────────────────────────────────────────
+class _PayNowBanner extends StatelessWidget {
+  final BookingDocument booking;
+  const _PayNowBanner({required this.booking});
+
+  String _rp(int v) {
+    if (v == 0) return 'Rp 0';
+    final s = v.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return 'Rp ${buf.toString()}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = booking.finalTotalAmount ?? booking.estimatedPrice;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF2FF),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFBFCBFF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.receipt_long_rounded, color: Color(0xFF4163FF), size: 22),
+              const SizedBox(width: 8),
+              const Text(
+                'Pembayaran Siap Dilakukan',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Teknisi telah menyelesaikan diagnosa. Total yang harus dibayar: ${_rp(total)}',
+            style: const TextStyle(color: Color(0xFF4B5563), height: 1.4, fontSize: 13),
+          ),
+          const SizedBox(height: 14),
+          FilledButton(
+            onPressed: () => Get.toNamed(AppRoutes.payService),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF4163FF),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(46),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('BAYAR SEKARANG', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Cancel Order Button ────────────────────────────────────────────────────
+class _CancelOrderButton extends StatelessWidget {
+  final BookingController controller;
+  const _CancelOrderButton({required this.controller});
+
+  void _showConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Batalkan Pesanan?',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          'Pesanan yang sudah dibatalkan tidak dapat dikembalikan. Yakin ingin membatalkan?',
+          style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Tidak',
+              style: TextStyle(
+                  color: Color(0xFF64748B), fontWeight: FontWeight.w700),
+            ),
+          ),
+          Obx(() => TextButton(
+                onPressed: controller.isSubmitting.value
+                    ? null
+                    : () => controller.cancelBooking(),
+                child: controller.isSubmitting.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Color(0xFFDC2626)),
+                      )
+                    : const Text(
+                        'Ya, Batalkan',
+                        style: TextStyle(
+                            color: Color(0xFFDC2626),
+                            fontWeight: FontWeight.w800),
+                      ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showConfirmDialog(context),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF1F2),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFCDD2)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cancel_outlined, color: Color(0xFFDC2626), size: 18),
+            SizedBox(width: 8),
+            Text(
+              'Batalkan Pesanan',
+              style: TextStyle(
+                color: Color(0xFFDC2626),
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── No Active Order State ─────────────────────────────────────────────────
+class _NoActiveOrderState extends StatelessWidget {
+  final VoidCallback onGoToHistory;
+  const _NoActiveOrderState({required this.onGoToHistory});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.receipt_long_outlined,
+                size: 36,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Tidak Ada Pesanan Aktif',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Kamu belum memiliki pesanan yang sedang berjalan. Mulai booking untuk melacak status servis.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: onGoToHistory,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(200, 48),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+              ),
+              child: const Text('Lihat Riwayat',
+                  style: TextStyle(fontWeight: FontWeight.w800)),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => Get.toNamed(AppRoutes.technicianList),
+              child: const Text(
+                'Cari Teknisi →',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF0061FF),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

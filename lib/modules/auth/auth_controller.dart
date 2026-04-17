@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../../services/auth_service.dart';
 import '../../config/routes.dart';
@@ -52,7 +55,7 @@ class AuthController extends GetxController {
         role == 'technician'
             ? 'Akun dibuat! Lengkapi profil teknisimu.'
             : 'Akun berhasil dibuat.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
     } catch (e) {
       errorMessage.value = _parseError(e.toString());
@@ -82,7 +85,7 @@ class AuthController extends GetxController {
         Get.snackbar(
           'Akun Dibuat!',
           'Pendaftaran Google berhasil.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
         );
       }
     } catch (e) {
@@ -92,30 +95,56 @@ class AuthController extends GetxController {
     }
   }
 
+  /// Simpan FCM token ke Firestore agar Cloud Functions bisa kirim push.
+  Future<void> _saveFcmToken() async {
+    try {
+      final uid = _authService.currentUser?.uid;
+      if (uid == null) return;
+      // Request permission (Android 13+ dan iOS butuh ini)
+      await FirebaseMessaging.instance.requestPermission();
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null) return;
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .update({'fcmToken': token});
+      debugPrint('FCM token saved: $token');
+    } catch (e) {
+      debugPrint('saveFcmToken error (non-fatal): $e');
+    }
+  }
+
   Future<void> _navigateToHome(String role) async {
+    // Simpan FCM token setiap kali login (token bisa berubah)
+    _saveFcmToken();
+
     if (role == 'admin') {
       Get.offAllNamed(AppRoutes.adminHome);
-    } else if (role == 'technician') {
+      return;
+    }
+
+    if (role == 'technician') {
       final uid = _authService.currentUser?.uid;
       if (uid != null) {
         final data = await _authService.getUserData(uid);
         final techProfile = data?['technicianProfile'] as Map?;
 
         // Belum onboarding
-        if (techProfile == null) {
+        if (techProfile == null || techProfile['verificationStatus'] == null) {
           Get.offAllNamed(AppRoutes.technicianOnboarding);
           return;
         }
 
         final status = techProfile['verificationStatus'] as String? ?? 'pending';
 
-        switch (status) {
-          case 'verified':
-            Get.offAllNamed(AppRoutes.technicianHome);
-          case 'declined':
-            Get.offAllNamed(AppRoutes.verificationDeclined);
-          default: // pending
-            Get.offAllNamed(AppRoutes.verificationPending);
+        if (status == 'pending') {
+          Get.offAllNamed(AppRoutes.technicianPending);
+          return;
+        }
+        if (status == 'declined') {
+          Get.offAllNamed(AppRoutes.technicianPending,
+              arguments: {'declined': true});
+          return;
         }
       }
     } else {

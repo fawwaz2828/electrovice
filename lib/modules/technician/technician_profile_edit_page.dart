@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
 import '../../services/technician_service.dart';
 import '../../config/routes.dart';
 
@@ -17,16 +19,17 @@ class _TechnicianProfileEditPageState
     extends State<TechnicianProfileEditPage> {
   final _authService = AuthService();
   final _technicianService = TechnicianService();
+  final _storageService = StorageService();
+  final _imagePicker = ImagePicker();
 
   // Controllers
   final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _specialtyController = TextEditingController();
   final _bioController = TextEditingController();
   final _workshopAddressController = TextEditingController();
+  final _diagnosisFeeController = TextEditingController();
   final _newAccreditationController = TextEditingController();
-  final _newServiceController = TextEditingController();
-  final _newMinPriceController = TextEditingController();
-  final _newMaxPriceController = TextEditingController();
 
   // State
   String _category = 'electronic';
@@ -36,7 +39,13 @@ class _TechnicianProfileEditPageState
   double? _lat;
   double? _lng;
   List<String> _accreditations = [];
+  /// Existing certification photo URLs (from Firestore), parallel to _accreditations
+  List<String> _certUrls = [];
+  /// New photo files to upload (null = keep existing URL, if any)
+  List<File?> _certNewFiles = [];
   List<Map<String, dynamic>> _serviceEstimates = [];
+  String? _currentPhotoUrl;
+  File? _newPhotoFile;
   bool _isLoading = false;
   bool _isFetching = true;
 
@@ -68,6 +77,8 @@ class _TechnicianProfileEditPageState
 
     setState(() {
       _nameController.text = userModel.name;
+      _phoneController.text = userModel.phone ?? '';
+      _currentPhotoUrl = userModel.photoUrl;
       _specialtyController.text = tp?.specialty ?? '';
       _bioController.text = tp?.bio ?? '';
       _category = tp?.category ?? 'electronic';
@@ -78,6 +89,13 @@ class _TechnicianProfileEditPageState
         _isAvailable = techOnline.isAvailable;
         _workshopAddressController.text = techOnline.workshopAddress;
         _accreditations = List.from(techOnline.accreditations);
+        _certUrls = List.from(techOnline.certificationUrls);
+        // Pad _certNewFiles and _certUrls to match _accreditations length
+        while (_certUrls.length < _accreditations.length) { _certUrls.add(''); }
+        _certNewFiles = List.filled(_accreditations.length, null);
+        if (techOnline.diagnosisFee > 0) {
+          _diagnosisFeeController.text = techOnline.diagnosisFee.toString();
+        }
         _serviceEstimates = techOnline.serviceEstimates
             .map((e) => {
                   'service': e.service,
@@ -102,22 +120,47 @@ class _TechnicianProfileEditPageState
 
     if (_nameController.text.trim().isEmpty) {
       Get.snackbar('Oops', 'Nama tidak boleh kosong',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
     if (_lat == null || _lng == null) {
       Get.snackbar('Oops', 'Pilih lokasi workshop di peta dulu',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
+      final diagFee = int.tryParse(
+              _diagnosisFeeController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+          0;
+
+      // Upload profile photo jika ada yang baru
+      if (_newPhotoFile != null) {
+        final newUrl =
+            await _storageService.uploadProfilePhoto(user.uid, _newPhotoFile!);
+        await _authService.updateUserPhoto(user.uid, newUrl);
+      }
+
+      // Upload any new cert photos and build final URL list
+      final List<String> finalCertUrls = [];
+      for (int i = 0; i < _accreditations.length; i++) {
+        final newFile = i < _certNewFiles.length ? _certNewFiles[i] : null;
+        if (newFile != null) {
+          final uploaded = await _storageService.uploadCertifications(
+              user.uid, [newFile]);
+          finalCertUrls.add(uploaded.isNotEmpty ? uploaded.first : '');
+        } else {
+          finalCertUrls.add(i < _certUrls.length ? _certUrls[i] : '');
+        }
+      }
+
       await _technicianService.updateTechnicianProfile(
         user.uid,
         name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
         category: _category,
         specialty: _specialtyController.text.trim(),
         bio: _bioController.text.trim(),
@@ -128,15 +171,26 @@ class _TechnicianProfileEditPageState
         lat: _lat!,
         lng: _lng!,
         accreditations: _accreditations,
+        certificationUrls: finalCertUrls,
         serviceEstimates: _serviceEstimates,
+        diagnosisFee: diagFee,
       );
+
+      // Update diagnosisFee juga di users collection jika ada
+      if (_phoneController.text.trim().isNotEmpty) {
+        await _authService.updateUserProfile(
+          user.uid,
+          name: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
+      }
 
       Get.back();
       Get.snackbar('Berhasil', 'Profil berhasil disimpan',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('Error', e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -152,40 +206,46 @@ class _TechnicianProfileEditPageState
     }
   }
 
+  Future<void> _pickProfilePhoto() async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (picked != null) {
+      setState(() => _newPhotoFile = File(picked.path));
+    }
+  }
+
   void _addAccreditation() {
     final text = _newAccreditationController.text.trim();
     if (text.isEmpty) return;
     setState(() {
       _accreditations.add(text);
+      _certUrls.add('');
+      _certNewFiles.add(null);
       _newAccreditationController.clear();
     });
   }
 
   void _removeAccreditation(int index) {
-    setState(() => _accreditations.removeAt(index));
+    setState(() {
+      _accreditations.removeAt(index);
+      if (index < _certUrls.length) _certUrls.removeAt(index);
+      if (index < _certNewFiles.length) _certNewFiles.removeAt(index);
+    });
   }
 
-  void _addServiceEstimate() {
-    final service = _newServiceController.text.trim();
-    final minPrice = int.tryParse(_newMinPriceController.text) ?? 0;
-    final maxPrice = int.tryParse(_newMaxPriceController.text) ?? 0;
-
-    if (service.isEmpty) {
-      Get.snackbar('Oops', 'Nama layanan tidak boleh kosong',
-          snackPosition: SnackPosition.BOTTOM);
-      return;
-    }
-
-    setState(() {
-      _serviceEstimates.add({
-        'service': service,
-        'minPrice': minPrice,
-        'maxPrice': maxPrice == 0 ? minPrice : maxPrice,
+  Future<void> _pickCertPhoto(int index) async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (picked != null) {
+      setState(() {
+        while (_certNewFiles.length <= index) { _certNewFiles.add(null); }
+        _certNewFiles[index] = File(picked.path);
       });
-      _newServiceController.clear();
-      _newMinPriceController.clear();
-      _newMaxPriceController.clear();
-    });
+    }
   }
 
   void _removeServiceEstimate(int index) {
@@ -195,13 +255,12 @@ class _TechnicianProfileEditPageState
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     _specialtyController.dispose();
     _bioController.dispose();
     _workshopAddressController.dispose();
+    _diagnosisFeeController.dispose();
     _newAccreditationController.dispose();
-    _newServiceController.dispose();
-    _newMinPriceController.dispose();
-    _newMaxPriceController.dispose();
     super.dispose();
   }
 
@@ -255,12 +314,72 @@ class _TechnicianProfileEditPageState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── FOTO PROFIL ────────────────────────────────
+                  Center(
+                    child: GestureDetector(
+                      onTap: _pickProfilePhoto,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: _newPhotoFile != null
+                                  ? Image.file(_newPhotoFile!,
+                                      fit: BoxFit.cover)
+                                  : (_currentPhotoUrl != null &&
+                                          _currentPhotoUrl!.isNotEmpty)
+                                      ? Image.network(_currentPhotoUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(Icons.person_rounded,
+                                                  color: Color(0xFF94A3B8),
+                                                  size: 52))
+                                      : const Icon(Icons.person_rounded,
+                                          color: Color(0xFF94A3B8), size: 52),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -4,
+                            right: -4,
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: _accent,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.camera_alt_rounded,
+                                  color: Colors.white, size: 15),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   // ── IDENTITAS ──────────────────────────────────
                   _buildSection('IDENTITAS', [
                     _buildField(
                       label: 'Nama Lengkap',
                       controller: _nameController,
                       hint: 'Masukkan nama lengkap',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildField(
+                      label: 'Nomor HP',
+                      controller: _phoneController,
+                      hint: 'Contoh: 08123456789',
+                      keyboardType: TextInputType.phone,
                     ),
                   ]),
                   const SizedBox(height: 24),
@@ -303,6 +422,26 @@ class _TechnicianProfileEditPageState
                   // ── SERTIFIKASI ────────────────────────────────
                   _buildSection('SERTIFIKASI & AKREDITASI', [
                     _buildAccreditationSection(),
+                  ]),
+                  const SizedBox(height: 24),
+
+                  // ── BIAYA DIAGNOSA ─────────────────────────────
+                  _buildSection('BIAYA DIAGNOSA', [
+                    _buildField(
+                      label: 'Biaya Diagnosa Awal (Rp)',
+                      controller: _diagnosisFeeController,
+                      hint: 'Contoh: 50000',
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Biaya ini otomatis muncul sebagai item pertama di daftar layananmu.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _muted,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   ]),
                   const SizedBox(height: 24),
 
@@ -410,48 +549,81 @@ class _TechnicianProfileEditPageState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Existing chips
+        // Existing certs with photo
         if (_accreditations.isNotEmpty) ...[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _accreditations.asMap().entries.map((entry) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.verified_rounded,
-                        size: 14, color: _accent),
-                    const SizedBox(width: 6),
-                    Text(
-                      entry.value,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: _accent,
-                      ),
+          ..._accreditations.asMap().entries.map((entry) {
+            final i = entry.key;
+            final name = entry.value;
+            final newFile = i < _certNewFiles.length ? _certNewFiles[i] : null;
+            final existingUrl = i < _certUrls.length ? _certUrls[i] : '';
+            final hasPhoto = newFile != null || existingUrl.isNotEmpty;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F9FB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  // Photo thumbnail / upload button
+                  GestureDetector(
+                    onTap: () => _pickCertPhoto(i),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: hasPhoto
+                          ? (newFile != null
+                              ? Image.file(newFile,
+                                  width: 52, height: 52, fit: BoxFit.cover)
+                              : Image.network(existingUrl,
+                                  width: 52, height: 52, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _certPlaceholder()))
+                          : _certPlaceholder(),
                     ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => _removeAccreditation(entry.key),
-                      child: const Icon(Icons.close_rounded,
-                          size: 14, color: _accent),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: _ink,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        GestureDetector(
+                          onTap: () => _pickCertPhoto(i),
+                          child: Text(
+                            hasPhoto ? 'Ganti foto' : 'Upload foto sertifikat',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _accent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
+                  ),
+                  GestureDetector(
+                    onTap: () => _removeAccreditation(i),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        size: 20, color: Color(0xFFE11D48)),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
         ],
 
-        // Add new
+        // Add new cert name
         Row(
           children: [
             Expanded(
@@ -462,7 +634,7 @@ class _TechnicianProfileEditPageState
                 decoration: InputDecoration(
                   hintText: 'Contoh: Apple Certified',
                   hintStyle: TextStyle(
-                    color: _muted.withOpacity(0.5),
+                    color: _muted.withValues(alpha: 0.5),
                     fontWeight: FontWeight.w400,
                   ),
                   filled: true,
@@ -493,6 +665,16 @@ class _TechnicianProfileEditPageState
           ],
         ),
       ],
+    );
+  }
+
+  Widget _certPlaceholder() {
+    return Container(
+      width: 52,
+      height: 52,
+      color: const Color(0xFFE2E8F0),
+      child: const Icon(Icons.upload_file_outlined,
+          size: 22, color: Color(0xFF94A3B8)),
     );
   }
 
@@ -557,126 +739,6 @@ class _TechnicianProfileEditPageState
           const SizedBox(height: 16),
         ],
 
-        // Add new service
-        const Text(
-          'Tambah Layanan',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: _muted,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _newServiceController,
-          style: const TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w600),
-          decoration: InputDecoration(
-            hintText: 'Nama layanan (contoh: LCD Screen Replacement)',
-            hintStyle: TextStyle(
-              color: _muted.withOpacity(0.5),
-              fontWeight: FontWeight.w400,
-              fontSize: 13,
-            ),
-            filled: true,
-            fillColor: const Color(0xFFF8F9FB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 12),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _newMinPriceController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly
-                ],
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  hintText: 'Harga min',
-                  hintStyle: TextStyle(
-                    color: _muted.withOpacity(0.5),
-                    fontWeight: FontWeight.w400,
-                    fontSize: 13,
-                  ),
-                  prefixText: 'Rp',
-                  prefixStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _ink,
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFF8F9FB),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text('—',
-                style: TextStyle(color: _muted, fontSize: 16)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: _newMaxPriceController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly
-                ],
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  hintText: 'Harga max',
-                  hintStyle: TextStyle(
-                    color: _muted.withOpacity(0.5),
-                    fontWeight: FontWeight.w400,
-                    fontSize: 13,
-                  ),
-                  prefixText: 'Rp',
-                  prefixStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _ink,
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFF8F9FB),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            GestureDetector(
-              onTap: _addServiceEstimate,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _accent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.add_rounded,
-                    color: Colors.white, size: 22),
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }
@@ -772,6 +834,7 @@ class _TechnicianProfileEditPageState
     required TextEditingController controller,
     required String hint,
     int maxLines = 1,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -788,6 +851,7 @@ class _TechnicianProfileEditPageState
         TextField(
           controller: controller,
           maxLines: maxLines,
+          keyboardType: keyboardType,
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,

@@ -4,8 +4,11 @@ import 'package:geolocator/geolocator.dart' hide Position;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
     if (dart.library.html) '../../config/mapbox_web_stub.dart';
 import '../../config/routes.dart';
+import '../../models/booking_document.dart';
 import '../../services/technician_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../booking/booking_controller.dart';
+import '../notification/notification_controller.dart';
 import 'home_controller.dart';
 
 class HomePage extends GetView<HomeController> {
@@ -43,25 +46,15 @@ class HomePage extends GetView<HomeController> {
                         height: 32,
                         fit: BoxFit.contain,
                       ),
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.notifications_none_rounded,
-                          color: Color(0xFF1E293B),
-                          size: 20,
-                        ),
+                      Row(
+                        children: [
+                          _HeaderIconButton(
+                            icon: Icons.chat_bubble_outline_rounded,
+                            onTap: () => Get.toNamed(AppRoutes.chatInbox),
+                          ),
+                          const SizedBox(width: 8),
+                          _NotifBell(),
+                        ],
                       ),
                     ],
                   ),
@@ -111,6 +104,98 @@ class HomePage extends GetView<HomeController> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Header Icon Button ─────────────────────────────────────────────────────
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _HeaderIconButton({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: const Color(0xFF1E293B), size: 20),
+      ),
+    );
+  }
+}
+
+// ── Notification Bell with Badge ──────────────────────────────────────────
+class _NotifBell extends StatelessWidget {
+  _NotifBell();
+
+  final _notifCtrl = Get.find<NotificationController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(AppRoutes.notifications),
+      child: Obx(() {
+        final count = _notifCtrl.unreadCount.value;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.notifications_none_rounded,
+                  color: Color(0xFF1E293B), size: 20),
+            ),
+            if (count > 0)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEF4444),
+                    shape: BoxShape.circle,
+                  ),
+                  constraints:
+                      const BoxConstraints(minWidth: 16, minHeight: 16),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      }),
     );
   }
 }
@@ -208,7 +293,7 @@ class _HeroCTACardState extends State<_HeroCTACard> {
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.technicianList),
       child: Container(
-        height: 175,
+        height: 190,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: const Color(0xFF0D1117),
@@ -275,15 +360,22 @@ class _HeroCTACardState extends State<_HeroCTACard> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    '12 active specialists\navailable now',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFFCBD5E1),
-                      fontWeight: FontWeight.w500,
-                      height: 1.4,
-                    ),
-                  ),
+                  Obx(() {
+                    final ctrl = Get.find<HomeController>();
+                    final count = ctrl.technicianCount.value;
+                    final label = count > 0
+                        ? '$count active specialists\navailable now'
+                        : 'Find specialists\nnear you';
+                    return Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFCBD5E1),
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    );
+                  }),
                   const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -378,91 +470,140 @@ class _SearchBar extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  CURRENT REPAIR CARD  (matches Figma: IN PROGRESS badge)
+//  CURRENT REPAIR CARD  — data dari BookingController
 // ═══════════════════════════════════════════════════════════════
-class _CurrentRepairCard extends StatelessWidget {
+class _CurrentRepairCard extends GetView<BookingController> {
   const _CurrentRepairCard();
+
+  String _statusLabel(String status) => switch (status) {
+        BookingStatus.pending => 'MENUNGGU',
+        BookingStatus.confirmed => 'DIKONFIRMASI',
+        BookingStatus.onProgress => 'IN PROGRESS',
+        BookingStatus.awaitingPayment => 'BAYAR',
+        BookingStatus.done => 'SELESAI',
+        _ => 'IN PROGRESS',
+      };
+
+  Color _statusBg(String status) => switch (status) {
+        BookingStatus.pending => const Color(0xFFFFF7ED),
+        BookingStatus.awaitingPayment => const Color(0xFFFFF1F2),
+        BookingStatus.done => const Color(0xFFDCFCE7),
+        _ => const Color(0xFFDCEDFF),
+      };
+
+  Color _statusTextColor(String status) => switch (status) {
+        BookingStatus.pending => const Color(0xFFD97706),
+        BookingStatus.awaitingPayment => const Color(0xFFE11D48),
+        BookingStatus.done => const Color(0xFF16A34A),
+        _ => const Color(0xFF0061FF),
+      };
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.orderTracking),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(10),
+    return Obx(() {
+      final booking = controller.activeBooking.value;
+
+      // Tidak ada active booking — sembunyikan card
+      if (booking == null) return const SizedBox.shrink();
+
+      final title =
+          '${booking.technicianName} • ${_damageTypeLabel(booking.damageType)}';
+      final status = booking.status;
+
+      return GestureDetector(
+        onTap: () {
+          final s = booking.status;
+          if (s == BookingStatus.done || s == BookingStatus.cancelled) {
+            Get.toNamed(AppRoutes.bookingDetail, arguments: booking);
+          } else {
+            Get.toNamed(AppRoutes.orderTracking);
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-              child: const Icon(Icons.laptop_mac_rounded,
-                  color: Color(0xFF475569), size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'CURRENT REPAIR',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF94A3B8),
-                      letterSpacing: 0.8,
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.build_rounded,
+                    color: Color(0xFF475569), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'CURRENT REPAIR',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF94A3B8),
+                        letterSpacing: 0.8,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'MacBook Pro M1 • Screen Replacement',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                    const SizedBox(height: 2),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFDCEDFF),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                'IN PROGRESS',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF0061FF),
-                  letterSpacing: 0.5,
+                  ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _statusBg(status),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _statusLabel(status),
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: _statusTextColor(status),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
+
+  String _damageTypeLabel(String type) => switch (type) {
+        'screen' => 'Layar',
+        'battery' => 'Baterai',
+        'hardware' => 'Hardware',
+        'water' => 'Water Damage',
+        'camera' => 'Kamera',
+        _ => 'Perbaikan Umum',
+      };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -522,25 +663,23 @@ class _RepairCategories extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // 2 baris × 3 kolom
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _categories.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 0,
-              childAspectRatio: 1.1,
+          // 1 baris scroll horizontal
+          SizedBox(
+            height: 84,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              itemCount: _categories.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) {
+                final c = _categories[i];
+                return _CategoryItem(
+                  icon: c['icon'] as IconData,
+                  label: c['label'] as String,
+                  category: c['category'] as String,
+                );
+              },
             ),
-            itemBuilder: (_, i) {
-              final c = _categories[i];
-              return _CategoryItem(
-                icon: c['icon'] as IconData,
-                label: c['label'] as String,
-                category: c['category'] as String,
-              );
-            },
           ),
         ],
       ),
@@ -562,15 +701,17 @@ class _CategoryItem extends StatelessWidget {
         AppRoutes.technicianList,
         arguments: {'category': category},
       ),
-      child: Column(
+      child: SizedBox(
+        width: 72,
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -579,11 +720,12 @@ class _CategoryItem extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(icon, color: const Color(0xFF475569), size: 26),
+            child: Icon(icon, color: const Color(0xFF475569), size: 24),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             label,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w700,
@@ -592,6 +734,7 @@ class _CategoryItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

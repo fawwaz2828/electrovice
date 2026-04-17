@@ -1,7 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../config/routes.dart';
-import 'admin_controller.dart';
+import '../services/auth_service.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -13,7 +14,6 @@ class AdminHomePage extends StatefulWidget {
 class _AdminHomePageState extends State<AdminHomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late AdminController _controller;
 
   static const Color _primary = Color(0xFF1A1A2E);
   static const Color _accent = Color(0xFF00A8E8);
@@ -26,7 +26,6 @@ class _AdminHomePageState extends State<AdminHomePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _controller = Get.put(AdminController());
   }
 
   @override
@@ -35,50 +34,100 @@ class _AdminHomePageState extends State<AdminHomePage>
     super.dispose();
   }
 
+  // Stream semua teknisi yang sudah submit onboarding
+  Stream<List<Map<String, dynamic>>> _streamTechnicians() {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .where('role', isEqualTo: 'technician')
+        .snapshots()
+        .map((snap) {
+      return snap.docs
+          .where((doc) => doc.data()['technicianProfile'] != null)
+          .map((doc) {
+        final data = doc.data();
+        final profile = data['technicianProfile'] as Map<String, dynamic>;
+        final cats = (profile['deviceCategories'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+        final name = data['name'] as String? ?? '';
+        final initials = name.trim().split(' ').take(2).map((w) {
+          return w.isNotEmpty ? w[0].toUpperCase() : '';
+        }).join();
+
+        // Format submitted date
+        final updatedAt = data['updatedAt'] as Timestamp?;
+        final submittedStr = updatedAt != null
+            ? _formatDate(updatedAt.toDate())
+            : '—';
+
+        return {
+          'uid': doc.id,
+          'name': name,
+          'initials': initials,
+          'city': profile['city'] as String? ?? '—',
+          'workshop': profile['workshopName'] as String? ?? 'Tanpa workshop',
+          'categories': cats,
+          'submitted': submittedStr,
+          'status': _mapStatus(profile['verificationStatus'] as String? ?? 'pending'),
+        };
+      }).toList();
+    });
+  }
+
+  String _mapStatus(String raw) {
+    switch (raw) {
+      case 'verified':
+        return 'VERIFIED';
+      case 'declined':
+        return 'DECLINED';
+      default:
+        return 'PENDING';
+    }
+  }
+
+  String _formatDate(DateTime dt) {
+    const months = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    return '${dt.day} ${months[dt.month]} ${dt.year}, '
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bg,
-      appBar: _buildAppBar(),
-      body: Obx(() {
-        if (_controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (_controller.error.value.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 12),
-                Text(_controller.error.value,
-                    style: const TextStyle(color: Colors.black54)),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _controller.fetchTechnicians,
-                  child: const Text('Coba lagi'),
-                ),
-              ],
-            ),
-          );
-        }
-        return Column(
-          children: [
-            _buildStatsSection(),
-            _buildTabBar(),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildList(_controller.pendingList, 'PENDING'),
-                  _buildList(_controller.verifiedList, 'VERIFIED'),
-                  _buildList(_controller.declinedList, 'DECLINED'),
-                ],
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _streamTechnicians(),
+      builder: (context, snapshot) {
+        final all = snapshot.data ?? [];
+        final pending = all.where((t) => t['status'] == 'PENDING').toList();
+        final verified = all.where((t) => t['status'] == 'VERIFIED').toList();
+        final declined = all.where((t) => t['status'] == 'DECLINED').toList();
+
+        return Scaffold(
+          backgroundColor: _bg,
+          appBar: _buildAppBar(),
+          body: Column(
+            children: [
+              _buildStatsSection(pending.length, verified.length, declined.length),
+              _buildTabBar(pending.length, verified.length, declined.length),
+              Expanded(
+                child: snapshot.connectionState == ConnectionState.waiting
+                    ? const Center(child: CircularProgressIndicator())
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildList(pending, 'PENDING'),
+                          _buildList(verified, 'VERIFIED'),
+                          _buildList(declined, 'DECLINED'),
+                        ],
+                      ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
-      }),
+      },
     );
   }
 
@@ -119,37 +168,27 @@ class _AdminHomePageState extends State<AdminHomePage>
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.refresh, color: Colors.white70),
-          onPressed: _controller.fetchTechnicians,
-        ),
-        Container(
-          margin: const EdgeInsets.only(right: 16),
-          width: 36,
-          height: 36,
-          decoration: const BoxDecoration(color: _accent, shape: BoxShape.circle),
-          child: const Center(
-            child: Text('SA',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13)),
-          ),
+          icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 22),
+          onPressed: () async {
+            await AuthService().logout();
+            Get.offAllNamed(AppRoutes.register);
+          },
         ),
       ],
     );
   }
 
-  Widget _buildStatsSection() {
+  Widget _buildStatsSection(int p, int v, int d) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          _buildStatCard('PENDING', _controller.pendingList.length, _colorPending),
+          _buildStatCard('PENDING', p, _colorPending),
           const SizedBox(width: 10),
-          _buildStatCard('VERIFIED', _controller.verifiedList.length, _colorVerified),
+          _buildStatCard('VERIFIED', v, _colorVerified),
           const SizedBox(width: 10),
-          _buildStatCard('DECLINED', _controller.declinedList.length, _colorDeclined),
+          _buildStatCard('DECLINED', d, _colorDeclined),
         ],
       ),
     );
@@ -183,7 +222,7 @@ class _AdminHomePageState extends State<AdminHomePage>
     );
   }
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(int p, int v, int d) {
     return Container(
       color: Colors.white,
       child: TabBar(
@@ -195,40 +234,36 @@ class _AdminHomePageState extends State<AdminHomePage>
         labelStyle: const TextStyle(
             fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
         tabs: [
-          Tab(text: 'PENDING  ${_controller.pendingList.length}'),
-          Tab(text: 'VERIFIED  ${_controller.verifiedList.length}'),
-          Tab(text: 'DECLINED  ${_controller.declinedList.length}'),
+          Tab(text: 'PENDING  $p'),
+          Tab(text: 'VERIFIED  $v'),
+          Tab(text: 'DECLINED  $d'),
         ],
       ),
     );
   }
 
-  Widget _buildList(List<TechnicianVerificationModel> items, String type) {
+  Widget _buildList(List<Map<String, dynamic>> items, String type) {
     if (items.isEmpty) return _buildEmptyState(type);
-    return RefreshIndicator(
-      onRefresh: _controller.fetchTechnicians,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, index) => _buildCard(items[index]),
-      ),
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, index) => _buildTechnicianCard(items[index]),
     );
   }
 
   Widget _buildEmptyState(String type) {
-    final String emoji;
-    final String message;
-    if (type == 'DECLINED') {
-      emoji = '📋';
-      message = 'Tidak ada yang di-decline';
-    } else if (type == 'VERIFIED') {
-      emoji = '✅';
-      message = 'Belum ada teknisi terverifikasi';
-    } else {
-      emoji = '🎉';
-      message = 'Tidak ada pending verifikasi';
-    }
+    final emoji = type == 'DECLINED'
+        ? '📋'
+        : type == 'VERIFIED'
+            ? '✅'
+            : '🎉';
+    final message = type == 'DECLINED'
+        ? 'Tidak ada yang di-decline'
+        : type == 'VERIFIED'
+            ? 'Belum ada teknisi terverifikasi'
+            : 'Tidak ada pending verifikasi';
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -245,18 +280,18 @@ class _AdminHomePageState extends State<AdminHomePage>
     );
   }
 
-  Widget _buildCard(TechnicianVerificationModel tech) {
-    final Color statusColor;
-    if (tech.verificationStatus == 'verified') {
-      statusColor = _colorVerified;
-    } else if (tech.verificationStatus == 'declined') {
-      statusColor = _colorDeclined;
-    } else {
-      statusColor = _colorPending;
-    }
+  Widget _buildTechnicianCard(Map<String, dynamic> tech) {
+    final status = tech['status'] as String;
+    final Color statusColor = status == 'VERIFIED'
+        ? _colorVerified
+        : status == 'DECLINED'
+            ? _colorDeclined
+            : _colorPending;
+    final List<String> categories = List<String>.from(tech['categories']);
 
     return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.adminVerification, arguments: tech),
+      onTap: () => Get.toNamed(AppRoutes.adminVerification,
+          arguments: {'uid': tech['uid']}),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -267,28 +302,43 @@ class _AdminHomePageState extends State<AdminHomePage>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildAvatar(tech),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFF374151),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  tech['initials'],
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15),
+                ),
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(tech.name,
+                  Text(tech['name'],
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 14)),
                   const SizedBox(height: 2),
-                  Text('${tech.city}  ·  ${tech.workshopName}',
+                  Text('${tech['city']}  ·  ${tech['workshop']}',
                       style: const TextStyle(
                           fontSize: 12, color: Colors.black54)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 4,
-                    children:
-                        tech.deviceCategories.map(_buildChip).toList(),
+                    children: categories.map(_buildChip).toList(),
                   ),
                   const SizedBox(height: 8),
-                  Text('Submitted: ${tech.submittedLabel}',
+                  Text('Submitted: ${tech['submitted']}',
                       style: const TextStyle(
                           fontSize: 11, color: Colors.black38)),
                 ],
@@ -303,7 +353,7 @@ class _AdminHomePageState extends State<AdminHomePage>
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                tech.verificationStatus.toUpperCase(),
+                status,
                 style: TextStyle(
                     color: statusColor,
                     fontWeight: FontWeight.bold,
@@ -313,39 +363,6 @@ class _AdminHomePageState extends State<AdminHomePage>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildAvatar(TechnicianVerificationModel tech) {
-    if (tech.photoUrl != null && tech.photoUrl!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Image.network(
-          tech.photoUrl!,
-          width: 44,
-          height: 44,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildInitialsAvatar(tech.initials),
-        ),
-      );
-    }
-    return _buildInitialsAvatar(tech.initials);
-  }
-
-  Widget _buildInitialsAvatar(String initials) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-          color: const Color(0xFF374151),
-          borderRadius: BorderRadius.circular(10)),
-      child: Center(
-        child: Text(initials,
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 15)),
       ),
     );
   }

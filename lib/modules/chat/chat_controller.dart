@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
+import '../../services/booking_service.dart';
 import '../../services/chat_service.dart';
+import '../../services/storage_service.dart';
 import '../../models/booking_document.dart';
 
 class ChatController extends GetxController {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
+  final BookingService _bookingService = BookingService();
 
   // ── Args dari navigation ──────────────────────────────────────
   late final String chatId;
@@ -19,12 +24,18 @@ class ChatController extends GetxController {
   final RxBool isLoading = true.obs;
   final RxBool isSending = false.obs;
 
+  /// true jika booking sudah done/cancelled — input dinonaktifkan.
+  final RxBool sessionClosed = false.obs;
+
   // ── Current user ──────────────────────────────────────────────
   String get currentUserId => _authService.currentUser?.uid ?? '';
   String _currentUserName = '';
 
   final TextEditingController inputController = TextEditingController();
+  final RxBool isUploadingPhoto = false.obs;
   StreamSubscription? _msgSub;
+  StreamSubscription? _bookingSub;
+  String? _bookingId; // non-null hanya untuk booking-attached chat
 
   @override
   void onInit() {
@@ -36,6 +47,7 @@ class ChatController extends GetxController {
   @override
   void onClose() {
     _msgSub?.cancel();
+    _bookingSub?.cancel();
     inputController.dispose();
     super.onClose();
   }
@@ -43,23 +55,58 @@ class ChatController extends GetxController {
   void _loadFromArgs() {
     final args = Get.arguments;
     if (args is Map) {
-      chatId = args['chatId'] as String? ?? '';
       otherPartyName = args['otherPartyName'] as String? ?? 'Pengguna';
       otherPartyPhotoUrl = args['otherPartyPhotoUrl'] as String?;
 
-      // Ensure chat doc exists (fire & forget)
       final bookingDoc = args['bookingDoc'] as BookingDocument?;
+
+      // ── Case 1: chat dari tracking/active job (ada bookingDoc) ──
       if (bookingDoc != null) {
-        _chatService.ensureChatExists(
-          chatId: chatId,
-          bookingId: bookingDoc.bookingId,
-          customerId: bookingDoc.userId,
-          customerName: bookingDoc.userName,
-          technicianId: bookingDoc.technicianId,
-          technicianName: bookingDoc.technicianName,
-          technicianPhotoUrl: bookingDoc.technicianPhotoUrl,
-        );
+        chatId = bookingDoc.bookingId;
+        _bookingId = bookingDoc.bookingId;
+        // Jika booking sudah done/cancelled saat dibuka, langsung tutup
+        if (bookingDoc.status == BookingStatus.done ||
+            bookingDoc.status == BookingStatus.cancelled) {
+          sessionClosed.value = true;
+        }
+        // Fetch customer photo di background dan ensure chat exists
+        _authService.getUserModel(bookingDoc.userId).then((user) {
+          _chatService.ensureChatExists(
+            chatId: chatId,
+            bookingId: bookingDoc.bookingId,
+            customerId: bookingDoc.userId,
+            customerName: bookingDoc.userName,
+            technicianId: bookingDoc.technicianId,
+            technicianName: bookingDoc.technicianName,
+            technicianPhotoUrl: bookingDoc.technicianPhotoUrl,
+            customerPhotoUrl: user?.photoUrl,
+          );
+        });
+        return;
       }
+
+      // ── Case 2: pre-booking chat dari technician detail ──────────
+      final customerId   = args['customerId']   as String?;
+      final customerName = args['customerName'] as String?;
+      final techId       = args['technicianId'] as String?;
+
+      if (customerId != null && techId != null) {
+        chatId = ChatService.preChatId(customerId, techId);
+        _chatService.ensurePreChatExists(
+          customerId: customerId,
+          customerName: customerName ?? 'Customer',
+          customerPhotoUrl: args['customerPhotoUrl'] as String?,
+          technicianId: techId,
+          technicianName: otherPartyName,
+          technicianPhotoUrl: otherPartyPhotoUrl,
+        );
+        return;
+      }
+
+      // ── Case 3: fallback — chatId eksplisit dikirim (misal dari inbox) ──
+      chatId = args['chatId'] as String? ?? '';
+      // bookingId opsional — dipakai untuk stream status saat dibuka dari inbox
+      _bookingId = args['bookingId'] as String?;
     } else {
       chatId = '';
       otherPartyName = 'Pengguna';
@@ -67,24 +114,17 @@ class ChatController extends GetxController {
   }
 
   Future<void> _initStream() async {
-    // Dapatkan nama user sekarang
-    final uid = currentUserId;
-    if (uid.isNotEmpty) {
-      final user = await _authService.getUserModel(uid);
-      _currentUserName =
-          user?.name ?? _authService.currentUser?.email ?? 'Saya';
-    }
-
     if (chatId.isEmpty) {
       isLoading.value = false;
       return;
     }
 
+    // Start message stream immediately so messages appear without waiting for
+    // the username Firestore fetch (which can take 1-2 seconds on first open).
     _msgSub = _chatService.streamMessages(chatId).listen(
       (msgs) {
         messages.assignAll(msgs);
         isLoading.value = false;
-        // Mark incoming as read
         _chatService.markAsRead(chatId, currentUserId);
       },
       onError: (e) {
@@ -92,6 +132,29 @@ class ChatController extends GetxController {
         isLoading.value = false;
       },
     );
+
+    // Stream status booking agar chat otomatis tertutup saat done/cancelled
+    if (_bookingId != null) {
+      _bookingSub = _bookingService.streamBookingById(_bookingId!).listen(
+        (doc) {
+          if (doc != null &&
+              (doc.status == BookingStatus.done ||
+                  doc.status == BookingStatus.cancelled)) {
+            sessionClosed.value = true;
+            _bookingSub?.cancel();
+          }
+        },
+        onError: (e) => debugPrint('ChatController booking stream error: $e'),
+      );
+    }
+
+    // Fetch username in background — only needed when the user sends a message.
+    final uid = currentUserId;
+    if (uid.isNotEmpty) {
+      final user = await _authService.getUserModel(uid);
+      _currentUserName =
+          user?.name ?? _authService.currentUser?.email ?? 'Saya';
+    }
   }
 
   Future<void> sendMessage() async {
@@ -111,9 +174,37 @@ class ChatController extends GetxController {
     } catch (e) {
       debugPrint('sendMessage error: $e');
       Get.snackbar('Gagal', 'Pesan tidak terkirim',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
     } finally {
       isSending.value = false;
+    }
+  }
+
+  Future<void> sendPhoto() async {
+    if (chatId.isEmpty) return;
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 1280,
+      );
+      if (picked == null) return;
+
+      isUploadingPhoto.value = true;
+      final url = await StorageService().uploadChatPhoto(chatId, File(picked.path));
+      await _chatService.sendMessage(
+        chatId: chatId,
+        senderId: currentUserId,
+        senderName: _currentUserName,
+        text: '',
+        imageUrl: url,
+      );
+    } catch (e) {
+      debugPrint('sendPhoto error: $e');
+      Get.snackbar('Gagal', 'Foto tidak bisa dikirim',
+          snackPosition: SnackPosition.TOP);
+    } finally {
+      isUploadingPhoto.value = false;
     }
   }
 

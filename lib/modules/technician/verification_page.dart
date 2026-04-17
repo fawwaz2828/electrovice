@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
+import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../../widget/customer_location_map.dart';
 import '../technician/technician_controller.dart';
 
 class VerificationPage extends StatefulWidget {
@@ -28,7 +30,7 @@ class _VerificationPageState extends State<VerificationPage> {
     final code = _pin.join();
     if (code.length < 6 || _pin.contains('')) {
       Get.snackbar('Oops', 'Masukkan 6 digit kode verifikasi',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -36,12 +38,29 @@ class _VerificationPageState extends State<VerificationPage> {
 
     try {
       await Get.find<TechnicianController>().verifyCode(code);
+      setState(() => _isVerifying = false);
+
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const _VerificationResultDialog(success: true),
+      );
+      // Dialog dismissed → navigate to active job
       Get.offNamed(AppRoutes.activeJob);
     } catch (e) {
-      Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
-          snackPosition: SnackPosition.BOTTOM);
-    } finally {
-      setState(() => _isVerifying = false);
+      // Clear pin for re-entry
+      setState(() {
+        for (int i = 0; i < 6; i++) { _pin[i] = ''; }
+        _isVerifying = false;
+      });
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _VerificationResultDialog(success: false, message: msg),
+      );
     }
   }
 
@@ -63,19 +82,15 @@ class _VerificationPageState extends State<VerificationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
-      extendBody: true,
-      bottomNavigationBar: const TechnicianNavBar(selectedItem: AppNavItem.active),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-              // ── Top Bar ─────────────────────────────────────────────
-              Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Top Bar ─────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+              child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
@@ -92,54 +107,72 @@ class _VerificationPageState extends State<VerificationPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              // ── Header Card (Map + Client Info) ────────────────────
-              _ClientSummaryCard(),
+            ),
+            const SizedBox(height: 16),
 
-              const SizedBox(height: 48),
-
-              // ── Verification Section ───────────────────────────────
-              const Center(
+            // ── Scrollable area ──────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '6-Digit Verification Code',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF111111),
-                        letterSpacing: -0.5,
+                    // ── Header Card (Map + Client Info) ───────────────
+                    _ClientSummaryCard(),
+                    const SizedBox(height: 28),
+
+                    // ── Verification Section ──────────────────────────
+                    const Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            '6-Digit Verification Code',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF111111),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            "Enter user's code to start service",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF6F88AE),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 10),
-                    Text(
-                      "Enter user's code to start service",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6F88AE),
-                        fontWeight: FontWeight.w500,
-                      ),
+                    const SizedBox(height: 24),
+
+                    // PIN Display
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(6, (index) => _PinBox(value: _pin[index])),
                     ),
+                    const SizedBox(height: 20),
+
+                    // Numpad
+                    _Numpad(onTap: _onKeyTap, onDelete: _onDelete),
+                    const SizedBox(height: 24),
+
+                    // ── Service Parameters ────────────────────────────
+                    _ServiceParametersCard(),
+                    const SizedBox(height: 120),
                   ],
                 ),
               ),
-              const SizedBox(height: 38),
+            ),
 
-              // PIN Display
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) => _PinBox(value: _pin[index])),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Numpad
-              _Numpad(onTap: _onKeyTap, onDelete: _onDelete),
-
-              const SizedBox(height: 24),
-
-              // Verify Button
-              ElevatedButton(
+            // ── Fixed Verify Button at bottom ────────────────────────
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                24, 8, 24, MediaQuery.of(context).padding.bottom + 16),
+              child: ElevatedButton(
                 onPressed: _isVerifying ? null : _onVerify,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -162,15 +195,8 @@ class _VerificationPageState extends State<VerificationPage> {
                             fontSize: 16, fontWeight: FontWeight.w800),
                       ),
               ),
-
-              const SizedBox(height: 48),
-
-              // ── Service Parameters ─────────────────────────────────
-              _ServiceParametersCard(),
-
-              const SizedBox(height: 120),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -207,6 +233,8 @@ class _ClientSummaryCard extends StatelessWidget {
           ? order!.userAddress
           : 'Alamat tidak tersedia';
       final damageTitle = _verifDamageLabel(order?.damageType ?? '');
+      final lat = order?.latitude;
+      final lng = order?.longitude;
 
       return Container(
         width: double.infinity,
@@ -215,7 +243,7 @@ class _ClientSummaryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -223,45 +251,112 @@ class _ClientSummaryCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // Map placeholder
-            Container(
-              height: 170,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                color: Color(0xFFE8EDF5),
-              ),
-              child: Stack(
-                children: [
-                  const Center(
-                    child: Icon(Icons.location_on_rounded, color: Color(0xFF0061FF), size: 48),
-                  ),
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
+            // ── Map (real Mapbox jika lat/lng tersedia, placeholder jika tidak) ──
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
+              child: SizedBox(
+                height: 170,
+                width: double.infinity,
+                child: lat != null && lng != null
+                    ? Stack(
                         children: [
-                          const Icon(Icons.location_on_rounded, color: Colors.white, size: 14),
-                          const SizedBox(width: 6),
-                          Text(
-                            address.length > 25 ? '${address.substring(0, 25)}...' : address,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.5,
+                          CustomerLocationMap(lat: lat, lng: lng),
+                          // Address label bawah-kiri
+                          Positioned(
+                            bottom: 12,
+                            left: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.85),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.location_on_rounded,
+                                      color: Colors.white, size: 12),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    address.length > 22
+                                        ? '${address.substring(0, 22)}...'
+                                        : address,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Navigate button bawah-kanan
+                          Positioned(
+                            bottom: 12,
+                            right: 12,
+                            child: GestureDetector(
+                              onTap: () => MapsLauncher.navigateTo(
+                                lat: lat,
+                                lng: lng,
+                                label: address,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.12),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.navigation_rounded,
+                                        size: 14, color: Color(0xFF0061FF)),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Navigasi',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF0061FF),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ],
+                      )
+                    : Container(
+                        color: const Color(0xFFE8EDF5),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.location_off_outlined,
+                                size: 28, color: Color(0xFF94A3B8)),
+                            const SizedBox(height: 8),
+                            Text(
+                              address,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Color(0xFF64748B), fontSize: 12),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                ],
               ),
             ),
             Padding(
@@ -421,6 +516,124 @@ class _Numpad extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  VERIFICATION RESULT DIALOG
+// ─────────────────────────────────────────────────────────────────
+class _VerificationResultDialog extends StatelessWidget {
+  final bool success;
+  final String? message;
+  const _VerificationResultDialog({required this.success, this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Icon Circle ─────────────────────────────────────────
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: success
+                    ? const Color(0xFFDCFCE7)
+                    : const Color(0xFFFEE2E2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                success
+                    ? Icons.check_circle_rounded
+                    : Icons.error_rounded,
+                color: success
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFFDC2626),
+                size: 44,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Title ───────────────────────────────────────────────
+            Text(
+              success ? 'Verification Accepted' : 'Verification Failed',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // ── Subtitle ────────────────────────────────────────────
+            Text(
+              success
+                  ? 'Verification Code Received'
+                  : (message ?? 'Enter the right Code'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            // ── Button ──────────────────────────────────────────────
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                success ? 'Check Order' : 'Retry',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Quote ───────────────────────────────────────────────
+            const Text(
+              'No pain no gain\n-random person',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFFCBD5E1),
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

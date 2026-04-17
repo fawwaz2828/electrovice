@@ -1,4 +1,6 @@
+import 'package:electrovice/modules/technician/verification_pending_page.dart';
 import 'package:get/get.dart';
+import '../modules/splash/splash_page.dart';
 import '../modules/auth/login_page.dart';
 import '../modules/auth/register_page.dart';
 import '../modules/profile/profile_page.dart';
@@ -25,18 +27,29 @@ import '../modules/technician/mapbox_location_picker_page.dart';
 import '../modules/profile/profile_edit_page.dart';
 import '../modules/chat/chat_page.dart';
 import '../modules/chat/chat_controller.dart';
+import '../modules/chat/chat_inbox_page.dart';
+import '../modules/chat/chat_inbox_controller.dart';
 import '../modules/booking/review_page.dart';
 import '../modules/technician/onboarding/onboarding_page.dart';
 import '../modules/technician/onboarding/onboarding_controller.dart';
 import '../modules/technician/my_service_page.dart';
 import '../modules/technician/service_detail_page.dart';
-import '../admin/admin_verification_page.dart';
+import '../modules/technician/technician_active_orders_page.dart';
+import '../modules/technician/price_estimate_page.dart';
+import '../modules/technician/repair_approval_page.dart';
+import '../modules/technician/technician_order_history_page.dart';
+import '../modules/booking/pay_service_page.dart';
+import '../modules/booking/booking_detail_page.dart';
+import '../modules/booking/customer_orders_page.dart';
+import '../modules/technician/technician_saved_address_page.dart';
+import '../modules/notification/notification_controller.dart';
+import '../modules/notification/notification_page.dart';
+import '../modules/technician/technician_pending_page.dart';
 import '../admin/admin_home_page.dart';
-import '../admin/admin_controller.dart';
-import '../modules/technician/verification_pending_page.dart';
-import '../modules/technician/verification_declined_page.dart';
+import '../admin/admin_verification_page.dart';
 
 class AppRoutes {
+  static const String splash = '/splash';
   static const String login = '/login';
   static const String register = '/register';
   static const String profilePage = '/profile';
@@ -62,12 +75,26 @@ class AppRoutes {
   static const technicianOnboarding = '/technician/onboarding';
   static const myService = '/technician/my-service';
   static const serviceDetail = '/technician/service-detail';
-  static const String adminVerification = '/admin-verification';
-  static const String adminHome = '/admin-home';
-  static const String verificationPending = '/technician/verification-pending';
-  static const String verificationDeclined = '/technician/verification-declined';
+  static const activeOrders = '/technician/active-orders';
+  static const priceEstimate = '/technician/price-estimate';
+  static const repairApproval = '/technician/repair-approval';
+  static const payService = '/customer/pay-service';
+  static const technicianOrderHistory = '/technician/order-history';
+  static const bookingDetail = '/customer/booking-detail';
+  static const technicianSavedAddress = '/technician/saved-address';
+  static const customerOrders = '/customer/orders';
+  static const chatInbox = '/chat-inbox';
+  static const notifications = '/notifications';
+  static const technicianPending = '/technician/pending';
+  static const adminHome = '/admin-home';
+  static const adminVerification = '/admin-verification';
+  static const verificationPending = '/technician/verification-pending';
 
   static final routes = [
+    GetPage(
+      name: splash,
+      page: () => const SplashPage(),
+    ),
     GetPage(
       name: login,
       page: () => const LoginPage(),
@@ -88,6 +115,8 @@ class AppRoutes {
       binding: BindingsBuilder(() {
         Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
         Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
+        Get.lazyPut<BookingController>(() => BookingController(), fenix: true);
+        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
       }),
     ),
     GetPage(
@@ -153,6 +182,7 @@ class AppRoutes {
       page: () => const TechnicianHomePage(),
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
       }),
     ),
     GetPage(
@@ -233,23 +263,92 @@ class AppRoutes {
       page: () => const ServiceDetailPage(),
     ),
     GetPage(
-      name: adminVerification,
-      page: () => const admin_verification_page(),
-    ),
-    GetPage(
-      name: adminHome,
-      page: () => const AdminHomePage(),
+      name: activeOrders,
+      page: () => const TechnicianActiveOrdersPage(),
       binding: BindingsBuilder(() {
-        Get.put(AdminController());
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),
     ),
     GetPage(
-      name: verificationPending,
-      page: () => const VerificationPendingPage(),
+      name: priceEstimate,
+      page: () => const PriceEstimatePage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
     ),
     GetPage(
-      name: verificationDeclined,
-      page: () => const VerificationDeclinedPage(),
+      name: repairApproval,
+      page: () => const RepairApprovalPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
     ),
+    GetPage(
+      name: payService,
+      page: () => const PayServicePage(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<BookingController>()) Get.put(BookingController());
+      }),
+    ),
+    GetPage(
+      name: technicianOrderHistory,
+      page: () => const TechnicianOrderHistoryPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: bookingDetail,
+      page: () => const BookingDetailPage(),
+    ),
+    GetPage(
+      name: technicianSavedAddress,
+      page: () => const TechnicianSavedAddressPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(
+            () => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: customerOrders,
+      page: () => const CustomerOrdersPage(),
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<BookingController>()) Get.put(BookingController());
+      }),
+    ),
+    GetPage(
+      name: chatInbox,
+      page: () => const ChatInboxPage(),
+      binding: BindingsBuilder(() {
+        Get.delete<ChatInboxController>(force: true);
+        Get.put(ChatInboxController());
+      }),
+    ),
+    GetPage(
+      name: notifications,
+      page: () => const NotificationPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
+      }),
+    ),
+
+    // ── Admin ────────────────────────────────────────────────────
+    GetPage(
+      name: adminHome,
+      page: () => const AdminHomePage(),
+    ),
+    GetPage(
+      name: adminVerification,
+      page: () => const AdminVerificationPage(),
+    ),
+
+    // ── Technician Pending ───────────────────────────────────────
+    GetPage(
+      name: technicianPending,
+      page: () => const TechnicianPendingPage(),
+    ),
+    GetPage(
+      name: verificationPending, 
+      page: () => const VerificationPendingPage()),
   ];
 }

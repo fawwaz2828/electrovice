@@ -38,7 +38,15 @@ class ProfilePage extends GetView<ProfileController> {
               children: [
                 _buildTopBar(),
                 const SizedBox(height: 30),
-                Center(child: _AvatarCard(imageUrl: data.avatarUrl)),
+                Center(
+                  child: GestureDetector(
+                    onTap: controller.pickAndUploadPhoto,
+                    child: Obx(() => _AvatarCard(
+                          imageUrl: data.avatarUrl,
+                          isUploading: controller.isUploadingPhoto.value,
+                        )),
+                  ),
+                ),
                 const SizedBox(height: 18),
                 Center(
                   child: Text(
@@ -237,9 +245,10 @@ class ProfilePage extends GetView<ProfileController> {
 }
 
 class _AvatarCard extends StatelessWidget {
-  const _AvatarCard({this.imageUrl});
+  const _AvatarCard({this.imageUrl, this.isUploading = false});
 
   final String? imageUrl;
+  final bool isUploading;
 
   @override
   Widget build(BuildContext context) {
@@ -261,7 +270,23 @@ class _AvatarCard extends StatelessWidget {
               ),
             ],
           ),
-          child: const _AvatarPlaceholder(),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: isUploading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF0F172A),
+                    ),
+                  )
+                : (imageUrl != null && imageUrl!.isNotEmpty)
+                    ? Image.network(
+                        imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _AvatarPlaceholder(),
+                      )
+                    : const _AvatarPlaceholder(),
+          ),
         ),
         Positioned(
           right: -2,
@@ -275,7 +300,7 @@ class _AvatarCard extends StatelessWidget {
               border: Border.all(color: Colors.white, width: 2.5),
             ),
             child: const Icon(
-              Icons.edit_outlined,
+              Icons.camera_alt_outlined,
               color: Colors.white,
               size: 17,
             ),

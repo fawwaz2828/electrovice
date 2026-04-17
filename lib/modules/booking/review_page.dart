@@ -15,6 +15,7 @@ class _ReviewPageState extends State<ReviewPage> {
   late final BookingDocument _booking;
   final _reviewCtrl = TextEditingController();
   int _selectedRating = 5;
+  bool _recommend = true;
   bool _isSubmitting = false;
 
   @override
@@ -43,17 +44,18 @@ class _ReviewPageState extends State<ReviewPage> {
         technicianId: _booking.technicianId,
         rating: _selectedRating,
         review: _reviewCtrl.text.trim(),
+        recommend: _recommend,
       );
       Get.offAllNamed(AppRoutes.home);
       Get.snackbar(
         'Terima Kasih!',
         'Ulasan kamu sudah tersimpan',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFF22C55E),
         colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -114,6 +116,13 @@ class _ReviewPageState extends State<ReviewPage> {
                         );
                       },
                     ),
+                    const SizedBox(height: 16),
+
+                    // ── Recommend toggle ───────────────────────
+                    _RecommendToggle(
+                      value: _recommend,
+                      onChanged: (v) => setState(() => _recommend = v),
+                    ),
                   ],
                 ),
               ),
@@ -125,24 +134,40 @@ class _ReviewPageState extends State<ReviewPage> {
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
               child: SafeArea(
                 top: false,
-                child: FilledButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(56),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28)),
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : const Text('KIRIM ULASAN',
-                          style: TextStyle(fontWeight: FontWeight.w800)),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FilledButton(
+                      onPressed: _isSubmitting ? null : _submit,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(56),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28)),
+                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2.5),
+                            )
+                          : const Text('SUBMIT FEEDBACK',
+                              style: TextStyle(fontWeight: FontWeight.w800)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => Get.offAllNamed(AppRoutes.home),
+                      child: const Text(
+                        'Skip for now',
+                        style: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -309,6 +334,7 @@ class _ReviewTextField extends StatelessWidget {
           TextField(
             controller: controller,
             maxLines: 4,
+            maxLength: 500,
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText:
@@ -322,6 +348,50 @@ class _ReviewTextField extends StatelessWidget {
               ),
               contentPadding: const EdgeInsets.all(14),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Recommend Toggle ───────────────────────────────────────────────────────
+class _RecommendToggle extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _RecommendToggle({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Rekomendasikan teknisi ini?',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Bantu pengguna lain dengan rekomendasimu',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: const Color(0xFF4163FF),
+            activeTrackColor: const Color(0xFFBFCBFF),
           ),
         ],
       ),

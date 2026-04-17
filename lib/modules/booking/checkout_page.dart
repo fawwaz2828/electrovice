@@ -33,7 +33,6 @@ class CheckoutPage extends GetView<BookingController> {
       body: SafeArea(
         child: Obx(() {
           final CheckoutSummary checkout = controller.checkoutData;
-          final tech = controller.selectedTechnician.value;
 
           return Column(
             children: [
@@ -45,15 +44,15 @@ class CheckoutPage extends GetView<BookingController> {
                   child: Column(
                     children: [
                       // ── 1. Current Repair Card ───────────────────
-                      _CurrentRepairCard(checkout: checkout, tech: tech),
+                      _CurrentRepairCard(checkout: checkout),
                       const SizedBox(height: 14),
 
                       // ── 2. Jadwal Repair ─────────────────────────
                       _JadwalRepairCard(),
                       const SizedBox(height: 14),
 
-                      // ── 3. Biaya Diagnosa ────────────────────────
-                      _BiayaDiagnosaCard(tech: tech),
+                      // ── 3. Biaya Tambahan ────────────────────────
+                      const _BiayaTambahanCard(),
                       const SizedBox(height: 14),
 
                       // ── 4. Cost Breakdown ────────────────────────
@@ -135,14 +134,13 @@ class _CheckoutTopBar extends StatelessWidget {
 }
 
 // ── 1. Current Repair Card ────────────────────────────────────────────────
-class _CurrentRepairCard extends StatelessWidget {
+class _CurrentRepairCard extends GetView<BookingController> {
   final CheckoutSummary checkout;
-  final dynamic tech; // TechnicianOnlineModel | null
-  const _CurrentRepairCard({required this.checkout, this.tech});
+  const _CurrentRepairCard({required this.checkout});
 
   @override
   Widget build(BuildContext context) {
-    final name = tech?.name as String? ?? checkout.currentRepairTitle;
+    final name = controller.selectedTechnician.value?.name ?? checkout.currentRepairTitle;
     final scheduled = checkout.scheduledForLabel;
 
     return Container(
@@ -364,76 +362,103 @@ class _JadwalRepairCard extends GetView<BookingController> {
   }
 }
 
-// ── 3. Biaya Diagnosa Card ────────────────────────────────────────────────
-class _BiayaDiagnosaCard extends StatelessWidget {
-  final dynamic tech;
-  const _BiayaDiagnosaCard({this.tech});
+// ── 3. Biaya Tambahan Card ────────────────────────────────────────────────
+class _BiayaTambahanCard extends GetView<BookingController> {
+  const _BiayaTambahanCard();
 
   @override
   Widget build(BuildContext context) {
-    // diagnosisFee from TechnicianOnlineModel (stored in technicians_online as int)
-    // We show Rp 12.000 as admin fee placeholder; actual fee from tech profile
-    final fee = 12000.0; // default biaya administrasi
+    return Obx(() {
+      final checkout = controller.checkoutData;
+      final distKm = controller.selectedTechnician.value?.distanceKm ?? 0;
+      final distLabel = distKm >= 10 ? '≥10 km' : '<10 km';
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Biaya Diagnosa',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: _ink,
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _card,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Biaya Administrasi',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: _ink,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Biaya Tambahan',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: _ink,
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Admin fee
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Biaya Admin (10%)',
+                        style: TextStyle(fontSize: 13, color: _muted),
                       ),
-                    ),
-                    const Text(
-                      'Pencatatan sistem',
-                      style: TextStyle(fontSize: 11, color: _muted),
-                    ),
-                  ],
+                      const Text(
+                        'Dari estimasi harga servis',
+                        style: TextStyle(fontSize: 11, color: _muted),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Text(
-                _rp(fee),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: _ink,
+                Text(
+                  _rp(checkout.adminFee),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _ink,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Delivery fee
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Ongkos Kirim',
+                        style: TextStyle(fontSize: 13, color: _muted),
+                      ),
+                      Text(
+                        'Jarak $distLabel dari workshop',
+                        style: const TextStyle(fontSize: 11, color: _muted),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  _rp(checkout.deliveryFee),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _ink,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -474,7 +499,9 @@ class _CostBreakdown extends StatelessWidget {
           const SizedBox(height: 8),
           _CostRow(label: checkout.partsLabel, value: checkout.partsFee),
           const SizedBox(height: 8),
-          _CostRow(label: 'Tax & Processing Fee', value: checkout.taxFee),
+          _CostRow(label: 'Biaya Admin (10%)', value: checkout.adminFee),
+          const SizedBox(height: 8),
+          _CostRow(label: 'Ongkos Kirim', value: checkout.deliveryFee),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 14),
             child: Divider(height: 1, color: Color(0xFFF1F5F9)),

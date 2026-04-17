@@ -6,6 +6,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox
 
 import '../../config/routes.dart';
 import '../../services/technician_service.dart';
+import '../../utils/maps_launcher.dart';
 import 'booking_controller.dart';
 
 // ── Palette ──────────────────────────────────────────────────────────────────
@@ -213,15 +214,7 @@ class _ProfileHeader extends GetView<BookingController> {
 
           // ── CHAT FIRST button ────────────────────────────────────
           OutlinedButton.icon(
-            onPressed: () {
-              final t = controller.selectedTechnician.value;
-              if (t == null) return;
-              Get.toNamed(AppRoutes.chat, arguments: {
-                'chatId': t.uid,
-                'otherPartyName': t.name,
-                'otherPartyPhotoUrl': t.photoUrl,
-              });
-            },
+            onPressed: () => controller.openPreChat(),
             style: OutlinedButton.styleFrom(
               foregroundColor: _ink,
               side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
@@ -517,15 +510,7 @@ class _NotListedCard extends GetView<BookingController> {
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () {
-              final t = controller.selectedTechnician.value;
-              if (t == null) return;
-              Get.toNamed(AppRoutes.chat, arguments: {
-                'chatId': t.uid,
-                'otherPartyName': t.name,
-                'otherPartyPhotoUrl': t.photoUrl,
-              });
-            },
+            onPressed: () => controller.openPreChat(),
             style: OutlinedButton.styleFrom(
               foregroundColor: _blue,
               side: const BorderSide(color: _blue),
@@ -846,39 +831,77 @@ class _AboutTab extends GetView<BookingController> {
         const SizedBox(height: 14),
 
         // ── Certifications ──────────────────────────────────────
-        if (tech.accreditations.isNotEmpty)
+        if (tech.accreditations.isNotEmpty || tech.certificationUrls.isNotEmpty)
           _SectionCard(
             title: 'CERTIFICATION',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.verified_outlined,
-                            size: 28, color: _muted),
-                        const SizedBox(height: 4),
-                        Text(
-                          tech.accreditations.join(', '),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _muted,
+                // Photo tiles (horizontal scroll)
+                if (tech.certificationUrls.isNotEmpty) ...[
+                  SizedBox(
+                    height: 100,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: tech.certificationUrls.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      itemBuilder: (_, i) => ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          tech.certificationUrls[i],
+                          width: 140,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 140,
+                            height: 100,
+                            color: const Color(0xFFF1F5F9),
+                            child: const Icon(Icons.broken_image_outlined,
+                                color: _muted),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                ],
+                // Name chips
+                if (tech.accreditations.isNotEmpty)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: tech.accreditations
+                        .map((name) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF4FF),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.verified_rounded,
+                                      size: 13, color: _blue),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    name,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: _blue,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ))
+                        .toList(),
+                  )
+                else if (tech.certificationUrls.isNotEmpty)
+                  const Text(
+                    'Foto sertifikat tersedia.',
+                    style: TextStyle(fontSize: 12, color: _muted),
+                  ),
               ],
             ),
           ),
@@ -939,7 +962,23 @@ class _AboutTab extends GetView<BookingController> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        if (tech.lat != null && tech.lng != null) {
+                          MapsLauncher.navigateTo(
+                            lat: tech.lat!,
+                            lng: tech.lng!,
+                            label: tech.name,
+                          );
+                        } else if (tech.workshopAddress.isNotEmpty) {
+                          MapsLauncher.searchAddress(tech.workshopAddress);
+                        } else {
+                          Get.snackbar(
+                            'Lokasi tidak tersedia',
+                            'Teknisi belum mengisi alamat workshop',
+                            snackPosition: SnackPosition.TOP,
+                          );
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _blue,
                         side: const BorderSide(color: _blue),
@@ -965,7 +1004,7 @@ class _AboutTab extends GetView<BookingController> {
                         Get.snackbar(
                           'Tersalin',
                           'Alamat disalin ke clipboard',
-                          snackPosition: SnackPosition.BOTTOM,
+                          snackPosition: SnackPosition.TOP,
                           duration: const Duration(seconds: 2),
                         );
                       },

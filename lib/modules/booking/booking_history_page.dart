@@ -47,12 +47,24 @@ class BookingHistoryPage extends GetView<BookingController> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                ...items.map(
-                  (item) => Padding(
+                ...List.generate(items.length, (i) {
+                  final item = items[i];
+                  final doc = controller.bookingHistory.length > i
+                      ? controller.bookingHistory[i]
+                      : null;
+                  return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _HistoryRecordCard(item: item),
-                  ),
-                ),
+                    child: GestureDetector(
+                      onTap: doc == null
+                          ? null
+                          : () => Get.toNamed(
+                                AppRoutes.bookingDetail,
+                                arguments: doc,
+                              ),
+                      child: _HistoryRecordCard(item: item, category: doc?.category ?? ''),
+                    ),
+                  );
+                }),
                 const SizedBox(height: 10),
                 // Cari booking done yang belum dirating
                 Builder(builder: (_) {
@@ -74,13 +86,14 @@ class BookingHistoryPage extends GetView<BookingController> {
 }
 
 class _HistoryRecordCard extends StatelessWidget {
-  const _HistoryRecordCard({required this.item});
+  const _HistoryRecordCard({required this.item, this.category = ''});
 
   final OrderHistoryRecord item;
+  final String category;
 
   @override
   Widget build(BuildContext context) {
-    final badge = _badge(item.status);
+    final badge = _badge(item.status, category);
 
     return Container(
       width: double.infinity,
@@ -148,28 +161,55 @@ class _HistoryRecordCard extends StatelessWidget {
     );
   }
 
-  (Color, Color, IconData, String) _badge(OrderHistoryStatus status) {
+  IconData _categoryIcon(String cat) {
+    switch (cat.toLowerCase()) {
+      case 'vehicle':
+      case 'kendaraan':
+        return Icons.two_wheeler_rounded;
+      case 'ac':
+        return Icons.ac_unit_rounded;
+      default:
+        return Icons.devices_rounded;
+    }
+  }
+
+  (Color, Color, IconData, String) _badge(OrderHistoryStatus status, String cat) {
+    final icon = _categoryIcon(cat);
     switch (status) {
       case OrderHistoryStatus.success:
         return (
           const Color(0xFF7B8DEB),
           const Color(0xFF4F5C88),
-          Icons.computer_outlined,
-          'SUCCESS',
+          icon,
+          'SELESAI',
         );
       case OrderHistoryStatus.canceled:
         return (
           const Color(0xFF9AA2B4),
           const Color(0xFF6D7486),
-          Icons.smartphone_rounded,
-          'CANCELED',
+          icon,
+          'DIBATALKAN',
         );
       case OrderHistoryStatus.verificationFailed:
         return (
           const Color(0xFFD79A2B),
           const Color(0xFFB3671F),
-          Icons.ac_unit_rounded,
-          'VERIFICATION FAILED',
+          icon,
+          'VERIF GAGAL',
+        );
+      case OrderHistoryStatus.active:
+        return (
+          const Color(0xFF3B82F6),
+          const Color(0xFF1D4ED8),
+          Icons.autorenew_rounded,
+          'AKTIF',
+        );
+      case OrderHistoryStatus.awaitingPayment:
+        return (
+          const Color(0xFF10B981),
+          const Color(0xFF047857),
+          Icons.payment_rounded,
+          'BAYAR',
         );
     }
   }

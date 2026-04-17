@@ -25,6 +25,8 @@ enum OrderHistoryStatus {
   success,
   canceled,
   verificationFailed,
+  active,           // pending / confirmed / on_progress
+  awaitingPayment,  // menunggu konfirmasi pembayaran
 }
 
 class CustomerTechnicianDetail {
@@ -238,7 +240,8 @@ class CheckoutSummary {
     required this.serviceFee,
     required this.partsLabel,
     required this.partsFee,
-    required this.taxFee,
+    required this.adminFee,
+    required this.deliveryFee,
   });
 
   final String currentRepairTitle;
@@ -248,9 +251,12 @@ class CheckoutSummary {
   final double serviceFee;
   final String partsLabel;
   final double partsFee;
-  final double taxFee;
+  /// Biaya admin = 10% dari serviceFee
+  final double adminFee;
+  /// Ongkos kirim: Rp8.000 jika jarak <10km, Rp15.000 jika ≥10km
+  final double deliveryFee;
 
-  double get totalAmount => serviceFee + partsFee + taxFee;
+  double get totalAmount => serviceFee + partsFee + adminFee + deliveryFee;
 
   factory CheckoutSummary.fromMap(Map<String, dynamic> map) {
     return CheckoutSummary(
@@ -271,7 +277,8 @@ class CheckoutSummary {
       serviceFee: (map['serviceFee'] as num?)?.toDouble() ?? 0,
       partsLabel: map['partsLabel'] as String? ?? '',
       partsFee: (map['partsFee'] as num?)?.toDouble() ?? 0,
-      taxFee: (map['taxFee'] as num?)?.toDouble() ?? 0,
+      adminFee: (map['adminFee'] as num?)?.toDouble() ?? 0,
+      deliveryFee: (map['deliveryFee'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -284,7 +291,8 @@ class CheckoutSummary {
       'serviceFee': serviceFee,
       'partsLabel': partsLabel,
       'partsFee': partsFee,
-      'taxFee': taxFee,
+      'adminFee': adminFee,
+      'deliveryFee': deliveryFee,
     };
   }
 }

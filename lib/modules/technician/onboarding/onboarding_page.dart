@@ -8,13 +8,13 @@ import '../../../config/routes.dart';
 import 'onboarding_controller.dart';
 
 // ── Colors ────────────────────────────────────────────────────────────────────
-const _bg = Color(0xFF0A0A0A);
-const _surface = Color(0xFF111111);
-const _card = Color(0xFF1A1A1A);
-const _border = Color(0xFF2A2A2A);
-const _white = Colors.white;
-const _secondary = Color(0xFF9E9E9E);
-const _hint = Color(0xFF6B7280);
+const _bg = Color(0xFFF8F9FD);
+const _surface = Colors.white;
+const _card = Colors.white;
+const _border = Color(0xFFE2E8F0);
+const _white = Color(0xFF0F172A);
+const _secondary = Color(0xFF64748B);
+const _hint = Color(0xFF94A3B8);
 
 const _stepLabels = [
   'Personal',
@@ -37,7 +37,7 @@ class TechnicianOnboardingPage extends GetView<TechnicianOnboardingController> {
         backgroundColor: _bg,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         leading: Obx(
           () => IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded,
@@ -130,13 +130,13 @@ class _StepDot extends StatelessWidget {
 
     if (isDone) {
       bg = _white;
-      child = const Icon(Icons.check_rounded, size: 12, color: Colors.black);
+      child = const Icon(Icons.check_rounded, size: 12, color: Colors.white);
     } else if (isActive) {
       bg = _white;
       child = Text(
         '${index + 1}',
         style: const TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w800, color: Colors.black),
+            fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
       );
     } else {
       bg = _border;
@@ -212,7 +212,7 @@ class _BottomBar extends StatelessWidget {
                             : ctrl.nextStep,
                     style: FilledButton.styleFrom(
                       backgroundColor: _white,
-                      foregroundColor: Colors.black,
+                      foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 52),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -222,7 +222,7 @@ class _BottomBar extends StatelessWidget {
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.black),
+                                strokeWidth: 2, color: Colors.white),
                           )
                         : Text(
                             isLast ? 'Submit Registration →' : 'Continue →',
@@ -437,7 +437,7 @@ class _GenderChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black : _secondary,
+            color: isSelected ? Colors.white : _secondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 14,
           ),
@@ -733,7 +733,7 @@ class _Step3 extends StatelessWidget {
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
-                                color: isSelected ? _white : const Color(0xFF242424),
+                                color: isSelected ? _white : const Color(0xFFF1F5F9),
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                     color: isSelected ? _white : _border),
@@ -944,7 +944,7 @@ class _TimePickerButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF242424),
+          color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: _border),
         ),
@@ -1050,6 +1050,11 @@ class _Step4 extends StatelessWidget {
                       _CertItem(
                           index: e.key,
                           file: e.value,
+                          initialName: e.key < ctrl.certificationNames.length
+                              ? ctrl.certificationNames[e.key]
+                              : '',
+                          onNameChanged: (name) =>
+                              ctrl.updateCertificationName(e.key, name),
                           onRemove: () => ctrl.removeCertification(e.key))),
                   if (ctrl.certificationFiles.length < 5)
                     _AddCertButton(onTap: ctrl.pickCertification),
@@ -1123,7 +1128,7 @@ class _ServiceMethodCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFD6E4FF) : const Color(0xFF1E1E1E),
+            color: isSelected ? const Color(0xFFD6E4FF) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? const Color(0xFF3654FF) : _border,
@@ -1158,12 +1163,38 @@ class _ServiceMethodCard extends StatelessWidget {
   }
 }
 
-class _CertItem extends StatelessWidget {
+class _CertItem extends StatefulWidget {
   final int index;
   final File file;
+  final String initialName;
+  final ValueChanged<String> onNameChanged;
   final VoidCallback onRemove;
-  const _CertItem(
-      {required this.index, required this.file, required this.onRemove});
+  const _CertItem({
+    required this.index,
+    required this.file,
+    required this.initialName,
+    required this.onNameChanged,
+    required this.onRemove,
+  });
+
+  @override
+  State<_CertItem> createState() => _CertItemState();
+}
+
+class _CertItemState extends State<_CertItem> {
+  late final TextEditingController _nameCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1175,22 +1206,36 @@ class _CertItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: _border)),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: Image.file(file,
+            child: Image.file(widget.file,
                 width: 48, height: 48, fit: BoxFit.cover),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              'Certification ${index + 1}',
-              style:
-                  const TextStyle(color: _white, fontWeight: FontWeight.w600),
+            child: TextField(
+              controller: _nameCtrl,
+              onChanged: widget.onNameChanged,
+              style: const TextStyle(color: _white, fontSize: 13, fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                hintText: 'Certificate name (e.g. Samsung Certified)',
+                hintStyle: const TextStyle(color: _hint, fontSize: 12),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: _border),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF3654FF)),
+                ),
+              ),
             ),
           ),
+          const SizedBox(width: 4),
           IconButton(
-            onPressed: onRemove,
+            onPressed: widget.onRemove,
             icon: const Icon(Icons.close_rounded,
                 color: Colors.redAccent, size: 20),
             padding: EdgeInsets.zero,
@@ -1258,9 +1303,9 @@ class _Step5 extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1200),
+              color: const Color(0xFFFFFBEB),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF3A2E00)),
+              border: Border.all(color: const Color(0xFFFDE68A)),
             ),
             child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1272,7 +1317,7 @@ class _Step5 extends StatelessWidget {
                   child: Text(
                     'Biaya ini tetap dibayar customer meski mereka menolak penawaran perbaikanmu.',
                     style: TextStyle(
-                        color: Color(0xFFFDE68A),
+                        color: Color(0xFF92400E),
                         fontSize: 12,
                         height: 1.5),
                   ),
@@ -1409,9 +1454,9 @@ class _Step6 extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0A1500),
+                  color: const Color(0xFFF0FDF4),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF1E3A00)),
+                  border: Border.all(color: const Color(0xFFBBF7D0)),
                 ),
                 child: const Row(
                   children: [
@@ -1422,7 +1467,7 @@ class _Step6 extends StatelessWidget {
                       child: Text(
                         'Akun akan langsung diaktifkan setelah submit.',
                         style: TextStyle(
-                            color: Color(0xFF86EFAC),
+                            color: Color(0xFF166534),
                             fontSize: 12,
                             height: 1.5),
                       ),
@@ -1619,7 +1664,7 @@ class _SelectChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black : _secondary,
+            color: isSelected ? Colors.white : _secondary,
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),

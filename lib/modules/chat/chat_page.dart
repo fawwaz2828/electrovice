@@ -15,7 +15,9 @@ class ChatPage extends StatelessWidget {
       body: Column(
         children: [
           Expanded(child: _MessageList(ctrl: ctrl)),
-          _InputBar(ctrl: ctrl),
+          Obx(() => ctrl.sessionClosed.value
+              ? _ClosedSessionBanner()
+              : _InputBar(ctrl: ctrl)),
         ],
       ),
     );
@@ -261,33 +263,60 @@ class _MessageBubble extends StatelessWidget {
           crossAxisAlignment:
               isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: isMine ? myBg : otherBg,
+            if (message.isImage)
+              // ── Image bubble ───────────────────────────────────
+              ClipRRect(
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
                   bottomLeft: Radius.circular(isMine ? 18 : (showTail ? 4 : 18)),
                   bottomRight: Radius.circular(isMine ? (showTail ? 4 : 18) : 18),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+                child: Image.network(
+                  message.imageUrl!,
+                  width: MediaQuery.of(context).size.width * 0.65,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (_, child, progress) => progress == null
+                      ? child
+                      : Container(
+                          width: MediaQuery.of(context).size.width * 0.65,
+                          height: 180,
+                          color: const Color(0xFFE2E8F0),
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                ),
+              )
+            else
+              // ── Text bubble ────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isMine ? myBg : otherBg,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(18),
+                    topRight: const Radius.circular(18),
+                    bottomLeft: Radius.circular(isMine ? 18 : (showTail ? 4 : 18)),
+                    bottomRight: Radius.circular(isMine ? (showTail ? 4 : 18) : 18),
                   ),
-                ],
-              ),
-              child: Text(
-                message.text,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isMine ? const Color(0xFF1E2A4A) : Colors.black87,
-                  height: 1.4,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  message.text,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isMine ? const Color(0xFF1E2A4A) : Colors.black87,
+                    height: 1.4,
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 3),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -332,20 +361,26 @@ class _InputBar extends StatelessWidget {
           12, 8, 12, MediaQuery.of(context).padding.bottom + 8),
       child: Row(
         children: [
-          // Camera button
-          GestureDetector(
-            onTap: () {},
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F4F8),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.add_photo_alternate_outlined,
-                  size: 20, color: Color(0xFF6B7487)),
-            ),
-          ),
+          // Photo button
+          Obx(() => GestureDetector(
+                onTap: ctrl.isUploadingPhoto.value ? null : ctrl.sendPhoto,
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F4F8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ctrl.isUploadingPhoto.value
+                      ? const Padding(
+                          padding: EdgeInsets.all(11),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Color(0xFF4163FF)),
+                        )
+                      : const Icon(Icons.add_photo_alternate_outlined,
+                          size: 20, color: Color(0xFF6B7487)),
+                ),
+              )),
           const SizedBox(width: 8),
 
           // Text field
@@ -390,6 +425,42 @@ class _InputBar extends StatelessWidget {
                 ),
               )),
         ],
+      ),
+    );
+  }
+}
+
+// ── Closed Session Banner ──────────────────────────────────────────────────
+class _ClosedSessionBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.fromLTRB(
+          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F3F7),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_outline_rounded,
+                size: 16, color: Color(0xFF94A3B8)),
+            SizedBox(width: 8),
+            Text(
+              'Sesi chat telah berakhir',
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

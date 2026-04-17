@@ -9,6 +9,7 @@ class TechnicianService {
   Future<void> updateTechnicianProfile(
     String uid, {
     required String name,
+    String phone = '',
     required String category,
     required String specialty,
     required String bio,
@@ -19,13 +20,16 @@ class TechnicianService {
     required double lat,
     required double lng,
     required List<String> accreditations,
+    List<String> certificationUrls = const [],
     required List<Map<String, dynamic>> serviceEstimates,
+    int diagnosisFee = 0,
   }) async {
     final GeoFirePoint point = GeoFirePoint(GeoPoint(lat, lng));
 
     // Update collection users
     await _firestore.collection('users').doc(uid).update({
       'name': name,
+      if (phone.isNotEmpty) 'phone': phone,
       'technicianProfile.category': category,
       'technicianProfile.specialty': specialty,
       'technicianProfile.bio': bio,
@@ -44,11 +48,34 @@ class TechnicianService {
       'workshopAddress': workshopAddress,
       'location': point.data,
       'accreditations': accreditations,
+      'certificationUrls': certificationUrls,
       'serviceEstimates': serviceEstimates,
       'serviceRadius': serviceRadius,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     // merge: true supaya rating & totalJobs tidak tertimpa
+  }
+
+  // ── UPDATE WORKSHOP ADDRESS ONLY ──────────────────────────────
+  Future<void> updateWorkshopAddress({
+    required String uid,
+    required String address,
+    required double lat,
+    required double lng,
+  }) async {
+    final GeoFirePoint point = GeoFirePoint(GeoPoint(lat, lng));
+    await _firestore.collection('technicians_online').doc(uid).set({
+      'workshopAddress': address,
+      'location': point.data,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    // Also update users collection
+    await _firestore.collection('users').doc(uid).update({
+      'technicianProfile.workshopAddress': address,
+      'technicianProfile.latitude': lat,
+      'technicianProfile.longitude': lng,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   // ── GET CURRENT LOCATION ───────────────────────────────────────
@@ -93,6 +120,7 @@ class TechnicianService {
 
       result = snapshots
           .where((doc) => doc.data() != null)
+          .where((doc) => doc.data()!['isOnline'] != false)
           .map((doc) {
             final data = doc.data()!;
             double distKm = 0;
@@ -102,7 +130,8 @@ class TechnicianService {
                     lat, lng, gp.latitude, gp.longitude) /
                   1000;
             } catch (_) {}
-            return TechnicianOnlineModel.fromMap(data, distanceKm: distKm);
+            return TechnicianOnlineModel.fromMap(data,
+                distanceKm: distKm, injectDiagnosa: true);
           })
           .toList();
     } catch (_) {}
@@ -115,6 +144,7 @@ class TechnicianService {
 
       result = snapshot.docs
           .where((d) => d.data().isNotEmpty)
+          .where((d) => d.data()['isOnline'] != false)
           .map((d) {
             final data = d.data();
             double distKm = 0;
@@ -127,7 +157,8 @@ class TechnicianService {
                     1000;
               }
             } catch (_) {}
-            return TechnicianOnlineModel.fromMap(data, distanceKm: distKm);
+            return TechnicianOnlineModel.fromMap(data,
+                distanceKm: distKm, injectDiagnosa: true);
           })
           .toList();
     }
@@ -147,7 +178,30 @@ class TechnicianService {
         .doc(uid)
         .get();
     if (!doc.exists || doc.data() == null) return null;
-    return TechnicianOnlineModel.fromMap(doc.data()!);
+    return TechnicianOnlineModel.fromMap(doc.data()!, injectDiagnosa: true);
+  }
+
+  // ── INJECT DIAGNOSA HELPER ─────────────────────────────────────
+  static List<ServiceEstimate> _withDiagnosa(
+    List<ServiceEstimate> list,
+    int diagFee,
+  ) {
+    if (diagFee <= 0) return list;
+    final hasDiagnosa = list.any(
+      (s) => s.service.toLowerCase().contains('diagnosa'),
+    );
+    if (hasDiagnosa) return list;
+    return [
+      ServiceEstimate(
+        service: 'Diagnosa',
+        minPrice: diagFee,
+        maxPrice: diagFee,
+        description:
+            'Pemeriksaan awal kondisi perangkat untuk menentukan kerusakan dan estimasi biaya perbaikan.',
+        duration: 'same_day',
+      ),
+      ...list,
+    ];
   }
 
   // ── SERVICE ESTIMATE CRUD ───────────────────────────────────────
@@ -169,26 +223,8 @@ class TechnicianService {
         .map((e) => ServiceEstimate.fromMap(Map<String, dynamic>.from(e)))
         .toList();
 
-    // Inject diagnosa dari diagnosisFee jika belum ada
     final diagFee = (data['diagnosisFee'] as num?)?.toInt() ?? 0;
-    final hasDiagnosa = list.any(
-      (s) => s.service.toLowerCase().contains('diagnosa'),
-    );
-    if (diagFee > 0 && !hasDiagnosa) {
-      list.insert(
-        0,
-        ServiceEstimate(
-          service: 'Diagnosa',
-          minPrice: diagFee,
-          maxPrice: diagFee,
-          description:
-              'Pemeriksaan awal kondisi perangkat untuk menentukan kerusakan dan estimasi biaya perbaikan.',
-          duration: 'same_day',
-        ),
-      );
-    }
-
-    return list;
+    return _withDiagnosa(list, diagFee);
   }
 
   /// Simpan seluruh list service (replace all)
@@ -198,6 +234,19 @@ class TechnicianService {
       {'serviceEstimates': estimates.map((e) => e.toMap()).toList()},
       SetOptions(merge: true),
     );
+  }
+
+  /// Baca review snippets dari technicians_online (bisa dibaca customer).
+  /// Snippets ditulis oleh syncTechnicianStats saat teknisi buka app.
+  Future<List<Map<String, dynamic>>> getTechnicianReviewSnippets(
+      String techId) async {
+    final doc =
+        await _firestore.collection('technicians_online').doc(techId).get();
+    if (!doc.exists) return [];
+    return (doc.data()?['reviewSnippets'] as List<dynamic>? ?? [])
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 }
 
@@ -216,7 +265,9 @@ class TechnicianOnlineModel {
   final String workshopAddress;
   final double distanceKm;
   final List<String> accreditations;
+  final List<String> certificationUrls; // foto sertifikat
   final List<ServiceEstimate> serviceEstimates;
+  final int diagnosisFee;
   // Koordinat workshop — null jika belum pernah di-set
   final double? lat;
   final double? lng;
@@ -233,7 +284,9 @@ class TechnicianOnlineModel {
     required this.workshopAddress,
     required this.distanceKm,
     required this.accreditations,
+    required this.certificationUrls,
     required this.serviceEstimates,
+    required this.diagnosisFee,
     this.photoUrl,
     this.lat,
     this.lng,
@@ -242,18 +295,32 @@ class TechnicianOnlineModel {
   factory TechnicianOnlineModel.fromMap(
     Map<String, dynamic> map, {
     double distanceKm = 0,
+    bool injectDiagnosa = false,
   }) {
     final List<String> accreditations =
         (map['accreditations'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
+            // Filter out accidental URLs stored by old onboarding
+            .where((s) => !s.startsWith('http'))
             .toList();
 
-    final List<ServiceEstimate> estimates =
+    final List<String> certUrls =
+        (map['certificationUrls'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+
+    final diagFee = (map['diagnosisFee'] as num?)?.toInt() ?? 0;
+
+    List<ServiceEstimate> estimates =
         (map['serviceEstimates'] as List<dynamic>? ?? [])
             .whereType<Map>()
             .map((e) => ServiceEstimate.fromMap(
                 Map<String, dynamic>.from(e)))
             .toList();
+
+    if (injectDiagnosa) {
+      estimates = TechnicianService._withDiagnosa(estimates, diagFee);
+    }
 
     // Baca koordinat dari GeoFirePoint ('location.geopoint')
     double? lat;
@@ -274,13 +341,15 @@ class TechnicianOnlineModel {
       category: map['category'] as String? ?? 'electronic',
       rating: (map['rating'] as num?)?.toDouble() ?? 0.0,
       totalJobs: (map['totalJobs'] as num?)?.toInt() ?? 0,
-      yearsExperience: (map['yearsExperience'] as num?)?.toInt() ?? 0,
+      yearsExperience: _parseYearsExp(map['yearsExperience']),
       isAvailable: map['isAvailable'] as bool? ?? false,
       photoUrl: map['photoUrl'] as String?,
       workshopAddress: map['workshopAddress'] as String? ?? '',
       distanceKm: distanceKm,
       accreditations: accreditations,
+      certificationUrls: certUrls,
       serviceEstimates: estimates,
+      diagnosisFee: diagFee,
       lat: lat,
       lng: lng,
     );
@@ -290,6 +359,19 @@ class TechnicianOnlineModel {
     if (distanceKm < 1) return '${(distanceKm * 1000).toInt()} m';
     return '${distanceKm.toStringAsFixed(1)} km';
   }
+}
+
+/// Parse yearsExperience yang mungkin disimpan sebagai String ('1-2yr', '<1yr', '5yr+')
+/// atau sebagai num (int/double). Mengekstrak digit pertama dari string.
+int _parseYearsExp(dynamic v) {
+  if (v is num) return v.toInt();
+  if (v is String) {
+    final direct = int.tryParse(v);
+    if (direct != null) return direct;
+    final match = RegExp(r'(\d+)').firstMatch(v);
+    if (match != null) return int.parse(match.group(1)!);
+  }
+  return 0;
 }
 
 class ServiceEstimate {

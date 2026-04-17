@@ -49,6 +49,8 @@ class TechnicianOnboardingController extends GetxController {
   final RxList<String> deviceCategories = <String>[].obs;
   final RxString yearsExperience = ''.obs;
   final RxList<File> certificationFiles = <File>[].obs;
+  /// Parallel list — name for each uploaded certification photo
+  final RxList<String> certificationNames = <String>[].obs;
   final RxList<String> serviceMethod = <String>[].obs;
 
   // ── Step 5: Pricing ───────────────────────────────────────────
@@ -145,11 +147,21 @@ class TechnicianOnboardingController extends GetxController {
       source: ImageSource.gallery,
       imageQuality: 80,
     );
-    if (picked != null) certificationFiles.add(File(picked.path));
+    if (picked != null) {
+      certificationFiles.add(File(picked.path));
+      certificationNames.add(''); // placeholder — user fills in the name field
+    }
   }
 
   void removeCertification(int index) {
     certificationFiles.removeAt(index);
+    if (index < certificationNames.length) certificationNames.removeAt(index);
+  }
+
+  void updateCertificationName(int index, String name) {
+    if (index < certificationNames.length) {
+      certificationNames[index] = name;
+    }
   }
 
   // ── Date of Birth ─────────────────────────────────────────────
@@ -287,8 +299,9 @@ class TechnicianOnboardingController extends GetxController {
         'serviceMethod': serviceMethod.toList(),
         'yearsExperience': yearsExperience.value,
         'certificationUrls': certUrls,
+        'accreditations': certificationNames.map((n) => n.trim()).where((n) => n.isNotEmpty).toList(),
         'diagnosisFee': fee,
-        'verificationStatus': 'pending',
+        'verificationStatus': 'pending', // menunggu verifikasi admin
         'isAvailable': false,
         'rating': 0.0,
         'totalRatings': 0,
@@ -330,7 +343,8 @@ class TechnicianOnboardingController extends GetxController {
         'isAvailable': false,
         'workshopAddress': workshopAddressCtrl.text.trim(),
         'location': point.data,
-        'accreditations': certUrls,
+        'accreditations': certificationNames.map((n) => n.trim()).where((n) => n.isNotEmpty).toList(),
+        'certificationUrls': certUrls, // foto sertifikat dari upload
         'serviceEstimates': initialServices,
         'serviceRadius': radius,
         'diagnosisFee': fee,
@@ -340,7 +354,7 @@ class TechnicianOnboardingController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      Get.offAllNamed(AppRoutes.verificationPending);
+      Get.offAllNamed(AppRoutes.technicianPending);
     } catch (e) {
       submitError.value = e.toString();
     } finally {

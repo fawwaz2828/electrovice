@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../models/technician_model.dart';
+import '../../services/auth_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../../config/routes.dart';
 import 'technician_controller.dart';
@@ -113,14 +114,7 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
                       icon: Icons.location_on_outlined,
                       label: 'Saved Addresses',
                       subtitle: 'Workshop & service locations',
-                      onTap: () {},
-                    ),
-                    const _Divider(),
-                    _MenuItem(
-                      icon: Icons.account_balance_wallet_outlined,
-                      label: 'Wallet',
-                      subtitle: 'Earnings & payment history',
-                      onTap: () {},
+                      onTap: () => Get.toNamed(AppRoutes.technicianSavedAddress),
                     ),
                   ],
                 ),
@@ -170,7 +164,10 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
             ),
           ),
           ElevatedButton(
-            onPressed: () => Get.offAllNamed(AppRoutes.login),
+            onPressed: () async {
+              await AuthService().logout();
+              Get.offAllNamed(AppRoutes.login);
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: _red,
               foregroundColor: Colors.white,

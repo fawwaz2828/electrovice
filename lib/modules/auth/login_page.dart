@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/theme.dart';
@@ -38,6 +39,98 @@ class _LoginPageState extends State<LoginPage> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailCtrl = TextEditingController(text: _emailController.text.trim());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Reset Password',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Enter your email address and we\'ll send you a link to reset your password.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: resetEmailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              autofocus: true,
+              style: const TextStyle(color: Color(0xFF0F172A), fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'email@example.com',
+                hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                filled: true,
+                fillColor: const Color(0xFFF1F5F9),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                prefixIcon: const Icon(Icons.mail_outline, color: Color(0xFF64748B), size: 20),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final email = resetEmailCtrl.text.trim();
+              if (email.isEmpty) return;
+              Navigator.of(ctx).pop();
+              try {
+                await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                Get.snackbar(
+                  'Email Sent',
+                  'Password reset link sent to $email',
+                  backgroundColor: const Color(0xFF0F172A),
+                  colorText: Colors.white,
+                  snackPosition: SnackPosition.TOP,
+                  borderRadius: 12,
+                  margin: const EdgeInsets.all(16),
+                  duration: const Duration(seconds: 4),
+                );
+              } on FirebaseAuthException catch (e) {
+                final msg = e.code == 'user-not-found'
+                    ? 'No account found with that email.'
+                    : 'Failed to send email. Please try again.';
+                Get.snackbar(
+                  'Error',
+                  msg,
+                  backgroundColor: Colors.red.shade700,
+                  colorText: Colors.white,
+                  snackPosition: SnackPosition.TOP,
+                  borderRadius: 12,
+                  margin: const EdgeInsets.all(16),
+                );
+              }
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF0F172A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Send Link'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -143,7 +236,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {},
+                          onTap: _showForgotPasswordDialog,
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(

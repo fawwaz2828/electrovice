@@ -52,17 +52,16 @@ dependencies:
   image_picker: ^1.1.2
   
   mapbox_maps_flutter: ^2.4.0
+  url_launcher: ^6.3.2
+
+  flutter_native_splash: ^2.4.6
+  package_info_plus: ^10.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -85,6 +84,30 @@ flutter:
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
+
+flutter_native_splash:
+  # Background biru, ikon petir putih — seperti figma
+  color: "#3254FF"
+  image: assets/images/splash_electrovice.png
+  android_gravity: center
+  ios_content_mode: scaleAspectFit
+  web_image_mode: center
+  # Android 12+ — icon di tengah lingkaran biru
+  android_12:
+    image: assets/images/splash_electrovice.png
+    color: "#3254FF"
+  fullscreen: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/electrovice_blue.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/electrovice_blue.png"
+  web:
+    generate: true
+    image_path: "assets/images/electrovice_blue.png"
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
