@@ -15,9 +15,29 @@ class LocationManager {
   Future<void> updateSettings(LocationComponentSettings settings) async {}
 }
 
+class CircleAnnotation {}
+
+class CircleAnnotationOptions {
+  CircleAnnotationOptions({
+    Point? geometry,
+    double? circleRadius,
+    int? circleColor,
+    double? circleStrokeWidth,
+    int? circleStrokeColor,
+  });
+}
+
+class CircleAnnotationManager {
+  Future<void> delete(CircleAnnotation annotation) async {}
+  Future<CircleAnnotation> create(CircleAnnotationOptions options) async =>
+      CircleAnnotation();
+}
+
 class AnnotationsManager {
   Future<PointAnnotationManager> createPointAnnotationManager() async =>
       PointAnnotationManager();
+  Future<CircleAnnotationManager> createCircleAnnotationManager() async =>
+      CircleAnnotationManager();
 }
 
 class MapboxMap {

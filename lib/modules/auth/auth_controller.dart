@@ -146,6 +146,9 @@ class AuthController extends GetxController {
               arguments: {'declined': true});
           return;
         }
+        // approved
+        Get.offAllNamed(AppRoutes.technicianHome);
+        return;
       }
     } else {
       Get.offAllNamed(AppRoutes.home);
@@ -153,8 +156,9 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
-    await _authService.logout();
-    // Hapus ProfileController saat logout
+    try {
+      await _authService.logout();
+    } catch (_) {}
     if (Get.isRegistered<ProfileController>()) {
       Get.delete<ProfileController>();
     }

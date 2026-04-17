@@ -16,21 +16,20 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
 
 void main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: binding);
 
   if (!kIsWeb) {
+    FlutterNativeSplash.preserve(widgetsBinding: binding);
     MapboxOptions.setAccessToken(mapboxPublicToken);
   }
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Daftarkan background handler SEBELUM runApp
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  if (!kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    await FcmHandler.init();
+    FlutterNativeSplash.remove();
+  }
 
-  // Setup FCM listeners & navigasi deep link
-  await FcmHandler.init();
-
-  FlutterNativeSplash.remove();
   runApp(const MyApp());
 }
 
@@ -43,7 +42,7 @@ class MyApp extends StatelessWidget {
       title: 'Electrovice',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.splash,
+      initialRoute: AppRoutes.register,
       getPages: AppRoutes.routes,
       defaultTransition: Transition.noTransition,
     );

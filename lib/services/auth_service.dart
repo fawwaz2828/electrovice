@@ -95,9 +95,10 @@ class AuthService {
     }
 
     Future<void> logout() async {
-        await _auth.signOut();        // Firebase dulu
-        await _googleSignIn.signOut(); // Hapus sesi Google
-        // disconnect() tidak perlu — cukup signOut
+        await _auth.signOut();
+        try {
+          await _googleSignIn.signOut();
+        } catch (_) {}
     }
 
     Future<void> updateUserProfile(
