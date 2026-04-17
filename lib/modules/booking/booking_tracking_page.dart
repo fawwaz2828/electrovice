@@ -340,10 +340,10 @@ class _LiveMapCardState extends State<_LiveMapCard> {
               // Legend: customer dot + tech dot (only when tech is streaming)
               if (widget.techLat != null) ...[
                 const SizedBox(width: 8),
-                _MapLegendDot(color: const Color(0xFF3654FF), label: 'Kamu'),
+                _MapLegendDot(color: const Color(0xFF3654FF), label: 'You'),
                 const SizedBox(width: 8),
                 _MapLegendDot(
-                    color: const Color(0xFFF97316), label: 'Teknisi'),
+                    color: const Color(0xFFF97316), label: 'Technician'),
               ],
             ],
           ),
@@ -380,7 +380,7 @@ class _LiveMapCardState extends State<_LiveMapCard> {
                                 size: 32, color: Color(0xFF94A3B8)),
                             SizedBox(height: 8),
                             Text(
-                              'Lokasi GPS belum diaktifkan',
+                              'GPS location not enabled',
                               style: TextStyle(
                                   color: Color(0xFF94A3B8), fontSize: 12),
                             ),
@@ -524,7 +524,7 @@ class _SecurityCodeCard extends StatelessWidget {
       child: Column(
         children: [
           const Text(
-            'KODE VERIFIKASI',
+            'VERIFICATION CODE',
             style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.6),
           ),
           const SizedBox(height: 14),
@@ -543,7 +543,7 @@ class _SecurityCodeCard extends StatelessWidget {
                   SizedBox(width: 10),
                   Flexible(
                     child: Text(
-                      'Kode akan muncul setelah teknisi mengkonfirmasi pesanan',
+                      'Code will appear after the technician confirms the order',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF92400E),
@@ -584,7 +584,7 @@ class _SecurityCodeCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Berikan kode ini kepada teknisi saat tiba di lokasi.',
+              'Show this code to the technician upon arrival.',
               style: TextStyle(color: Color(0xFF737B8C)),
             ),
           ],
@@ -624,13 +624,13 @@ class _TechnicianContactCardState extends State<_TechnicianContactCard> {
       final user = await AuthService().getUserModel(techId);
       final phone = (user?.phone ?? '').trim();
       if (phone.isEmpty) {
-        Get.snackbar('Tidak tersedia', 'Nomor HP teknisi tidak terdaftar',
+        Get.snackbar('Not available', 'Technician phone number is not registered',
             snackPosition: SnackPosition.TOP);
         return;
       }
       await launchUrl(Uri(scheme: 'tel', path: phone));
     } catch (e) {
-      Get.snackbar('Gagal', 'Tidak dapat membuka aplikasi telepon',
+      Get.snackbar('Failed', 'Unable to open phone app',
           snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _isCalling = false);
@@ -730,8 +730,8 @@ class _TechnicianContactCardState extends State<_TechnicianContactCard> {
                     MapsLauncher.navigateTo(lat: lat, lng: lng);
                   } else {
                     Get.snackbar(
-                      'Lokasi tidak tersedia',
-                      'Customer belum mengaktifkan GPS',
+                      'Location not available',
+                      'Customer has not enabled GPS',
                       snackPosition: SnackPosition.TOP,
                     );
                   }
@@ -790,14 +790,14 @@ class _PayNowBanner extends StatelessWidget {
               const Icon(Icons.receipt_long_rounded, color: Color(0xFF4163FF), size: 22),
               const SizedBox(width: 8),
               const Text(
-                'Pembayaran Siap Dilakukan',
+                'Payment Ready',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            'Teknisi telah menyelesaikan diagnosa. Total yang harus dibayar: ${_rp(total)}',
+            'Technician has completed the diagnosis. Total amount due: ${_rp(total)}',
             style: const TextStyle(color: Color(0xFF4B5563), height: 1.4, fontSize: 13),
           ),
           const SizedBox(height: 14),
@@ -809,7 +809,7 @@ class _PayNowBanner extends StatelessWidget {
               minimumSize: const Size.fromHeight(46),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('BAYAR SEKARANG', style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text('PAY NOW', style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -828,18 +828,18 @@ class _CancelOrderButton extends StatelessWidget {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
-          'Batalkan Pesanan?',
+          'Cancel Order?',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         content: const Text(
-          'Pesanan yang sudah dibatalkan tidak dapat dikembalikan. Yakin ingin membatalkan?',
+          'Cancelled orders cannot be reversed. Are you sure you want to cancel?',
           style: TextStyle(color: Color(0xFF64748B), height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
             child: const Text(
-              'Tidak',
+              'No',
               style: TextStyle(
                   color: Color(0xFF64748B), fontWeight: FontWeight.w700),
             ),
@@ -856,7 +856,7 @@ class _CancelOrderButton extends StatelessWidget {
                             strokeWidth: 2, color: Color(0xFFDC2626)),
                       )
                     : const Text(
-                        'Ya, Batalkan',
+                        'Yes, Cancel',
                         style: TextStyle(
                             color: Color(0xFFDC2626),
                             fontWeight: FontWeight.w800),
@@ -885,7 +885,7 @@ class _CancelOrderButton extends StatelessWidget {
             Icon(Icons.cancel_outlined, color: Color(0xFFDC2626), size: 18),
             SizedBox(width: 8),
             Text(
-              'Batalkan Pesanan',
+              'Cancel Order',
               style: TextStyle(
                 color: Color(0xFFDC2626),
                 fontWeight: FontWeight.w700,
@@ -927,7 +927,7 @@ class _NoActiveOrderState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Tidak Ada Pesanan Aktif',
+              'No Active Orders',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -936,7 +936,7 @@ class _NoActiveOrderState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Kamu belum memiliki pesanan yang sedang berjalan. Mulai booking untuk melacak status servis.',
+              'You have no ongoing orders. Start a booking to track your service status.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -954,14 +954,14 @@ class _NoActiveOrderState extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
               ),
-              child: const Text('Lihat Riwayat',
+              child: const Text('View History',
                   style: TextStyle(fontWeight: FontWeight.w800)),
             ),
             const SizedBox(height: 12),
             GestureDetector(
               onTap: () => Get.toNamed(AppRoutes.technicianList),
               child: const Text(
-                'Cari Teknisi →',
+                'Find Technician →',
                 style: TextStyle(
                   fontSize: 13,
                   color: Color(0xFF0061FF),
@@ -998,14 +998,14 @@ class _ReviewBanner extends StatelessWidget {
               const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 22),
               const SizedBox(width: 8),
               const Text(
-                'Pekerjaan Selesai!',
+                'Job Complete!',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
             ],
           ),
           const SizedBox(height: 6),
           const Text(
-            'Bagaimana pengalamanmu? Berikan ulasan untuk teknisi.',
+            'How was your experience? Leave a review for the technician.',
             style: TextStyle(color: Color(0xFF67728B), height: 1.4),
           ),
           const SizedBox(height: 14),
@@ -1015,7 +1015,7 @@ class _ReviewBanner extends StatelessWidget {
               backgroundColor: Colors.black,
               foregroundColor: Colors.white,
             ),
-            child: const Text('BERI ULASAN',
+            child: const Text('WRITE REVIEW',
                 style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],

@@ -42,7 +42,7 @@ class _BookingFormPageState extends State<BookingFormPage> {
 
   void _onConfirm() {
     if (_addressCtrl.text.trim().isEmpty) {
-      Get.snackbar('Alamat belum diisi', 'Masukkan alamat lengkap kamu',
+      Get.snackbar('Address required', 'Please enter your full address',
           snackPosition: SnackPosition.TOP);
       return;
     }
@@ -71,7 +71,7 @@ class _BookingFormPageState extends State<BookingFormPage> {
                   ),
                   const Expanded(
                     child: Text(
-                      'Atur Jadwal',
+                      'Schedule',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -94,19 +94,19 @@ class _BookingFormPageState extends State<BookingFormPage> {
                     const SizedBox(height: 14),
 
                     // ── 2. Jadwal ────────────────────────────────────────
-                    _SectionLabel(label: 'JADWAL KUNJUNGAN'),
+                    _SectionLabel(label: 'VISIT SCHEDULE'),
                     const SizedBox(height: 10),
                     _ScheduleCard(ctrl: _ctrl),
                     const SizedBox(height: 14),
 
                     // ── 3. Alamat ────────────────────────────────────────
-                    _SectionLabel(label: 'ALAMAT LENGKAP'),
+                    _SectionLabel(label: 'FULL ADDRESS'),
                     const SizedBox(height: 10),
                     _AddressCard(controller: _addressCtrl, ctrl: _ctrl),
                     const SizedBox(height: 14),
 
                     // ── 4. Catatan + Foto kerusakan ──────────────────────
-                    _SectionLabel(label: 'CATATAN & FOTO KERUSAKAN (OPSIONAL)'),
+                    _SectionLabel(label: 'NOTES & DAMAGE PHOTOS (OPTIONAL)'),
                     const SizedBox(height: 10),
                     _NotesAndPhotosCard(notesController: _notesCtrl, ctrl: _ctrl),
                     const SizedBox(height: 14),
@@ -137,7 +137,7 @@ class _BookingFormPageState extends State<BookingFormPage> {
                   ),
                   icon: const Icon(Icons.arrow_forward_rounded),
                   label: const Text(
-                    'Lanjut ke Checkout',
+                    'Proceed to Checkout',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 15,
@@ -276,8 +276,8 @@ class _ScheduleCard extends StatelessWidget {
   const _ScheduleCard({required this.ctrl});
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
   @override
@@ -332,7 +332,7 @@ class _ScheduleCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'TANGGAL KUNJUNGAN',
+                          'VISIT DATE',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -359,7 +359,7 @@ class _ScheduleCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
-                      'Ubah',
+                      'Change',
                       style: TextStyle(
                         color: _blue,
                         fontWeight: FontWeight.w700,
@@ -384,7 +384,7 @@ class _ScheduleCard extends StatelessWidget {
                   color: _muted, size: 16),
               const SizedBox(width: 8),
               const Text(
-                'PILIH JAM',
+                'SELECT TIME',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
@@ -410,7 +410,7 @@ class _ScheduleCard extends StatelessWidget {
 
             if (slots.isEmpty) {
               return const Text(
-                'Tidak ada slot tersedia',
+                'No slots available',
                 style: TextStyle(color: _muted, fontSize: 13),
               );
             }
@@ -473,7 +473,7 @@ class _ScheduleCard extends StatelessWidget {
                         ),
                         if (!isAvailable)
                           Text(
-                            'Penuh',
+                            'Full',
                             style: TextStyle(
                               color: fg,
                               fontSize: 9,
@@ -489,7 +489,7 @@ class _ScheduleCard extends StatelessWidget {
 
           const SizedBox(height: 8),
           const Text(
-            '* Jam kerja 08.00 – 17.00 • Tiap slot 2 jam',
+            '* Working hours 08.00 – 17.00 • Each slot 2 hours',
             style: TextStyle(color: _muted, fontSize: 10),
           ),
         ],
@@ -528,7 +528,7 @@ class _AddressCard extends StatelessWidget {
               Icon(Icons.location_on_outlined, size: 18, color: _blue),
               SizedBox(width: 8),
               Text(
-                'ALAMAT PENJEMPUTAN',
+                'PICKUP ADDRESS',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
@@ -547,7 +547,7 @@ class _AddressCard extends StatelessWidget {
             style: const TextStyle(fontSize: 14, color: _ink),
             decoration: InputDecoration(
               hintText:
-                  'Contoh: Jl. Sudirman No. 12, RT 03/RW 05, Menteng, Jakarta Pusat',
+                  'Example: 12 Main St, Apt 3, Downtown, City',
               hintStyle: TextStyle(
                   color: _muted.withValues(alpha: 0.7), fontSize: 13),
               filled: true,
@@ -598,7 +598,7 @@ class _AddressCard extends StatelessWidget {
                         hasPin
                             ? '${ctrl.latitude.value!.toStringAsFixed(6)}, '
                                 '${ctrl.longitude.value!.toStringAsFixed(6)}'
-                            : 'Pilih lokasi di peta',
+                            : 'Pick location on map',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -625,7 +625,7 @@ class _AddressCard extends StatelessWidget {
                       size: 14, color: Color(0xFF16A34A)),
                   SizedBox(width: 6),
                   Text(
-                    'Koordinat tersimpan',
+                    'Coordinates saved',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF16A34A),
@@ -674,7 +674,7 @@ class _NotesAndPhotosCard extends StatelessWidget {
             style: const TextStyle(fontSize: 14, color: _ink),
             decoration: InputDecoration(
               hintText:
-                  'Contoh: Layar HP retak setelah jatuh, ada garis hitam di kiri...',
+                  'Example: Phone screen cracked after drop, black lines on the left side...',
               hintStyle:
                   TextStyle(color: _muted.withValues(alpha: 0.7), fontSize: 13),
               filled: true,
@@ -693,7 +693,7 @@ class _NotesAndPhotosCard extends StatelessWidget {
               const Icon(Icons.photo_library_outlined, size: 15, color: _muted),
               const SizedBox(width: 6),
               const Text(
-                'FOTO KERUSAKAN',
+                'DAMAGE PHOTOS',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
@@ -772,7 +772,7 @@ class _NotesAndPhotosCard extends StatelessWidget {
                               size: 22, color: _muted),
                           SizedBox(height: 4),
                           Text(
-                            'Tambah',
+                            'Add',
                             style: TextStyle(fontSize: 10, color: _muted),
                           ),
                         ],
@@ -808,7 +808,7 @@ class _SecurityNote extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Kode verifikasi 6 digit akan digenerate setelah konfirmasi. Tunjukkan kode ini hanya kepada teknisi saat tiba di lokasi.',
+              'A 6-digit verification code will be generated after confirmation. Show this code only to the technician upon arrival.',
               style: TextStyle(
                 color: Color(0xFF1D4ED8),
                 fontSize: 12,

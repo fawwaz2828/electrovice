@@ -45,13 +45,13 @@ class _JobDetailPageState extends State<JobDetailPage> {
       final user = await AuthService().getUserModel(order.userId);
       final phone = (user?.phone ?? '').trim();
       if (phone.isEmpty) {
-        Get.snackbar('Tidak tersedia', 'Nomor HP customer tidak terdaftar',
+        Get.snackbar('Not available', 'Customer phone number is not registered',
             snackPosition: SnackPosition.TOP);
         return;
       }
       await launchUrl(Uri(scheme: 'tel', path: phone));
     } catch (e) {
-      Get.snackbar('Gagal', 'Tidak dapat membuka aplikasi telepon',
+      Get.snackbar('Failed', 'Unable to open phone app',
           snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _isCalling = false);
@@ -59,12 +59,12 @@ class _JobDetailPageState extends State<JobDetailPage> {
   }
 
   String _damageLabel(String type) => switch (type) {
-        'screen' => 'Kerusakan Layar',
-        'battery' => 'Masalah Baterai',
-        'hardware' => 'Kerusakan Hardware',
+        'screen' => 'Screen Damage',
+        'battery' => 'Battery Issue',
+        'hardware' => 'Hardware Damage',
         'water' => 'Water Damage',
-        'camera' => 'Masalah Kamera',
-        _ => 'Perbaikan Umum',
+        'camera' => 'Camera Issue',
+        _ => 'General Repair',
       };
 
   String _formatPrice(int price) {
@@ -154,7 +154,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              order == null ? '-' : 'Permintaan Baru',
+                              order == null ? '-' : 'New Request',
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
@@ -169,7 +169,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         const Text(
-                          'JADWAL KEDATANGAN',
+                          'ARRIVAL SCHEDULE',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -241,7 +241,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                                     child: Text(
                                       (order?.userAddress.isNotEmpty ?? false)
                                           ? order!.userAddress
-                                          : 'Alamat tidak tersedia',
+                                          : 'Address not available',
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
@@ -323,7 +323,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                                 Text(
                                   order?.userAddress.isNotEmpty == true
                                       ? order!.userAddress
-                                      : 'Lokasi GPS tidak tersedia',
+                                      : 'GPS location not available',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                       color: Color(0xFF64748B), fontSize: 12),
@@ -353,7 +353,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                       ),
                       icon: const Icon(Icons.navigation_rounded, size: 18),
                       label: const Text(
-                        'Navigasi ke Lokasi',
+                        'Navigate to Location',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w800),
                       ),
@@ -511,7 +511,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                           ),
                           const SizedBox(height: 12),
                           const Text(
-                            'Estimasi biaya (dapat berubah sesuai kondisi di lapangan)',
+                            'Estimated cost (may change based on field conditions)',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF94A3B8),
@@ -542,7 +542,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                                 await controller.acceptOrder();
                                 Get.toNamed(AppRoutes.verification);
                               } catch (e) {
-                                Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
+                                Get.snackbar('Failed', e.toString().replaceAll('Exception: ', ''),
                                     snackPosition: SnackPosition.TOP);
                               } finally {
                                 if (mounted) setState(() => _isAccepting = false);
@@ -564,7 +564,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                               children: [
                                 Icon(Icons.check_circle_outline_rounded, size: 20),
                                 SizedBox(width: 10),
-                                Text('Terima Order',
+                                Text('Accept Order',
                                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                               ],
                             ),
@@ -581,7 +581,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                                 await controller.declineOrder();
                                 Get.back();
                               } catch (e) {
-                                Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
+                                Get.snackbar('Failed', e.toString().replaceAll('Exception: ', ''),
                                     snackPosition: SnackPosition.TOP);
                               } finally {
                                 if (mounted) setState(() => _isDeclining = false);
@@ -602,7 +602,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                               children: [
                                 Icon(Icons.close_rounded, size: 20),
                                 SizedBox(width: 6),
-                                Text('Tolak',
+                                Text('Decline',
                                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                               ],
                             ),

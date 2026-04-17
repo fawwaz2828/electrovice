@@ -21,6 +21,21 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class FcmHandler {
   FcmHandler._();
 
+  // Cache role agar tidak fetch Firestore setiap notif masuk
+  static String? _cachedRole;
+
+  static const _technicianTypes = {
+    'new_order',
+    'order_cancelled',
+    'payment_confirmed',
+  };
+  static const _customerTypes = {
+    'order_accepted',
+    'order_declined',
+    'on_progress',
+    'awaiting_payment',
+  };
+
   /// Dipanggil sekali di main() setelah Firebase.initializeApp()
   static Future<void> init() async {
     final messaging = FirebaseMessaging.instance;
@@ -58,7 +73,24 @@ class FcmHandler {
     // ── 3. App FOREGROUND → notif masuk ──────────────────────────
     // Sistem Android tidak otomatis tampilkan heads-up saat foreground,
     // jadi kita tampilkan sendiri sebagai snackbar di atas.
-    FirebaseMessaging.onMessage.listen((message) {
+    FirebaseMessaging.onMessage.listen((message) async {
+      // Jangan tampilkan notif kalau kita sendiri yang kirim
+      final senderId = message.data['senderId'] as String? ?? '';
+      final currentUid = AuthService().currentUser?.uid ?? '';
+      if (senderId.isNotEmpty && senderId == currentUid) return;
+
+      // Filter berdasarkan role — jangan tampilkan notif yang bukan untuk role ini
+      final type = message.data['type'] as String? ?? '';
+      if (type.isNotEmpty && type != 'chat') {
+        final uid = AuthService().currentUser?.uid;
+        if (uid != null) {
+          _cachedRole ??= await AuthService().getUserRole(uid);
+          final isTechnician = _cachedRole == 'technician';
+          if (isTechnician && _customerTypes.contains(type)) return;
+          if (!isTechnician && _technicianTypes.contains(type)) return;
+        }
+      }
+
       final title = message.notification?.title ?? '';
       final body = message.notification?.body ?? '';
       if (title.isEmpty && body.isEmpty) return;

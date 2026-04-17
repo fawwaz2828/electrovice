@@ -16,7 +16,7 @@ class NotificationPage extends GetView<NotificationController> {
         elevation: 0,
         centerTitle: false,
         title: const Text(
-          'Notifikasi',
+          'Notifications',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
@@ -33,7 +33,7 @@ class NotificationPage extends GetView<NotificationController> {
             return TextButton(
               onPressed: controller.markAllRead,
               child: const Text(
-                'Baca semua',
+                'Mark all read',
                 style: TextStyle(
                   color: Color(0xFF4163FF),
                   fontWeight: FontWeight.w700,
@@ -204,10 +204,10 @@ class _NotificationTile extends StatelessWidget {
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Baru saja';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
-    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-    if (diff.inDays < 7) return '${diff.inDays} hari lalu';
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} minutes ago';
+    if (diff.inHours < 24) return '${diff.inHours} hours ago';
+    if (diff.inDays < 7) return '${diff.inDays} days ago';
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 }
@@ -237,7 +237,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Belum Ada Notifikasi',
+            'No Notifications Yet',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -246,7 +246,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Notifikasi tentang pesanan akan muncul di sini.',
+            'Order notifications will appear here.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
           ),

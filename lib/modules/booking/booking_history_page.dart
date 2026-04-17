@@ -181,35 +181,35 @@ class _HistoryRecordCard extends StatelessWidget {
           const Color(0xFF7B8DEB),
           const Color(0xFF4F5C88),
           icon,
-          'SELESAI',
+          'DONE',
         );
       case OrderHistoryStatus.canceled:
         return (
           const Color(0xFF9AA2B4),
           const Color(0xFF6D7486),
           icon,
-          'DIBATALKAN',
+          'CANCELLED',
         );
       case OrderHistoryStatus.verificationFailed:
         return (
           const Color(0xFFD79A2B),
           const Color(0xFFB3671F),
           icon,
-          'VERIF GAGAL',
+          'VERIF FAILED',
         );
       case OrderHistoryStatus.active:
         return (
           const Color(0xFF3B82F6),
           const Color(0xFF1D4ED8),
           Icons.autorenew_rounded,
-          'AKTIF',
+          'ACTIVE',
         );
       case OrderHistoryStatus.awaitingPayment:
         return (
           const Color(0xFF10B981),
           const Color(0xFF047857),
           Icons.payment_rounded,
-          'BAYAR',
+          'PAY',
         );
     }
   }
@@ -232,11 +232,11 @@ class _ReviewPromptCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Bagaimana pengalamanmu?',
+          const Text('How was your experience?',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 6),
           Text(
-            'Beri ulasan untuk ${unreviewedBooking!.technicianName}.',
+            'Leave a review for ${unreviewedBooking!.technicianName}.',
             style: const TextStyle(color: Color(0xFF67728B)),
           ),
           const SizedBox(height: 14),
@@ -247,7 +247,7 @@ class _ReviewPromptCard extends StatelessWidget {
             ),
             style: FilledButton.styleFrom(
                 backgroundColor: Colors.black, foregroundColor: Colors.white),
-            child: const Text('BERI ULASAN',
+            child: const Text('WRITE REVIEW',
                 style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],

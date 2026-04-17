@@ -102,7 +102,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       height: 1.6,
                     ),
                     children: [
-                      const TextSpan(text: 'Dengan melanjutkan, kamu menyetujui\n'),
+                      const TextSpan(text: 'By continuing, you agree to our\n'),
                       WidgetSpan(
                         child: GestureDetector(
                           onTap: () => launchUrl(
@@ -110,7 +110,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             mode: LaunchMode.externalApplication,
                           ),
                           child: const Text(
-                            'Syarat & Ketentuan',
+                            'Terms & Conditions',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF0061FF),
@@ -121,7 +121,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                       ),
-                      const TextSpan(text: '  dan  '),
+                      const TextSpan(text: '  and  '),
                       WidgetSpan(
                         child: GestureDetector(
                           onTap: () => launchUrl(
@@ -129,7 +129,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             mode: LaunchMode.externalApplication,
                           ),
                           child: const Text(
-                            'Kebijakan Privasi',
+                            'Privacy Policy',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF0061FF),
@@ -140,7 +140,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                       ),
-                      const TextSpan(text: ' kami.'),
+                      const TextSpan(text: '.'),
                     ],
                   ),
                 ),

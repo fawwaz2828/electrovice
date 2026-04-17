@@ -303,7 +303,7 @@ class _ProfileHero extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              data.specialty.isEmpty ? 'Belum diisi' : data.specialty,
+              data.specialty.isEmpty ? 'Not filled' : data.specialty,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,

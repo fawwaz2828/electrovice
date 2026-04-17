@@ -29,8 +29,8 @@ class _ActiveJobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isConfirmed = status == BookingStatus.confirmed;
     final bgColor = isConfirmed ? const Color(0xFF1E293B) : const Color(0xFF0061FF);
-    final statusLabel = isConfirmed ? 'MENUJU LOKASI' : 'SEDANG DIKERJAKAN';
-    final buttonLabel = isConfirmed ? 'INPUT KODE VERIFIKASI' : 'LIHAT PEKERJAAN';
+    final statusLabel = isConfirmed ? 'EN ROUTE' : 'IN PROGRESS';
+    final buttonLabel = isConfirmed ? 'ENTER VERIFICATION CODE' : 'VIEW JOB';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -57,7 +57,7 @@ class _ActiveJobCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const Text(
-                'PEKERJAAN AKTIF',
+                'ACTIVE JOB',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
@@ -132,16 +132,16 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
   _FilterTab _selectedFilter = _FilterTab.newOrders;
 
   String _damageLabel(String type) => switch (type) {
-        'screen' => 'Kerusakan Layar',
-        'battery' => 'Masalah Baterai',
-        'hardware' => 'Kerusakan Hardware',
+        'screen' => 'Screen Damage',
+        'battery' => 'Battery Issue',
+        'hardware' => 'Hardware Damage',
         'water' => 'Water Damage',
-        'camera' => 'Masalah Kamera',
-        _ => 'Perbaikan Umum',
+        'camera' => 'Camera Issue',
+        _ => 'General Repair',
       };
 
   String _formatSchedule(DateTime dt) {
-    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return '${dt.day} ${months[dt.month - 1]}, ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
@@ -195,7 +195,7 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                     // ── Current Assignment (confirmed atau on_progress) ────────
                     if (activeOrder != null) ...[
                       const Text(
-                        'Pekerjaan Aktif',
+                        'Active Job',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
@@ -222,7 +222,7 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                       if (pendingOrders.isNotEmpty) ...[
                         const SizedBox(height: 28),
                         const Text(
-                          'Permintaan Masuk',
+                          'Incoming Requests',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
@@ -239,7 +239,7 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                                 distance: _formatSchedule(order.scheduledAt),
                                 title: _damageLabel(order.damageType),
                                 description: order.description.isEmpty
-                                    ? 'Tidak ada deskripsi tambahan'
+                                    ? 'No additional description'
                                     : order.description,
                                 onTap: () {
                                   _controller.selectOrder(order);
@@ -253,7 +253,7 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                       Row(
                         children: [
                           const Text(
-                            'Permintaan Masuk',
+                            'Incoming Requests',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
@@ -295,8 +295,8 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                               padding: const EdgeInsets.symmetric(vertical: 40),
                               child: Text(
                                 _selectedFilter == _FilterTab.newOrders
-                                    ? 'Belum ada permintaan baru'
-                                    : 'Tidak ada order aktif',
+                                    ? 'No new requests'
+                                    : 'No active orders',
                                 style: const TextStyle(color: Color(0xFF94A3B8)),
                               ),
                             ),
@@ -316,7 +316,7 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                                   distance: _formatSchedule(order.scheduledAt),
                                   title: _damageLabel(order.damageType),
                                   description: order.description.isEmpty
-                                      ? 'Tidak ada deskripsi tambahan'
+                                      ? 'No additional description'
                                       : order.description,
                                   onTap: () {
                                     _controller.selectOrder(order);
@@ -619,7 +619,7 @@ class _EarningsCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '${ctrl.completedOrders.length} order selesai',
+                  '${ctrl.completedOrders.length} orders completed',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

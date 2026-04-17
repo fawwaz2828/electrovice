@@ -29,7 +29,7 @@ class _VerificationPageState extends State<VerificationPage> {
   Future<void> _onVerify() async {
     final code = _pin.join();
     if (code.length < 6 || _pin.contains('')) {
-      Get.snackbar('Oops', 'Masukkan 6 digit kode verifikasi',
+      Get.snackbar('Oops', 'Enter the 6-digit verification code',
           snackPosition: SnackPosition.TOP);
       return;
     }
@@ -190,7 +190,7 @@ class _VerificationPageState extends State<VerificationPage> {
                             color: Colors.white, strokeWidth: 2.5),
                       )
                     : const Text(
-                        'Verifikasi & Mulai Servis',
+                        'Verify & Start Service',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w800),
                       ),
@@ -204,12 +204,12 @@ class _VerificationPageState extends State<VerificationPage> {
 }
 
 String _verifDamageLabel(String type) => switch (type) {
-      'screen' => 'Kerusakan Layar',
-      'battery' => 'Masalah Baterai',
-      'hardware' => 'Kerusakan Hardware',
+      'screen' => 'Screen Damage',
+      'battery' => 'Battery Issue',
+      'hardware' => 'Hardware Damage',
       'water' => 'Water Damage',
-      'camera' => 'Masalah Kamera',
-      _ => 'Perbaikan Umum',
+      'camera' => 'Camera Issue',
+      _ => 'General Repair',
     };
 
 String _verifFormatRp(int price) {
@@ -231,7 +231,7 @@ class _ClientSummaryCard extends StatelessWidget {
       final customerName = order?.userName ?? '-';
       final address = (order?.userAddress.isNotEmpty ?? false)
           ? order!.userAddress
-          : 'Alamat tidak tersedia';
+          : 'Address not available';
       final damageTitle = _verifDamageLabel(order?.damageType ?? '');
       final lat = order?.latitude;
       final lng = order?.longitude;
@@ -326,7 +326,7 @@ class _ClientSummaryCard extends StatelessWidget {
                                         size: 14, color: Color(0xFF0061FF)),
                                     SizedBox(width: 4),
                                     Text(
-                                      'Navigasi',
+                                      'Navigate',
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w800,
@@ -417,7 +417,7 @@ class _ClientSummaryCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'JENIS KERUSAKAN',
+                                'DAMAGE TYPE',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
@@ -645,7 +645,7 @@ class _ServiceParametersCard extends StatelessWidget {
     return Obx(() {
       final order = ctrl.selectedOrder.value ?? ctrl.activeOrder.value;
       final price = order?.estimatedPrice ?? 0;
-      final priceLabel = price > 0 ? 'Rp ${_verifFormatRp(price)}' : 'Tunai';
+      final priceLabel = price > 0 ? 'Rp ${_verifFormatRp(price)}' : 'Cash';
 
       return Container(
         padding: const EdgeInsets.all(24),
@@ -657,7 +657,7 @@ class _ServiceParametersCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'PARAMETER LAYANAN',
+              'SERVICE PARAMETERS',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -677,7 +677,7 @@ class _ServiceParametersCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Estimasi Biaya',
+                            'Estimated Cost',
                             style: TextStyle(
                               fontSize: 11,
                               color: Color(0xFF94A3B8),
@@ -707,7 +707,7 @@ class _ServiceParametersCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Metode Bayar',
+                            'Payment Method',
                             style: TextStyle(
                               fontSize: 11,
                               color: Color(0xFF94A3B8),
@@ -716,7 +716,7 @@ class _ServiceParametersCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            order?.paymentMethod == 'cash' ? 'Tunai' : (order?.paymentMethod ?? 'Tunai'),
+                            order?.paymentMethod == 'cash' ? 'Cash' : (order?.paymentMethod ?? 'Cash'),
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,

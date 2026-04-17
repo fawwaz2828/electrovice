@@ -68,7 +68,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     if (user == null) return;
 
     if (_nameController.text.trim().isEmpty) {
-      Get.snackbar('Oops', 'Nama tidak boleh kosong',
+      Get.snackbar('Oops', 'Name cannot be empty',
           snackPosition: SnackPosition.TOP);
       return;
     }
@@ -94,7 +94,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       }
 
       Get.back();
-      Get.snackbar('Berhasil', 'Profil berhasil diperbarui',
+      Get.snackbar('Success', 'Profile updated successfully',
           snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('Error', e.toString(),
@@ -142,7 +142,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 : TextButton(
                     onPressed: _save,
                     child: const Text(
-                      'Simpan',
+                      'Save',
                       style: TextStyle(
                         color: _accent,
                         fontWeight: FontWeight.w800,
@@ -214,18 +214,18 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                   const SizedBox(height: 32),
 
                   // ── IDENTITAS ──────────────────────────────────
-                  _buildSection('IDENTITAS', [
+                  _buildSection('IDENTITY', [
                     _buildField(
-                      label: 'Nama Lengkap',
+                      label: 'Full Name',
                       controller: _nameController,
-                      hint: 'Masukkan nama lengkap',
+                      hint: 'Enter full name',
                       icon: Icons.person_outline_rounded,
                     ),
                     const SizedBox(height: 16),
                     _buildField(
-                      label: 'Nomor HP',
+                      label: 'Phone Number',
                       controller: _phoneController,
-                      hint: 'Contoh: 081234567890',
+                      hint: 'Example: +1234567890',
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                     ),

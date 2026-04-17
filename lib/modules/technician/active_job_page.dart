@@ -31,13 +31,13 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
       final user = await AuthService().getUserModel(order.userId);
       final phone = (user?.phone ?? '').trim();
       if (phone.isEmpty) {
-        Get.snackbar('Tidak tersedia', 'Nomor HP customer tidak terdaftar',
+        Get.snackbar('Not available', 'Customer phone number is not registered',
             snackPosition: SnackPosition.TOP);
         return;
       }
       await launchUrl(Uri(scheme: 'tel', path: phone));
     } catch (e) {
-      Get.snackbar('Gagal', 'Tidak dapat membuka aplikasi telepon',
+      Get.snackbar('Failed', 'Unable to open phone app',
           snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _isCalling = false);
@@ -75,12 +75,12 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
   }
 
   String _damageLabel(String type) => switch (type) {
-        'screen' => 'Kerusakan Layar',
-        'battery' => 'Masalah Baterai',
-        'hardware' => 'Kerusakan Hardware',
+        'screen' => 'Screen Damage',
+        'battery' => 'Battery Issue',
+        'hardware' => 'Hardware Damage',
         'water' => 'Water Damage',
-        'camera' => 'Masalah Kamera',
-        _ => 'Perbaikan Umum',
+        'camera' => 'Camera Issue',
+        _ => 'General Repair',
       };
 
   @override
@@ -109,7 +109,7 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                 bookingId: order?.bookingId.substring(0, 8).toUpperCase() ?? '--------',
                 issueTitle: _damageLabel(order?.damageType ?? ''),
                 customerName: order?.userName ?? '-',
-                userAddress: order?.userAddress ?? 'Alamat tidak tersedia',
+                userAddress: order?.userAddress ?? 'Address not available',
                 status: order?.status ?? BookingStatus.onProgress,
                 elapsedLabel: _elapsedLabel,
                 lat: order?.latitude,
@@ -464,7 +464,7 @@ class _LocationCard extends StatelessWidget {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Navigasi ke Lokasi',
+                    'Navigate to Location',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
@@ -697,7 +697,7 @@ class _SystemEstimateCard extends StatelessWidget {
                 ] else ...[
                   const SizedBox(height: 8),
                   const Text(
-                    'Estimasi biaya awal (belum final)',
+                    'Initial estimate (not final)',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF94A3B8),

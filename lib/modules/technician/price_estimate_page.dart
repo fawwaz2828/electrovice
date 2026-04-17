@@ -128,12 +128,12 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
 
   Future<void> _confirm() async {
     if (_serviceFee == 0 && _partsTotal == 0) {
-      Get.snackbar('Oops', 'Masukkan minimal service fee atau spare part',
+      Get.snackbar('Oops', 'Enter at least a service fee or spare part',
           snackPosition: SnackPosition.TOP);
       return;
     }
     if (_workPhotos.isEmpty) {
-      Get.snackbar('Foto Wajib', 'Upload minimal 1 foto bukti pekerjaan',
+      Get.snackbar('Photo Required', 'Upload at least 1 work evidence photo',
           snackPosition: SnackPosition.TOP);
       return;
     }
@@ -168,7 +168,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
 
       Get.offNamed(AppRoutes.repairApproval);
     } catch (e) {
-      Get.snackbar('Gagal', e.toString().replaceAll('Exception: ', ''),
+      Get.snackbar('Failed', e.toString().replaceAll('Exception: ', ''),
           snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -399,7 +399,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                             if (_diagnosisFee > 0) ...[
                               const SizedBox(height: 6),
                               Text(
-                                'Termasuk diagnosa ${_rp(_diagnosisFee)}',
+                                'Including diagnosis fee ${_rp(_diagnosisFee)}',
                                 style: const TextStyle(
                                     fontSize: 11, color: Colors.white54),
                               ),
@@ -433,7 +433,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: const Text(
-                                'Wajib',
+                                'Required',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -455,7 +455,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Upload foto bukti hasil pekerjaan sebelum submit.',
+                      'Upload work evidence photos before submitting.',
                       style: TextStyle(fontSize: 12, color: _muted),
                     ),
                     const SizedBox(height: 10),

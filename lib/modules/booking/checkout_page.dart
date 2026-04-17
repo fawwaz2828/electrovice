@@ -93,7 +93,7 @@ class CheckoutPage extends GetView<BookingController> {
                           )
                         : const Icon(Icons.arrow_forward_rounded),
                     label: controller.isSubmitting.value
-                        ? const Text('Memproses...',
+                        ? const Text('Processing...',
                             style: TextStyle(fontWeight: FontWeight.w800))
                         : const Text('Order Now',
                             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
@@ -227,8 +227,8 @@ class _CurrentRepairCard extends GetView<BookingController> {
 // ── 2. Jadwal Repair Card ─────────────────────────────────────────────────
 class _JadwalRepairCard extends GetView<BookingController> {
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
   @override
@@ -250,7 +250,7 @@ class _JadwalRepairCard extends GetView<BookingController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Jadwal Repair',
+            'Repair Schedule',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -265,7 +265,7 @@ class _JadwalRepairCard extends GetView<BookingController> {
             final month = _months[dt.month - 1];
             final year = dt.year;
             final hour = dt.hour.toString().padLeft(2, '0');
-            final weekdays = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+            final weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
             final dayName = weekdays[dt.weekday - 1];
 
             return Row(
@@ -303,7 +303,7 @@ class _JadwalRepairCard extends GetView<BookingController> {
                       ),
                     ),
                     const Text(
-                      'waktu',
+                      'time',
                       style: TextStyle(fontSize: 12, color: _muted),
                     ),
                   ],
@@ -322,7 +322,7 @@ class _JadwalRepairCard extends GetView<BookingController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        address.isEmpty ? 'Alamat Lengkap' : address,
+                        address.isEmpty ? 'Full Address' : address,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -390,7 +390,7 @@ class _BiayaTambahanCard extends GetView<BookingController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Biaya Tambahan',
+              'Additional Fees',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
@@ -406,11 +406,11 @@ class _BiayaTambahanCard extends GetView<BookingController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Biaya Admin (10%)',
+                        'Admin Fee (10%)',
                         style: TextStyle(fontSize: 13, color: _muted),
                       ),
                       const Text(
-                        'Dari estimasi harga servis',
+                        'Based on service price estimate',
                         style: TextStyle(fontSize: 11, color: _muted),
                       ),
                     ],
@@ -435,11 +435,11 @@ class _BiayaTambahanCard extends GetView<BookingController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Ongkos Kirim',
+                        'Delivery Fee',
                         style: TextStyle(fontSize: 13, color: _muted),
                       ),
                       Text(
-                        'Jarak $distLabel dari workshop',
+                        'Distance $distLabel from workshop',
                         style: const TextStyle(fontSize: 11, color: _muted),
                       ),
                     ],
@@ -499,9 +499,9 @@ class _CostBreakdown extends StatelessWidget {
           const SizedBox(height: 8),
           _CostRow(label: checkout.partsLabel, value: checkout.partsFee),
           const SizedBox(height: 8),
-          _CostRow(label: 'Biaya Admin (10%)', value: checkout.adminFee),
+          _CostRow(label: 'Admin Fee (10%)', value: checkout.adminFee),
           const SizedBox(height: 8),
-          _CostRow(label: 'Ongkos Kirim', value: checkout.deliveryFee),
+          _CostRow(label: 'Delivery Fee', value: checkout.deliveryFee),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 14),
             child: Divider(height: 1, color: Color(0xFFF1F5F9)),

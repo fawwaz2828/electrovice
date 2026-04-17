@@ -85,7 +85,7 @@ class BookingDetailPage extends StatelessWidget {
     if (booking == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Order Detail')),
-        body: const Center(child: Text('Data tidak ditemukan')),
+        body: const Center(child: Text('Data not found')),
       );
     }
 
@@ -174,7 +174,7 @@ class BookingDetailPage extends StatelessWidget {
                           Text(
                             booking.description.isNotEmpty
                                 ? booking.description
-                                : 'Layanan perbaikan oleh ${booking.technicianName}.',
+                                : 'Repair service by ${booking.technicianName}.',
                             style: const TextStyle(
                               fontSize: 13,
                               color: Color(0xFF64748B),
@@ -356,7 +356,7 @@ class BookingDetailPage extends StatelessWidget {
                                     size: 18, color: Color(0xFF4163FF)),
                                 const SizedBox(width: 8),
                                 const Text(
-                                  'Foto Bukti Kerja',
+                                  'Work Proof Photos',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
@@ -365,7 +365,7 @@ class BookingDetailPage extends StatelessWidget {
                                 ),
                                 const Spacer(),
                                 Text(
-                                  '${booking.workPhotoUrls.length} foto',
+                                  '${booking.workPhotoUrls.length} photo(s)',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: Color(0xFF94A3B8),
@@ -545,7 +545,7 @@ class BookingDetailPage extends StatelessWidget {
                         ),
                         icon: const Icon(Icons.star_outline_rounded, size: 18),
                         label: const Text(
-                          'Beri Ulasan',
+                          'Write a Review',
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),

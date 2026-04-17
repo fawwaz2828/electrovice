@@ -119,13 +119,13 @@ class _TechnicianProfileEditPageState
     if (user == null) return;
 
     if (_nameController.text.trim().isEmpty) {
-      Get.snackbar('Oops', 'Nama tidak boleh kosong',
+      Get.snackbar('Oops', 'Name cannot be empty',
           snackPosition: SnackPosition.TOP);
       return;
     }
 
     if (_lat == null || _lng == null) {
-      Get.snackbar('Oops', 'Pilih lokasi workshop di peta dulu',
+      Get.snackbar('Oops', 'Please select a workshop location on the map first',
           snackPosition: SnackPosition.TOP);
       return;
     }
@@ -186,7 +186,7 @@ class _TechnicianProfileEditPageState
       }
 
       Get.back();
-      Get.snackbar('Berhasil', 'Profil berhasil disimpan',
+      Get.snackbar('Success', 'Profile saved successfully',
           snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('Error', e.toString(),
@@ -295,7 +295,7 @@ class _TechnicianProfileEditPageState
                 : TextButton(
                     onPressed: _save,
                     child: const Text(
-                      'Simpan',
+                      'Save',
                       style: TextStyle(
                         color: _accent,
                         fontWeight: FontWeight.w800,
@@ -368,74 +368,74 @@ class _TechnicianProfileEditPageState
                   const SizedBox(height: 24),
 
                   // ── IDENTITAS ──────────────────────────────────
-                  _buildSection('IDENTITAS', [
+                  _buildSection('IDENTITY', [
                     _buildField(
-                      label: 'Nama Lengkap',
+                      label: 'Full Name',
                       controller: _nameController,
-                      hint: 'Masukkan nama lengkap',
+                      hint: 'Enter full name',
                     ),
                     const SizedBox(height: 16),
                     _buildField(
-                      label: 'Nomor HP',
+                      label: 'Phone Number',
                       controller: _phoneController,
-                      hint: 'Contoh: 08123456789',
+                      hint: 'Example: +1234567890',
                       keyboardType: TextInputType.phone,
                     ),
                   ]),
                   const SizedBox(height: 24),
 
                   // ── KETERSEDIAAN ───────────────────────────────
-                  _buildSection('KETERSEDIAAN', [
+                  _buildSection('AVAILABILITY', [
                     _buildAvailabilityToggle(),
                   ]),
                   const SizedBox(height: 24),
 
                   // ── KATEGORI ───────────────────────────────────
-                  _buildSection('KATEGORI LAYANAN', [
+                  _buildSection('SERVICE CATEGORY', [
                     _buildCategoryToggle(),
                   ]),
                   const SizedBox(height: 24),
 
                   // ── KEAHLIAN ───────────────────────────────────
-                  _buildSection('KEAHLIAN', [
+                  _buildSection('SKILLS', [
                     _buildField(
                       label: 'Specialty',
                       controller: _specialtyController,
-                      hint: 'Contoh: Laptop & Micro-soldering',
+                      hint: 'Example: Laptop & Micro-soldering',
                     ),
                     const SizedBox(height: 16),
                     _buildField(
                       label: 'Bio',
                       controller: _bioController,
-                      hint: 'Ceritakan keahlian dan pengalaman kamu...',
+                      hint: 'Tell us about your skills and experience...',
                       maxLines: 4,
                     ),
                   ]),
                   const SizedBox(height: 24),
 
                   // ── PENGALAMAN ─────────────────────────────────
-                  _buildSection('PENGALAMAN', [
+                  _buildSection('EXPERIENCE', [
                     _buildYearsSelector(),
                   ]),
                   const SizedBox(height: 24),
 
                   // ── SERTIFIKASI ────────────────────────────────
-                  _buildSection('SERTIFIKASI & AKREDITASI', [
+                  _buildSection('CERTIFICATIONS & ACCREDITATIONS', [
                     _buildAccreditationSection(),
                   ]),
                   const SizedBox(height: 24),
 
                   // ── BIAYA DIAGNOSA ─────────────────────────────
-                  _buildSection('BIAYA DIAGNOSA', [
+                  _buildSection('DIAGNOSIS FEE', [
                     _buildField(
-                      label: 'Biaya Diagnosa Awal (Rp)',
+                      label: 'Initial Diagnosis Fee (Rp)',
                       controller: _diagnosisFeeController,
-                      hint: 'Contoh: 50000',
+                      hint: 'Example: 50000',
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Biaya ini otomatis muncul sebagai item pertama di daftar layananmu.',
+                      'This fee automatically appears as the first item in your service list.',
                       style: TextStyle(
                         fontSize: 12,
                         color: _muted,
@@ -452,13 +452,13 @@ class _TechnicianProfileEditPageState
                   const SizedBox(height: 24),
 
                   // ── LOKASI WORKSHOP ────────────────────────────
-                  _buildSection('LOKASI WORKSHOP', [
+                  _buildSection('WORKSHOP LOCATION', [
                     _buildLocationSection(),
                   ]),
                   const SizedBox(height: 24),
 
                   // ── RADIUS LAYANAN ─────────────────────────────
-                  _buildSection('RADIUS LAYANAN', [
+                  _buildSection('SERVICE RADIUS', [
                     _buildRadiusSlider(),
                   ]),
                   const SizedBox(height: 40),
@@ -515,7 +515,7 @@ class _TechnicianProfileEditPageState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Terima Pesanan',
+              'Accept Orders',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -524,7 +524,7 @@ class _TechnicianProfileEditPageState
             ),
             const SizedBox(height: 2),
             Text(
-              _isAvailable ? 'Kamu sedang online' : 'Kamu sedang offline',
+              _isAvailable ? 'You are online' : 'You are offline',
               style: TextStyle(
                 fontSize: 12,
                 color: _isAvailable
@@ -600,7 +600,7 @@ class _TechnicianProfileEditPageState
                         GestureDetector(
                           onTap: () => _pickCertPhoto(i),
                           child: Text(
-                            hasPhoto ? 'Ganti foto' : 'Upload foto sertifikat',
+                            hasPhoto ? 'Change photo' : 'Upload certificate photo',
                             style: const TextStyle(
                               fontSize: 12,
                               color: _accent,
@@ -632,7 +632,7 @@ class _TechnicianProfileEditPageState
                 style: const TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
-                  hintText: 'Contoh: Apple Certified',
+                  hintText: 'Example: Apple Certified',
                   hintStyle: TextStyle(
                     color: _muted.withValues(alpha: 0.5),
                     fontWeight: FontWeight.w400,
@@ -749,9 +749,9 @@ class _TechnicianProfileEditPageState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildField(
-          label: 'Alamat Workshop',
+          label: 'Workshop Address',
           controller: _workshopAddressController,
-          hint: 'Jl. Contoh No. 1, Kota',
+          hint: '123 Main St, City',
           maxLines: 2,
         ),
         const SizedBox(height: 16),
@@ -788,7 +788,7 @@ class _TechnicianProfileEditPageState
                   child: Text(
                     _lat != null
                         ? '${_lat!.toStringAsFixed(6)}, ${_lng!.toStringAsFixed(6)}'
-                        : 'Pilih lokasi di peta',
+                        : 'Pick location on map',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -814,7 +814,7 @@ class _TechnicianProfileEditPageState
                   size: 14, color: Color(0xFF16A34A)),
               SizedBox(width: 6),
               Text(
-                'Lokasi berhasil dipilih',
+                'Location selected successfully',
                 style: TextStyle(
                   fontSize: 12,
                   color: Color(0xFF16A34A),
@@ -881,10 +881,10 @@ class _TechnicianProfileEditPageState
   Widget _buildCategoryToggle() {
     return Row(
       children: [
-        _categoryChip('electronic', Icons.devices_rounded, 'Elektronik'),
+        _categoryChip('electronic', Icons.devices_rounded, 'Electronics'),
         const SizedBox(width: 12),
         _categoryChip(
-            'vehicle', Icons.directions_car_rounded, 'Kendaraan'),
+            'vehicle', Icons.directions_car_rounded, 'Vehicle'),
       ],
     );
   }
@@ -927,7 +927,7 @@ class _TechnicianProfileEditPageState
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Text(
-          'Tahun Pengalaman',
+          'Years of Experience',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -991,7 +991,7 @@ class _TechnicianProfileEditPageState
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Jarak Maksimal',
+              'Maximum Distance',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

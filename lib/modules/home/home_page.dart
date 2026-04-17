@@ -476,11 +476,11 @@ class _CurrentRepairCard extends GetView<BookingController> {
   const _CurrentRepairCard();
 
   String _statusLabel(String status) => switch (status) {
-        BookingStatus.pending => 'MENUNGGU',
-        BookingStatus.confirmed => 'DIKONFIRMASI',
+        BookingStatus.pending => 'PENDING',
+        BookingStatus.confirmed => 'CONFIRMED',
         BookingStatus.onProgress => 'IN PROGRESS',
-        BookingStatus.awaitingPayment => 'BAYAR',
-        BookingStatus.done => 'SELESAI',
+        BookingStatus.awaitingPayment => 'PAY',
+        BookingStatus.done => 'DONE',
         _ => 'IN PROGRESS',
       };
 
@@ -597,12 +597,12 @@ class _CurrentRepairCard extends GetView<BookingController> {
   }
 
   String _damageTypeLabel(String type) => switch (type) {
-        'screen' => 'Layar',
-        'battery' => 'Baterai',
+        'screen' => 'Screen',
+        'battery' => 'Battery',
         'hardware' => 'Hardware',
         'water' => 'Water Damage',
-        'camera' => 'Kamera',
-        _ => 'Perbaikan Umum',
+        'camera' => 'Camera',
+        _ => 'General Repair',
       };
 }
 
@@ -613,12 +613,12 @@ class _RepairCategories extends StatelessWidget {
   const _RepairCategories();
 
   static const _categories = [
-    {'icon': Icons.phone_android_rounded, 'label': 'HANDPHONE', 'category': 'electronic'},
-    {'icon': Icons.laptop_rounded,        'label': 'KOMPUTER',  'category': 'electronic'},
-    {'icon': Icons.tv_rounded,            'label': 'TV & AUDIO','category': 'electronic'},
-    {'icon': Icons.kitchen_rounded,       'label': 'ELEKTRONIK','category': 'electronic'},
-    {'icon': Icons.ac_unit_rounded,       'label': 'AC / KULKAS','category': 'electronic'},
-    {'icon': Icons.directions_car_rounded,'label': 'KENDARAAN', 'category': 'vehicle'},
+    {'icon': Icons.phone_android_rounded, 'label': 'PHONE',      'category': 'electronic'},
+    {'icon': Icons.laptop_rounded,        'label': 'COMPUTER',   'category': 'electronic'},
+    {'icon': Icons.tv_rounded,            'label': 'TV & AUDIO', 'category': 'electronic'},
+    {'icon': Icons.kitchen_rounded,       'label': 'ELECTRONICS','category': 'electronic'},
+    {'icon': Icons.ac_unit_rounded,       'label': 'AC / FRIDGE','category': 'electronic'},
+    {'icon': Icons.directions_car_rounded,'label': 'VEHICLE',    'category': 'vehicle'},
   ];
 
   @override
@@ -642,7 +642,7 @@ class _RepairCategories extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Kategori Layanan',
+                'Service Categories',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -652,7 +652,7 @@ class _RepairCategories extends StatelessWidget {
               GestureDetector(
                 onTap: () => Get.toNamed(AppRoutes.technicianList),
                 child: const Text(
-                  'Lihat Semua',
+                  'See All',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -1053,7 +1053,7 @@ class _EmptyState extends StatelessWidget {
               size: 48, color: Color(0xFF94A3B8)),
           const SizedBox(height: 12),
           const Text(
-            'Belum ada teknisi tersedia\ndi area kamu saat ini.',
+            'No technicians available\nin your area right now.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -1065,7 +1065,7 @@ class _EmptyState extends StatelessWidget {
           GestureDetector(
             onTap: onExplore,
             child: const Text(
-              'Cari di radius lebih luas →',
+              'Search wider area →',
               style: TextStyle(
                 fontSize: 13,
                 color: Color(0xFF0061FF),
@@ -1106,7 +1106,7 @@ class _ErrorState extends StatelessWidget {
           GestureDetector(
             onTap: onRetry,
             child: const Text(
-              'Coba lagi',
+              'Try again',
               style: TextStyle(
                 fontSize: 13,
                 color: Color(0xFF0061FF),
