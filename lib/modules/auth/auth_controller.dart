@@ -51,10 +51,10 @@ class AuthController extends GetxController {
         Get.offAllNamed(AppRoutes.home);
       }
       Get.snackbar(
-        'Berhasil!',
+        'Success!',
         role == 'technician'
-            ? 'Akun dibuat! Lengkapi profil teknisimu.'
-            : 'Akun berhasil dibuat.',
+            ? 'Account created! Complete your technician profile.'
+            : 'Account created successfully.',
         snackPosition: SnackPosition.TOP,
       );
     } catch (e) {
@@ -83,8 +83,8 @@ class AuthController extends GetxController {
 
       if (isNewUser) {
         Get.snackbar(
-          'Akun Dibuat!',
-          'Pendaftaran Google berhasil.',
+          'Account Created!',
+          'Google registration successful.',
           snackPosition: SnackPosition.TOP,
         );
       }
@@ -163,13 +163,13 @@ class AuthController extends GetxController {
   }
 
   String _parseError(String error) {
-    if (error.contains('user-not-found')) return 'Email tidak terdaftar';
-    if (error.contains('wrong-password')) return 'Password salah';
-    if (error.contains('invalid-credential')) return 'Email atau password salah';
-    if (error.contains('email-already-in-use')) return 'Email sudah digunakan';
-    if (error.contains('weak-password')) return 'Password minimal 6 karakter';
-    if (error.contains('invalid-email')) return 'Format email tidak valid';
-    if (error.contains('network')) return 'Periksa koneksi internet';
-    return 'Terjadi kesalahan, coba lagi';
+    if (error.contains('user-not-found')) return 'Email not registered';
+    if (error.contains('wrong-password')) return 'Wrong password';
+    if (error.contains('invalid-credential')) return 'Invalid email or password';
+    if (error.contains('email-already-in-use')) return 'Email already in use';
+    if (error.contains('weak-password')) return 'Password must be at least 6 characters';
+    if (error.contains('invalid-email')) return 'Invalid email format';
+    if (error.contains('network')) return 'Check your internet connection';
+    return 'An error occurred, please try again';
   }
 }

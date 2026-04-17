@@ -277,7 +277,7 @@ class BookingController extends GetxController {
       avatarUrl: t.photoUrl,
       accreditations: t.accreditations,
       guaranteeText:
-          'Setiap pengerjaan dilindungi sistem kode verifikasi 6 digit unik sebagai bukti kehadiran teknisi.',
+          'Every job is protected by a 6-digit unique verification code system as proof of technician arrival.',
       estimates: t.serviceEstimates
           .map((e) => ServiceEstimate(
                 title: e.service,
@@ -286,7 +286,7 @@ class BookingController extends GetxController {
           .toList(),
       workshopName: 'Workshop ${t.name}',
       workshopAddress: t.workshopAddress.isEmpty
-          ? 'Alamat belum diisi'
+          ? 'Address not filled'
           : t.workshopAddress,
       reviews: technicianReviews
           .map((r) => CustomerReview(
@@ -418,7 +418,7 @@ class BookingController extends GetxController {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Get.snackbar('GPS Mati', 'Aktifkan layanan lokasi di pengaturan perangkat',
+        Get.snackbar('GPS Off', 'Enable location services in device settings',
             snackPosition: SnackPosition.TOP);
         return;
       }
@@ -428,8 +428,8 @@ class BookingController extends GetxController {
         if (permission == LocationPermission.denied) return;
       }
       if (permission == LocationPermission.deniedForever) {
-        Get.snackbar('Izin Ditolak',
-            'Aktifkan izin lokasi di Pengaturan > Aplikasi > Electrovice',
+        Get.snackbar('Permission Denied',
+            'Enable location permission in Settings > Apps > Electrovice',
             snackPosition: SnackPosition.TOP);
         return;
       }
@@ -439,12 +439,12 @@ class BookingController extends GetxController {
       );
       latitude.value = pos.latitude;
       longitude.value = pos.longitude;
-      Get.snackbar('Lokasi Terdeteksi', 'Koordinat GPS berhasil disimpan',
+      Get.snackbar('Location Detected', 'GPS coordinates saved',
           snackPosition: SnackPosition.TOP,
           duration: const Duration(seconds: 2));
     } catch (e) {
       debugPrint('GPS error: $e');
-      Get.snackbar('Gagal', 'Tidak bisa mendapatkan lokasi GPS',
+      Get.snackbar('Failed', 'Unable to get GPS location',
           snackPosition: SnackPosition.TOP);
     } finally {
       isDetectingLocation.value = false;
@@ -455,7 +455,7 @@ class BookingController extends GetxController {
 
   Future<void> addDamagePhoto() async {
     if (damagePhotos.length >= 3) {
-      Get.snackbar('Maksimal 3 foto', 'Hapus foto yang ada untuk menambah yang baru',
+      Get.snackbar('Maximum 3 photos', 'Remove existing photos to add new ones',
           snackPosition: SnackPosition.TOP);
       return;
     }
@@ -467,7 +467,7 @@ class BookingController extends GetxController {
       );
       if (picked != null) damagePhotos.add(File(picked.path));
     } catch (e) {
-      Get.snackbar('Gagal', 'Tidak bisa membuka galeri',
+      Get.snackbar('Failed', 'Unable to open gallery',
           snackPosition: SnackPosition.TOP);
     }
   }
@@ -492,10 +492,10 @@ class BookingController extends GetxController {
     try {
       await _bookingService.cancelBooking(booking.bookingId);
       Get.back(); // tutup dialog kalau ada
-      Get.snackbar('Pesanan Dibatalkan', 'Booking berhasil dibatalkan.',
+      Get.snackbar('Order Cancelled', 'Booking successfully cancelled.',
           snackPosition: SnackPosition.TOP);
     } catch (e) {
-      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.TOP);
+      Get.snackbar('Failed', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       isSubmitting.value = false;
     }
@@ -510,7 +510,7 @@ class BookingController extends GetxController {
       await _bookingService.confirmPayment(booking.bookingId);
       Get.offNamed(AppRoutes.review, arguments: booking);
     } catch (e) {
-      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.TOP);
+      Get.snackbar('Failed', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       isSubmitting.value = false;
     }
@@ -538,12 +538,12 @@ class BookingController extends GetxController {
       paymentOptions: const [
         PaymentOption(
           type: PaymentMethodType.wallet,
-          title: 'Bayar Tunai',
-          subtitle: 'Bayar langsung ke teknisi di lokasi',
+          title: 'Cash Payment',
+          subtitle: 'Pay directly to the technician on-site',
         ),
       ],
       serviceFee: minPrice.toDouble(),
-      partsLabel: maxPrice > 0 ? 'Estimasi maks' : 'Estimasi (bisa berubah)',
+      partsLabel: maxPrice > 0 ? 'Max estimate' : 'Estimate (may change)',
       partsFee: maxPrice.toDouble(),
       adminFee: adminFee,
       deliveryFee: deliveryFee,
@@ -554,21 +554,21 @@ class BookingController extends GetxController {
 
   Future<void> submitBooking() async {
     if (!isFormValid) {
-      Get.snackbar('Oops', 'Deskripsi keluhan tidak boleh kosong',
+      Get.snackbar('Oops', 'Complaint description cannot be empty',
           snackPosition: SnackPosition.TOP);
       return;
     }
 
     final user = _authService.currentUser;
     if (user == null) {
-      Get.snackbar('Error', 'Sesi habis, silakan login ulang',
+      Get.snackbar('Error', 'Session expired, please log in again',
           snackPosition: SnackPosition.TOP);
       return;
     }
 
     final tech = selectedTechnician.value;
     if (tech == null) {
-      Get.snackbar('Error', 'Data teknisi tidak ditemukan',
+      Get.snackbar('Error', 'Technician data not found',
           snackPosition: SnackPosition.TOP);
       return;
     }
@@ -622,7 +622,7 @@ class BookingController extends GetxController {
       // Navigate ke tracking page (replace checkout dari stack)
       Get.offNamed(AppRoutes.orderTracking);
     } catch (e) {
-      Get.snackbar('Gagal membuat booking', e.toString(),
+      Get.snackbar('Failed to create booking', e.toString(),
           snackPosition: SnackPosition.TOP);
     } finally {
       isSubmitting.value = false;
@@ -645,38 +645,38 @@ class BookingController extends GetxController {
     final steps = [
       TrackingStatusStep(
         step: OrderStatusStep.waiting,
-        title: 'Menunggu Konfirmasi Teknisi',
-        subtitle: 'Teknisi sedang mempertimbangkan pesanan',
+        title: 'Awaiting Technician Confirmation',
+        subtitle: 'Technician is reviewing the order',
         isComplete: !isPending,
         isCurrent: isPending,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.waiting,
-        title: 'Teknisi di Jalan',
-        subtitle: 'Teknisi sedang menuju lokasi kamu',
+        title: 'Technician En Route',
+        subtitle: 'Technician is heading to your location',
         isComplete: isOnProgress || isDone,
         isCurrent: isConfirmed,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.verification,
-        title: 'Verifikasi Kode 6 Digit',
-        subtitle: 'Tunjukkan kode ke teknisi saat tiba',
+        title: '6-Digit Code Verification',
+        subtitle: 'Show the code to the technician upon arrival',
         isComplete: isOnProgress || isDone,
         isCurrent: isConfirmed,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.inProgress,
-        title: 'Sedang Diperbaiki',
-        subtitle: 'Teknisi sedang mengerjakan perangkat',
+        title: 'Under Repair',
+        subtitle: 'Technician is working on the device',
         isComplete: isAwaitingPayment || isDone,
         isCurrent: isOnProgress,
       ),
       TrackingStatusStep(
         step: OrderStatusStep.completed,
-        title: 'Selesai',
+        title: 'Done',
         subtitle: isAwaitingPayment
-            ? 'Silakan lakukan pembayaran'
-            : 'Pekerjaan telah selesai',
+            ? 'Please proceed with payment'
+            : 'Work is complete',
         isComplete: isDone,
         isCurrent: isAwaitingPayment || isDone,
       ),
@@ -686,7 +686,7 @@ class BookingController extends GetxController {
     final secCode = isPending ? '------' : (booking.verificationCode ?? '------');
 
     return OrderTrackingData(
-      mapTitle: 'STATUS PESANAN',
+      mapTitle: 'ORDER STATUS',
       currentStatusTitle: _statusLabel(booking.status),
       statusSteps: steps,
       securityCode: secCode,
@@ -701,8 +701,8 @@ class BookingController extends GetxController {
 
   OrderTrackingData _emptyTracking() {
     return const OrderTrackingData(
-      mapTitle: 'STATUS PESANAN',
-      currentStatusTitle: 'Memuat data...',
+      mapTitle: 'ORDER STATUS',
+      currentStatusTitle: 'Loading...',
       statusSteps: [],
       securityCode: '------',
       technicianName: '-',
@@ -731,7 +731,7 @@ class BookingController extends GetxController {
         dateLabel: _formatDate(b.createdAt),
         amountLabel: b.estimatedPrice > 0
             ? 'Rp ${_formatPrice(b.estimatedPrice)}'
-            : 'Tunai',
+            : 'Cash',
         status: statusUi,
       );
     }).toList();
@@ -740,28 +740,28 @@ class BookingController extends GetxController {
   // ── Helpers ───────────────────────────────────────────────────
 
   String _damageTypeLabel(String type) => switch (type) {
-        'screen' => 'Kerusakan Layar',
-        'battery' => 'Masalah Baterai',
-        'hardware' => 'Kerusakan Hardware',
+        'screen' => 'Screen Damage',
+        'battery' => 'Battery Issue',
+        'hardware' => 'Hardware Damage',
         'water' => 'Water Damage',
-        'camera' => 'Masalah Kamera',
-        _ => 'Perbaikan Umum',
+        'camera' => 'Camera Issue',
+        _ => 'General Repair',
       };
 
   String _statusLabel(String status) => switch (status) {
-        BookingStatus.pending => 'Menunggu Konfirmasi',
-        BookingStatus.confirmed => 'Teknisi Menuju Lokasi',
-        BookingStatus.onProgress => 'Sedang Dikerjakan',
-        BookingStatus.awaitingPayment => 'Menunggu Pembayaran',
-        BookingStatus.done => 'Selesai',
-        BookingStatus.cancelled => 'Dibatalkan',
+        BookingStatus.pending => 'Awaiting Confirmation',
+        BookingStatus.confirmed => 'Technician En Route',
+        BookingStatus.onProgress => 'In Progress',
+        BookingStatus.awaitingPayment => 'Awaiting Payment',
+        BookingStatus.done => 'Done',
+        BookingStatus.cancelled => 'Cancelled',
         _ => status,
       };
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }

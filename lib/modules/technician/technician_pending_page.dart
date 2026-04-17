@@ -41,7 +41,7 @@ class TechnicianPendingPage extends StatelessWidget {
               ),
               const SizedBox(height: 28),
               Text(
-                isDeclined ? 'Verifikasi Ditolak' : 'Menunggu Verifikasi',
+                isDeclined ? 'Verification Declined' : 'Awaiting Verification',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -53,8 +53,8 @@ class TechnicianPendingPage extends StatelessWidget {
               const SizedBox(height: 14),
               Text(
                 isDeclined
-                    ? 'Maaf, pendaftaranmu tidak lolos verifikasi admin. Pastikan data yang kamu masukkan lengkap dan akurat, lalu daftar ulang.'
-                    : 'Akun teknisimu sedang dalam proses verifikasi oleh tim Electrovice. Biasanya membutuhkan waktu 1×24 jam.\n\nKamu akan mendapat notifikasi begitu verifikasi selesai.',
+                    ? 'Sorry, your registration did not pass admin verification. Please make sure the data you entered is complete and accurate, then re-register.'
+                    : 'Your technician account is being verified by the Electrovice team. This usually takes up to 24 hours.\n\nYou will receive a notification once verification is complete.',
                 style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFF64748B),
@@ -78,7 +78,7 @@ class TechnicianPendingPage extends StatelessWidget {
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Tim kami memverifikasi KTP, selfie, dan data workshopmu untuk memastikan keamanan pelanggan.',
+                          'Our team verifies your ID, selfie, and workshop data to ensure customer safety.',
                           style: TextStyle(
                             fontSize: 13,
                             color: Color(0xFF475569),
@@ -102,7 +102,7 @@ class TechnicianPendingPage extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Daftar Ulang',
+                  child: const Text('Re-register',
                       style: TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 15)),
                 ),
@@ -120,7 +120,7 @@ class TechnicianPendingPage extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Keluar',
+                child: const Text('Sign Out',
                     style: TextStyle(fontWeight: FontWeight.w600)),
               ),
               const SizedBox(height: 32),

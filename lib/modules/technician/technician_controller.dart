@@ -94,7 +94,7 @@ class TechnicianController extends GetxController {
       final tp = userModel?.technicianProfile;
 
       profile.value = TechnicianProfileData(
-        fullName: userModel?.name ?? user.email ?? 'Teknisi',
+        fullName: userModel?.name ?? user.email ?? 'Technician',
         specialty: tp?.specialty ?? '',
         yearsExperience: tp?.yearsExperience ?? 0,
         successRate: tp?.successRate ?? 100,
@@ -117,7 +117,7 @@ class TechnicianController extends GetxController {
       // Set minimal profile so UI doesn't stay in skeleton forever
       final uid = _authService.currentUser?.uid;
       profile.value = TechnicianProfileData(
-        fullName: _authService.currentUser?.email ?? 'Teknisi',
+        fullName: _authService.currentUser?.email ?? 'Technician',
         specialty: '',
         yearsExperience: 0,
         successRate: 100,
@@ -307,11 +307,11 @@ class TechnicianController extends GetxController {
   /// Teknisi accept order → status pending → confirmed + generate kode verifikasi
   Future<void> acceptOrder() async {
     final order = selectedOrder.value;
-    if (order == null) throw Exception('Tidak ada order yang dipilih');
+    if (order == null) throw Exception('No order selected');
     // Jika sudah confirmed, langsung lanjut ke verifikasi tanpa memanggil Firestore lagi
     if (order.status == BookingStatus.confirmed) return;
     if (order.status != BookingStatus.pending) {
-      throw Exception('Status order tidak valid: ${order.status}');
+      throw Exception('Invalid order status: ${order.status}');
     }
     await _bookingService.acceptBooking(order.bookingId);
   }
@@ -319,7 +319,7 @@ class TechnicianController extends GetxController {
   /// Teknisi decline order → status cancelled
   Future<void> declineOrder() async {
     final order = selectedOrder.value;
-    if (order == null) throw Exception('Tidak ada order yang dipilih');
+    if (order == null) throw Exception('No order selected');
     await _bookingService.declineBooking(order.bookingId);
     selectedOrder.value = null;
   }
@@ -335,7 +335,7 @@ class TechnicianController extends GetxController {
   /// Verifikasi kode 6 digit
   Future<void> verifyCode(String enteredCode) async {
     final order = selectedOrder.value ?? activeOrder.value;
-    if (order == null) throw Exception('Tidak ada order yang dipilih');
+    if (order == null) throw Exception('No order selected');
     await _bookingService.verifyCode(order.bookingId, enteredCode);
   }
 
@@ -348,7 +348,7 @@ class TechnicianController extends GetxController {
     List<String> workPhotoUrls = const [],
   }) async {
     final order = activeOrder.value ?? selectedOrder.value;
-    if (order == null) throw Exception('Tidak ada order aktif');
+    if (order == null) throw Exception('No active order');
     final partsTotal = spareParts.fold<int>(
         0, (sum, p) => sum + ((p['price'] as num?)?.toInt() ?? 0));
     final totalAmount = serviceFee + partsTotal + diagnosisFee;
@@ -365,7 +365,7 @@ class TechnicianController extends GetxController {
   /// Tandai pekerjaan selesai — return order untuk ditampilkan di JobSummaryPage
   Future<BookingDocument> completeJob() async {
     final order = activeOrder.value;
-    if (order == null) throw Exception('Tidak ada order aktif');
+    if (order == null) throw Exception('No active order');
     await _bookingService.markAsDone(order.bookingId);
     return order;
   }
@@ -459,18 +459,18 @@ class TechnicianController extends GetxController {
   // ── Helpers ───────────────────────────────────────────────────
 
   String _damageLabel(String type) => switch (type) {
-        'screen' => 'Kerusakan Layar',
-        'battery' => 'Masalah Baterai',
-        'hardware' => 'Kerusakan Hardware',
+        'screen' => 'Screen Damage',
+        'battery' => 'Battery Issue',
+        'hardware' => 'Hardware Damage',
         'water' => 'Water Damage',
-        'camera' => 'Masalah Kamera',
-        _ => 'Perbaikan Umum',
+        'camera' => 'Camera Issue',
+        _ => 'General Repair',
       };
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }

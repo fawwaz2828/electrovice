@@ -66,7 +66,7 @@ class _AdminHomePageState extends State<AdminHomePage>
           'name': name,
           'initials': initials,
           'city': profile['city'] as String? ?? '—',
-          'workshop': profile['workshopName'] as String? ?? 'Tanpa workshop',
+          'workshop': profile['workshopName'] as String? ?? 'No workshop',
           'categories': cats,
           'submitted': submittedStr,
           'status': _mapStatus(profile['verificationStatus'] as String? ?? 'pending'),
@@ -88,8 +88,8 @@ class _AdminHomePageState extends State<AdminHomePage>
 
   String _formatDate(DateTime dt) {
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${dt.day} ${months[dt.month]} ${dt.year}, '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
@@ -259,10 +259,10 @@ class _AdminHomePageState extends State<AdminHomePage>
             ? '✅'
             : '🎉';
     final message = type == 'DECLINED'
-        ? 'Tidak ada yang di-decline'
+        ? 'No declined technicians'
         : type == 'VERIFIED'
-            ? 'Belum ada teknisi terverifikasi'
-            : 'Tidak ada pending verifikasi';
+            ? 'No verified technicians yet'
+            : 'No pending verifications';
 
     return Center(
       child: Column(

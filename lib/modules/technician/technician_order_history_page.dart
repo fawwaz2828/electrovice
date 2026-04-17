@@ -291,7 +291,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           const Text(
-            'Belum ada order selesai',
+            'No completed orders yet',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -300,7 +300,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Order yang sudah selesai akan muncul di sini',
+            'Completed orders will appear here',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFFCBD5E1),

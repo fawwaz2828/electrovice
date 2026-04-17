@@ -140,7 +140,7 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
                         ),
                         child: Text(
                           _selectedPoint == null
-                              ? 'Tap lokasi workshop di peta'
+                              ? 'Tap a location on the map'
                               : '${_selectedPoint!.coordinates.lat.toStringAsFixed(6)}, '
                                   '${_selectedPoint!.coordinates.lng.toStringAsFixed(6)}',
                           style: TextStyle(
@@ -212,8 +212,8 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
                     ),
                     child: Text(
                       _selectedPoint == null
-                          ? 'Tap di peta untuk memilih lokasi'
-                          : 'Konfirmasi Lokasi Ini',
+                          ? 'Tap on the map to select a location'
+                          : 'Confirm This Location',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,

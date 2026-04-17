@@ -55,7 +55,7 @@ class ChatController extends GetxController {
   void _loadFromArgs() {
     final args = Get.arguments;
     if (args is Map) {
-      otherPartyName = args['otherPartyName'] as String? ?? 'Pengguna';
+      otherPartyName = args['otherPartyName'] as String? ?? 'User';
       otherPartyPhotoUrl = args['otherPartyPhotoUrl'] as String?;
 
       final bookingDoc = args['bookingDoc'] as BookingDocument?;
@@ -109,7 +109,7 @@ class ChatController extends GetxController {
       _bookingId = args['bookingId'] as String?;
     } else {
       chatId = '';
-      otherPartyName = 'Pengguna';
+      otherPartyName = 'User';
     }
   }
 
@@ -153,7 +153,7 @@ class ChatController extends GetxController {
     if (uid.isNotEmpty) {
       final user = await _authService.getUserModel(uid);
       _currentUserName =
-          user?.name ?? _authService.currentUser?.email ?? 'Saya';
+          user?.name ?? _authService.currentUser?.email ?? 'Me';
     }
   }
 
@@ -173,7 +173,7 @@ class ChatController extends GetxController {
       );
     } catch (e) {
       debugPrint('sendMessage error: $e');
-      Get.snackbar('Gagal', 'Pesan tidak terkirim',
+      Get.snackbar('Failed', 'Message failed to send',
           snackPosition: SnackPosition.TOP);
     } finally {
       isSending.value = false;
@@ -201,7 +201,7 @@ class ChatController extends GetxController {
       );
     } catch (e) {
       debugPrint('sendPhoto error: $e');
-      Get.snackbar('Gagal', 'Foto tidak bisa dikirim',
+      Get.snackbar('Failed', 'Photo could not be sent',
           snackPosition: SnackPosition.TOP);
     } finally {
       isUploadingPhoto.value = false;

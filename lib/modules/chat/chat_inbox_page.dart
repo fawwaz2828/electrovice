@@ -21,7 +21,7 @@ class ChatInboxPage extends GetView<ChatInboxController> {
           onPressed: () => Get.back(),
         ),
         title: const Text(
-          'Pesan',
+          'Messages',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -60,7 +60,7 @@ class _ChatRoomTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = room.otherName(currentUserId);
     final photoUrl = room.otherPhotoUrl(currentUserId);
-    final lastMsg = room.lastMessage.isEmpty ? 'Belum ada pesan' : room.lastMessage;
+    final lastMsg = room.lastMessage.isEmpty ? 'No messages yet' : room.lastMessage;
     final timeLabel = room.lastMessageAt != null ? _formatTime(room.lastMessageAt!) : '';
 
     // Ada pesan belum dibaca jika pesan terakhir bukan dari current user
@@ -161,7 +161,7 @@ class _ChatRoomTile extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          room.isPreBooking ? 'KONSULTASI' : 'BOOKING',
+                          room.isPreBooking ? 'CONSULT' : 'BOOKING',
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w800,
@@ -203,10 +203,10 @@ class _ChatRoomTile extends StatelessWidget {
       final m = dt.minute.toString().padLeft(2, '0');
       return '$h:$m';
     }
-    if (d == today.subtract(const Duration(days: 1))) return 'Kemarin';
+    if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${dt.day} ${months[dt.month - 1]}';
   }
@@ -234,12 +234,12 @@ class _EmptyInboxState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Belum ada percakapan',
+            'No conversations yet',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Mulai chat dengan teknisi\ndari halaman detail teknisi',
+            'Start a chat with a technician\nfrom their detail page',
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
           ),

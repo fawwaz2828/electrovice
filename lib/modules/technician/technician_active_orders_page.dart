@@ -258,7 +258,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           const Text(
-            'Tidak ada pekerjaan aktif',
+            'No active jobs',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -267,7 +267,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Pekerjaan yang diterima akan muncul di sini',
+            'Accepted jobs will appear here',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFFCBD5E1),

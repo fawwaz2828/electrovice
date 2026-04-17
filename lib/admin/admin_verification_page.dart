@@ -20,7 +20,7 @@ class AdminVerificationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     if (_uid.isEmpty) {
       return const Scaffold(
-        body: Center(child: Text('UID tidak ditemukan')),
+        body: Center(child: Text('UID not found')),
       );
     }
 
@@ -39,7 +39,7 @@ class AdminVerificationPage extends StatelessWidget {
           return Scaffold(
             backgroundColor: const Color(0xFFF3F4F6),
             appBar: _buildAppBar(),
-            body: const Center(child: Text('Data tidak ditemukan')),
+            body: const Center(child: Text('Data not found')),
           );
         }
 
@@ -146,7 +146,7 @@ class AdminVerificationPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Text('ADMIN — VERIFIKASI',
+          const Text('ADMIN — VERIFICATION',
               style: TextStyle(
                   color: Colors.white54,
                   fontSize: 11,
@@ -163,7 +163,7 @@ class AdminVerificationPage extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.chevron_left, size: 20, color: Colors.black87),
-          Text('Kembali ke daftar',
+          Text('Back to list',
               style: TextStyle(fontSize: 14, color: Colors.black87)),
         ],
       ),
@@ -251,12 +251,12 @@ class AdminVerificationPage extends StatelessWidget {
               style: TextStyle(
                   fontSize: 13, color: Colors.black54, height: 1.5),
               children: [
-                TextSpan(text: 'Pastikan foto KTP jelas terbaca dan selfie menunjukkan '),
+                TextSpan(text: 'Make sure the ID photo is clearly legible and the selfie shows '),
                 TextSpan(
-                    text: 'wajah yang sama',
+                    text: 'the same face',
                     style: TextStyle(
                         color: _accent, fontWeight: FontWeight.w600)),
-                TextSpan(text: ' dengan KTP.'),
+                TextSpan(text: ' as the ID.'),
               ],
             ),
           ),
@@ -265,9 +265,9 @@ class AdminVerificationPage extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              Expanded(child: _buildImageWidget('FOTO KTP', ktpUrl, Icons.badge_outlined)),
+              Expanded(child: _buildImageWidget('ID CARD PHOTO', ktpUrl, Icons.badge_outlined)),
               const SizedBox(width: 10),
-              Expanded(child: _buildImageWidget('SELFIE + KTP', selfieUrl, Icons.person_outlined)),
+              Expanded(child: _buildImageWidget('SELFIE + ID CARD', selfieUrl, Icons.person_outlined)),
             ],
           ),
         ],
@@ -279,7 +279,7 @@ class AdminVerificationPage extends StatelessWidget {
       List<String> names, List<String> certUrls) {
     return _buildSection(
       icon: Icons.verified_outlined,
-      title: 'SERTIFIKASI',
+      title: 'CERTIFICATIONS',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -312,7 +312,7 @@ class AdminVerificationPage extends StatelessWidget {
               runSpacing: 8,
               children: certUrls.asMap().entries.map((e) {
                 return _buildImageWidget(
-                    'Sertifikat ${e.key + 1}', e.value, Icons.image_outlined,
+                    'Certificate ${e.key + 1}', e.value, Icons.image_outlined,
                     height: 90);
               }).toList(),
             ),
@@ -326,15 +326,15 @@ class AdminVerificationPage extends StatelessWidget {
       String workshopAddress, String serviceRadius) {
     return _buildSection(
       icon: Icons.location_on_outlined,
-      title: 'ALAMAT BENGKEL / TOKO',
+      title: 'WORKSHOP / SHOP ADDRESS',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildLabelValue('KOTA', city),
+          _buildLabelValue('CITY', city),
           const SizedBox(height: 10),
-          _buildLabelValue('NAMA WORKSHOP', workshopName),
+          _buildLabelValue('WORKSHOP NAME', workshopName),
           const SizedBox(height: 10),
-          _buildLabelValue('ALAMAT LENGKAP', workshopAddress),
+          _buildLabelValue('FULL ADDRESS', workshopAddress),
           const SizedBox(height: 10),
           _buildLabelValue('SERVICE RADIUS', 'Up to $serviceRadius km'),
         ],
@@ -346,11 +346,11 @@ class AdminVerificationPage extends StatelessWidget {
       List<String> days, String openTime, String closeTime) {
     // Key di Firestore: mon, tue, wed, thu, fri, sat, sun
     const dayKeys   = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-    const dayLabels = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'];
+    const dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     final dayMap = <String, String>{};
     for (int i = 0; i < dayKeys.length; i++) {
       dayMap[dayLabels[i]] =
-          days.contains(dayKeys[i]) ? '$openTime–$closeTime' : 'Tutup';
+          days.contains(dayKeys[i]) ? '$openTime–$closeTime' : 'Closed';
     }
     const allDays = dayLabels;
 
@@ -364,11 +364,11 @@ class AdminVerificationPage extends StatelessWidget {
           children: [
             Expanded(
                 child: _buildDayCell(d1, dayMap[d1]!,
-                    isClosed: dayMap[d1] == 'Tutup')),
+                    isClosed: dayMap[d1] == 'Closed')),
             const SizedBox(width: 8),
             Expanded(
                 child: _buildDayCell(d2, dayMap[d2]!,
-                    isClosed: dayMap[d2] == 'Tutup')),
+                    isClosed: dayMap[d2] == 'Closed')),
           ],
         ),
       ));
@@ -379,14 +379,14 @@ class AdminVerificationPage extends StatelessWidget {
       children: [
         Expanded(
             child: _buildDayCell(lastDay, dayMap[lastDay]!,
-                isClosed: dayMap[lastDay] == 'Tutup')),
+                isClosed: dayMap[lastDay] == 'Closed')),
         const Expanded(child: SizedBox()),
       ],
     ));
 
     return _buildSection(
       icon: Icons.access_time_outlined,
-      title: 'JADWAL OPERASIONAL',
+      title: 'OPERATING SCHEDULE',
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows),
     );
   }
@@ -490,21 +490,21 @@ class AdminVerificationPage extends StatelessWidget {
       builder: (_) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Approve Teknisi?',
+        title: const Text('Approve Technician?',
             style: TextStyle(fontWeight: FontWeight.w700)),
         content: Text(
-            '$name akan diaktifkan dan bisa menerima order dari customer.'),
+            '$name will be activated and can receive orders from customers.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal',
+              child: const Text('Cancel',
                   style: TextStyle(color: Colors.black54))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               await _updateStatus('verified');
               Get.back();
-              Get.snackbar('Berhasil', '$name telah diverifikasi',
+              Get.snackbar('Success', '$name has been verified',
                   snackPosition: SnackPosition.TOP,
                   backgroundColor: const Color(0xFF10B981),
                   colorText: Colors.white,
@@ -516,7 +516,7 @@ class AdminVerificationPage extends StatelessWidget {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8))),
-            child: const Text('Ya, Approve'),
+            child: const Text('Yes, Approve'),
           ),
         ],
       ),
@@ -529,21 +529,21 @@ class AdminVerificationPage extends StatelessWidget {
       builder: (_) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Decline Teknisi?',
+        title: const Text('Decline Technician?',
             style: TextStyle(fontWeight: FontWeight.w700)),
         content: Text(
-            '$name akan diberi tahu bahwa pendaftarannya tidak lolos verifikasi.'),
+            '$name will be notified that their registration did not pass verification.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal',
+              child: const Text('Cancel',
                   style: TextStyle(color: Colors.black54))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               await _updateStatus('declined');
               Get.back();
-              Get.snackbar('Ditolak', '$name telah di-decline',
+              Get.snackbar('Declined', '$name has been declined',
                   snackPosition: SnackPosition.TOP,
                   backgroundColor: _decline,
                   colorText: Colors.white,
@@ -555,7 +555,7 @@ class AdminVerificationPage extends StatelessWidget {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8))),
-            child: const Text('Ya, Decline'),
+            child: const Text('Yes, Decline'),
           ),
         ],
       ),

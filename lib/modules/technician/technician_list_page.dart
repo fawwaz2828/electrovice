@@ -139,7 +139,7 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Gagal memuat teknisi. Coba lagi.';
+        _errorMessage = 'Failed to load technicians. Please try again.';
         _isLoading = false;
       });
     }
@@ -425,8 +425,8 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
             const SizedBox(height: 12),
             Text(
               _searchQuery.isNotEmpty
-                  ? 'Tidak ada teknisi untuk "$_searchQuery"'
-                  : 'Tidak ada teknisi tersedia.',
+                  ? 'No technicians found for "$_searchQuery"'
+                  : 'No technicians available.',
               textAlign: TextAlign.center,
               style: const TextStyle(color: _muted, fontSize: 13),
             ),

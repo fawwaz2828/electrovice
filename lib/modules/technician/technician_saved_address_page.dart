@@ -76,12 +76,12 @@ class _TechnicianSavedAddressPageState
     if (user == null) return;
 
     if (_addressCtrl.text.trim().isEmpty) {
-      Get.snackbar('Oops', 'Alamat tidak boleh kosong',
+      Get.snackbar('Oops', 'Address cannot be empty',
           snackPosition: SnackPosition.TOP);
       return;
     }
     if (_lat == null || _lng == null) {
-      Get.snackbar('Oops', 'Pilih lokasi di peta terlebih dahulu',
+      Get.snackbar('Oops', 'Please select a location on the map first',
           snackPosition: SnackPosition.TOP);
       return;
     }
@@ -96,7 +96,7 @@ class _TechnicianSavedAddressPageState
         lng: _lng!,
       );
       Get.back();
-      Get.snackbar('Berhasil', 'Alamat workshop berhasil disimpan',
+      Get.snackbar('Success', 'Workshop address saved successfully',
           snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('Error', e.toString(),
@@ -139,7 +139,7 @@ class _TechnicianSavedAddressPageState
                 : TextButton(
                     onPressed: _save,
                     child: const Text(
-                      'Simpan',
+                      'Save',
                       style: TextStyle(
                         color: _accent,
                         fontWeight: FontWeight.w800,
@@ -160,7 +160,7 @@ class _TechnicianSavedAddressPageState
                 children: [
                   // ── Section label ──────────────────────────────────
                   const Text(
-                    'LOKASI WORKSHOP',
+                    'WORKSHOP LOCATION',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -190,7 +190,7 @@ class _TechnicianSavedAddressPageState
                       children: [
                         // Address field
                         const Text(
-                          'Alamat Workshop',
+                          'Workshop Address',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -207,7 +207,7 @@ class _TechnicianSavedAddressPageState
                             color: _ink,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Jl. Contoh No. 1, Kelurahan, Kota',
+                            hintText: 'Example: 123 Main St, District, City',
                             hintStyle: TextStyle(
                               color: _muted.withValues(alpha: 0.5),
                               fontWeight: FontWeight.w400,
@@ -256,7 +256,7 @@ class _TechnicianSavedAddressPageState
                                   child: Text(
                                     _lat != null
                                         ? '${_lat!.toStringAsFixed(6)}, ${_lng!.toStringAsFixed(6)}'
-                                        : 'Pilih lokasi di peta',
+                                        : 'Pick location on map',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
@@ -279,7 +279,7 @@ class _TechnicianSavedAddressPageState
                                   size: 14, color: Color(0xFF16A34A)),
                               SizedBox(width: 6),
                               Text(
-                                'Koordinat tersimpan',
+                                'Coordinates saved',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF16A34A),
@@ -309,8 +309,8 @@ class _TechnicianSavedAddressPageState
                         SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Alamat ini digunakan oleh customer untuk menemukan workshopmu '
-                            'dan ditampilkan di halaman profil teknisi.',
+                            'This address is used by customers to find your workshop '
+                            'and is displayed on the technician profile page.',
                             style: TextStyle(
                               fontSize: 13,
                               color: _accent,

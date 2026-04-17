@@ -85,8 +85,8 @@ class ProfileController extends GetxController {
     } catch (e) {
       debugPrint('ProfileController: gagal upload foto - $e');
       Get.snackbar(
-        'Upload Gagal',
-        'Foto profil tidak bisa diupload. Coba lagi.',
+        'Upload Failed',
+        'Profile photo could not be uploaded. Please try again.',
         snackPosition: SnackPosition.TOP,
       );
     } finally {

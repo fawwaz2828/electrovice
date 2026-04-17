@@ -35,15 +35,15 @@ class CustomerOrdersPage extends GetView<BookingController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Pesanan Aktif',
+                        'Active Orders',
                         style: TextStyle(
                             fontSize: 24, fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         activeOrders.isEmpty
-                            ? 'Tidak ada pesanan berjalan'
-                            : '${activeOrders.length} pesanan sedang berjalan',
+                            ? 'No ongoing orders'
+                            : '${activeOrders.length} order(s) in progress',
                         style: const TextStyle(
                             color: Color(0xFF68738A), fontSize: 14),
                       ),
@@ -78,7 +78,7 @@ class CustomerOrdersPage extends GetView<BookingController> {
                     child: Row(
                       children: [
                         const Text(
-                          'Riwayat',
+                          'History',
                           style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.w800),
                         ),
@@ -92,7 +92,7 @@ class CustomerOrdersPage extends GetView<BookingController> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              '${doneOrders.where((b) => b.customerRating == null).length} belum direview',
+                              '${doneOrders.where((b) => b.customerRating == null).length} pending review',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -219,7 +219,7 @@ class _OrderCard extends StatelessWidget {
                 Text(
                   booking.estimatedPrice > 0
                       ? 'Rp ${_formatPrice(booking.estimatedPrice)}'
-                      : 'Diskusi di lokasi',
+                      : 'Discuss on-site',
                   style: const TextStyle(
                       fontWeight: FontWeight.w700, fontSize: 13),
                 ),
@@ -232,10 +232,10 @@ class _OrderCard extends StatelessWidget {
   }
 
   (Color, String) _statusBadge(String status) => switch (status) {
-        BookingStatus.pending => (const Color(0xFF6B7280), 'MENUNGGU'),
-        BookingStatus.confirmed => (const Color(0xFF3B82F6), 'DIKONFIRMASI'),
-        BookingStatus.onProgress => (const Color(0xFFF59E0B), 'DIKERJAKAN'),
-        BookingStatus.awaitingPayment => (const Color(0xFF10B981), 'BAYAR'),
+        BookingStatus.pending => (const Color(0xFF6B7280), 'PENDING'),
+        BookingStatus.confirmed => (const Color(0xFF3B82F6), 'CONFIRMED'),
+        BookingStatus.onProgress => (const Color(0xFFF59E0B), 'IN PROGRESS'),
+        BookingStatus.awaitingPayment => (const Color(0xFF10B981), 'PAY'),
         _ => (const Color(0xFF6B7280), status.toUpperCase()),
       };
 
@@ -245,18 +245,18 @@ class _OrderCard extends StatelessWidget {
       };
 
   String _damageTypeLabel(String type) => switch (type) {
-        'screen' => 'Kerusakan Layar',
-        'battery' => 'Masalah Baterai',
-        'hardware' => 'Kerusakan Hardware',
+        'screen' => 'Screen Damage',
+        'battery' => 'Battery Issue',
+        'hardware' => 'Hardware Damage',
         'water' => 'Water Damage',
-        'camera' => 'Masalah Kamera',
-        _ => 'Perbaikan Umum',
+        'camera' => 'Camera Issue',
+        _ => 'General Repair',
       };
 
   String _formatDateTime(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     final h = dt.hour.toString().padLeft(2, '0');
     return '${dt.day} ${months[dt.month - 1]}, $h.00';
@@ -347,7 +347,7 @@ class _DoneOrderCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Text(
-                      'TULIS ULASAN',
+                      'WRITE REVIEW',
                       style: TextStyle(
                         color: Color(0xFFEA580C),
                         fontWeight: FontWeight.w800,
@@ -387,7 +387,7 @@ class _DoneOrderCard extends StatelessWidget {
                       ? 'Rp ${_formatPrice(booking.finalTotalAmount!)}'
                       : booking.estimatedPrice > 0
                           ? 'Rp ${_formatPrice(booking.estimatedPrice)}'
-                          : 'Selesai',
+                          : 'Done',
                   style: const TextStyle(
                       fontWeight: FontWeight.w700, fontSize: 13),
                 ),
@@ -400,18 +400,18 @@ class _DoneOrderCard extends StatelessWidget {
   }
 
   String _damageTypeLabel(String type) => switch (type) {
-        'screen' => 'Kerusakan Layar',
-        'battery' => 'Masalah Baterai',
-        'hardware' => 'Kerusakan Hardware',
+        'screen' => 'Screen Damage',
+        'battery' => 'Battery Issue',
+        'hardware' => 'Hardware Damage',
         'water' => 'Water Damage',
-        'camera' => 'Masalah Kamera',
-        _ => 'Perbaikan Umum',
+        'camera' => 'Camera Issue',
+        _ => 'General Repair',
       };
 
   String _formatDateTime(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     final h = dt.hour.toString().padLeft(2, '0');
     return '${dt.day} ${months[dt.month - 1]}, $h.00';
@@ -450,12 +450,12 @@ class _EmptyOrdersState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Tidak ada pesanan aktif',
+            'No active orders',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Pesanan yang sedang berjalan\nakan tampil di sini',
+            'Your ongoing orders\nwill appear here',
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
           ),
@@ -465,7 +465,7 @@ class _EmptyOrdersState extends StatelessWidget {
             style: FilledButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white),
-            child: const Text('Cari Teknisi',
+            child: const Text('Find Technician',
                 style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],

@@ -105,7 +105,7 @@ class PayServicePage extends GetView<BookingController> {
                       // ── Work Photos ─────────────────────────────────
                       if ((booking?.workPhotoUrls ?? []).isNotEmpty) ...[
                         const Text(
-                          'Foto Hasil Pekerjaan',
+                          'Work Photos',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
@@ -195,7 +195,7 @@ class PayServicePage extends GetView<BookingController> {
                                   MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text(
-                                  'Total Tagihan',
+                                  'Total Bill',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
@@ -220,7 +220,7 @@ class PayServicePage extends GetView<BookingController> {
 
                       // ── Payment Methods (display only for cash) ────────
                       const Text(
-                        'Metode Pembayaran',
+                        'Payment Method',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
@@ -340,7 +340,7 @@ class PayServicePage extends GetView<BookingController> {
                                       size: 20),
                                   SizedBox(width: 10),
                                   Text(
-                                    'Konfirmasi Pembayaran Diterima',
+                                    'Confirm Payment Received',
                                     style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w800),

@@ -137,7 +137,7 @@ class _MessageListState extends State<_MessageList> {
       if (msgs.isEmpty) {
         return const Center(
           child: Text(
-            'Belum ada pesan.\nMulai percakapan dengan teknisi.',
+            'No messages yet.\nStart a conversation with the technician.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFF94A3B8), height: 1.6),
           ),
@@ -189,11 +189,11 @@ class _DateSeparator extends StatelessWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final d = DateTime(date.year, date.month, date.day);
-    if (d == today) return 'HARI INI';
-    if (d == today.subtract(const Duration(days: 1))) return 'KEMARIN';
+    if (d == today) return 'TODAY';
+    if (d == today.subtract(const Duration(days: 1))) return 'YESTERDAY';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -331,7 +331,7 @@ class _MessageBubble extends StatelessWidget {
                 if (isMine) ...[
                   const SizedBox(width: 4),
                   const Text(
-                    '• Terkirim',
+                    '• Sent',
                     style: TextStyle(
                       fontSize: 10,
                       color: Color(0xFF94A3B8),
@@ -392,7 +392,7 @@ class _InputBar extends StatelessWidget {
               textInputAction: TextInputAction.newline,
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'Ketik pesan...',
+                hintText: 'Type a message...',
                 hintStyle: const TextStyle(color: Color(0xFFB7C0D2)),
                 filled: true,
                 fillColor: const Color(0xFFF5F7FB),
@@ -452,7 +452,7 @@ class _ClosedSessionBanner extends StatelessWidget {
                 size: 16, color: Color(0xFF94A3B8)),
             SizedBox(width: 8),
             Text(
-              'Sesi chat telah berakhir',
+              'Chat session has ended',
               style: TextStyle(
                 color: Color(0xFF94A3B8),
                 fontSize: 13,

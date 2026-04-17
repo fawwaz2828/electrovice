@@ -536,7 +536,7 @@ class _EmptyServices extends StatelessWidget {
           const Icon(Icons.build_outlined, size: 40, color: _muted),
           const SizedBox(height: 12),
           const Text(
-            'Belum ada daftar layanan.\nChat teknisi untuk informasi harga.',
+            'No services listed yet.\nChat the technician for pricing information.',
             textAlign: TextAlign.center,
             style: TextStyle(color: _muted, fontSize: 13, height: 1.5),
           ),
@@ -672,7 +672,7 @@ class _ReviewsTab extends GetView<BookingController> {
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Center(
                 child: Text(
-                  'Belum ada ulasan.',
+                  'No reviews yet.',
                   style: TextStyle(color: _muted, fontSize: 13),
                 ),
               ),
@@ -798,9 +798,9 @@ class _AboutTab extends GetView<BookingController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Teknisi ${tech.specialty.isEmpty ? tech.category : tech.specialty} '
-                'dengan pengalaman ${tech.yearsExperience > 0 ? tech.yearsExperience : 1}+ tahun. '
-                'Melayani berbagai merek dan model. Garansi pengerjaan.',
+                '${tech.specialty.isEmpty ? tech.category : tech.specialty} technician '
+                'with ${tech.yearsExperience > 0 ? tech.yearsExperience : 1}+ years of experience. '
+                'Serves various brands and models. Work guarantee.',
                 style: const TextStyle(
                   fontSize: 13,
                   color: _muted,
@@ -899,7 +899,7 @@ class _AboutTab extends GetView<BookingController> {
                   )
                 else if (tech.certificationUrls.isNotEmpty)
                   const Text(
-                    'Foto sertifikat tersedia.',
+                    'Certificate photos available.',
                     style: TextStyle(fontSize: 12, color: _muted),
                   ),
               ],
@@ -932,7 +932,7 @@ class _AboutTab extends GetView<BookingController> {
                                     size: 32, color: _muted),
                                 SizedBox(height: 6),
                                 Text(
-                                  'Lokasi belum diset',
+                                  'Location not set',
                                   style: TextStyle(color: _muted, fontSize: 12),
                                 ),
                               ],
@@ -953,7 +953,7 @@ class _AboutTab extends GetView<BookingController> {
               const SizedBox(height: 2),
               Text(
                 tech.workshopAddress.isEmpty
-                    ? 'Alamat belum diisi'
+                    ? 'Address not filled'
                     : tech.workshopAddress,
                 style: const TextStyle(fontSize: 12, color: _muted, height: 1.4),
               ),
@@ -973,8 +973,8 @@ class _AboutTab extends GetView<BookingController> {
                           MapsLauncher.searchAddress(tech.workshopAddress);
                         } else {
                           Get.snackbar(
-                            'Lokasi tidak tersedia',
-                            'Teknisi belum mengisi alamat workshop',
+                            'Location not available',
+                            'Technician has not filled in workshop address',
                             snackPosition: SnackPosition.TOP,
                           );
                         }
@@ -1002,8 +1002,8 @@ class _AboutTab extends GetView<BookingController> {
                           ClipboardData(text: tech.workshopAddress),
                         );
                         Get.snackbar(
-                          'Tersalin',
-                          'Alamat disalin ke clipboard',
+                          'Copied',
+                          'Address copied to clipboard',
                           snackPosition: SnackPosition.TOP,
                           duration: const Duration(seconds: 2),
                         );

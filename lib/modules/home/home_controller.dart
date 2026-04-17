@@ -45,7 +45,7 @@ class HomeController extends GetxController {
       final position = await _technicianService.getCurrentLocation();
 
       if (position == null) {
-        locationError.value = 'Izin lokasi diperlukan';
+        locationError.value = 'Location permission required';
         isLoadingTechnicians.value = false;
         return;
       }
@@ -63,7 +63,7 @@ class HomeController extends GetxController {
       nearbyTechnicians.assignAll(available.take(3).toList());
     } catch (e) {
       debugPrint('HomeController: gagal load teknisi - $e');
-      locationError.value = 'Gagal memuat data';
+      locationError.value = 'Failed to load data';
     } finally {
       isLoadingTechnicians.value = false;
     }

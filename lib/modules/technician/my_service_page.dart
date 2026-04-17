@@ -131,17 +131,17 @@ class MyServicePage extends GetView<TechnicianController> {
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
-          'Hapus Service?',
+          'Delete Service?',
           style: TextStyle(fontWeight: FontWeight.w900, color: _ink),
         ),
         content: Text(
-          'Service "${controller.serviceEstimates[index].service}" akan dihapus.',
+          'Service "${controller.serviceEstimates[index].service}" will be deleted.',
           style: const TextStyle(color: _muted, fontWeight: FontWeight.w500),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Batal',
+            child: const Text('Cancel',
                 style: TextStyle(
                     color: _muted, fontWeight: FontWeight.w700)),
           ),
@@ -157,7 +157,7 @@ class MyServicePage extends GetView<TechnicianController> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Hapus',
+            child: const Text('Delete',
                 style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
@@ -246,7 +246,7 @@ class _ServiceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Estimasi Harga',
+                      'Price Estimate',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -301,7 +301,7 @@ class _ServiceCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10)),
                 ),
                 child: const Text(
-                  'Hapus',
+                  'Delete',
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w700),
                 ),
@@ -451,7 +451,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Belum ada service',
+              'No services yet',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -460,7 +460,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Tambah service yang kamu tawarkan\nagar pelanggan bisa langsung booking.',
+              'Add services you offer\nso customers can book directly.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -480,7 +480,7 @@ class _EmptyState extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14)),
               ),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Tambah Service Pertama',
+              label: const Text('Add First Service',
                   style: TextStyle(fontWeight: FontWeight.w800)),
             ),
           ],

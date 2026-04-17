@@ -48,14 +48,14 @@ class _ReviewPageState extends State<ReviewPage> {
       );
       Get.offAllNamed(AppRoutes.home);
       Get.snackbar(
-        'Terima Kasih!',
-        'Ulasan kamu sudah tersimpan',
+        'Thank You!',
+        'Your review has been saved',
         snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFF22C55E),
         colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar('Gagal', e.toString(), snackPosition: SnackPosition.TOP);
+      Get.snackbar('Failed', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -78,7 +78,7 @@ class _ReviewPageState extends State<ReviewPage> {
                     onPressed: () => Get.back(),
                   ),
                   const Text(
-                    'Beri Ulasan',
+                    'Write a Review',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
                   ),
                 ],
@@ -232,7 +232,7 @@ class _TechCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text(
-              'SELESAI',
+              'DONE',
               style: TextStyle(
                   color: Color(0xFF10B981),
                   fontWeight: FontWeight.w800,
@@ -251,7 +251,7 @@ class _StarRatingCard extends StatelessWidget {
   final ValueChanged<int> onChanged;
   const _StarRatingCard({required this.selected, required this.onChanged});
 
-  static const _labels = ['Sangat Buruk', 'Buruk', 'Cukup', 'Bagus', 'Luar Biasa!'];
+  static const _labels = ['Very Bad', 'Bad', 'Average', 'Good', 'Excellent!'];
 
   @override
   Widget build(BuildContext context) {
@@ -263,7 +263,7 @@ class _StarRatingCard extends StatelessWidget {
       child: Column(
         children: [
           const Text(
-            'Seberapa puas kamu dengan layanan teknisi?',
+            'How satisfied are you with the technician\'s service?',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
@@ -323,7 +323,7 @@ class _ReviewTextField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'CERITAKAN PENGALAMANMU',
+            'SHARE YOUR EXPERIENCE',
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
@@ -338,7 +338,7 @@ class _ReviewTextField extends StatelessWidget {
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText:
-                  'Contoh: Teknisi datang tepat waktu, pekerjaan rapi dan cepat...',
+                  'Example: The technician arrived on time, work was neat and fast...',
               hintStyle: const TextStyle(color: Color(0xFFB7C0D2)),
               filled: true,
               fillColor: const Color(0xFFF5F7FB),
@@ -376,12 +376,12 @@ class _RecommendToggle extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Rekomendasikan teknisi ini?',
+                  'Recommend this technician?',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Bantu pengguna lain dengan rekomendasimu',
+                  'Help other users with your recommendation',
                   style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                 ),
               ],
@@ -405,12 +405,12 @@ class _QuickTagsRow extends StatelessWidget {
   const _QuickTagsRow({required this.onTap});
 
   static const _tags = [
-    'Tepat waktu',
-    'Ramah',
-    'Hasil rapi',
-    'Harga sesuai',
-    'Profesional',
-    'Cepat selesai',
+    'On time',
+    'Friendly',
+    'Neat work',
+    'Fair price',
+    'Professional',
+    'Fast completion',
   ];
 
   @override
@@ -421,7 +421,7 @@ class _QuickTagsRow extends StatelessWidget {
         const Padding(
           padding: EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'Pilih yang sesuai:',
+            'Select applicable tags:',
             style: TextStyle(
                 color: Color(0xFF5D6780),
                 fontWeight: FontWeight.w600,

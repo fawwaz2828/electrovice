@@ -86,7 +86,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Gagal menyimpan service: $e',
+        'Failed to save service: $e',
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
@@ -140,7 +140,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Service name
-                      _SectionLabel(label: 'Nama Service'),
+                      _SectionLabel(label: 'Service Name'),
                       const SizedBox(height: 8),
                       _FormCard(
                         child: TextFormField(
@@ -150,14 +150,14 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                             hint: 'cth. Screen Replacement, Battery Replacement',
                           ),
                           validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Nama service wajib diisi'
+                              ? 'Service name is required'
                               : null,
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // Description
-                      _SectionLabel(label: 'Deskripsi'),
+                      _SectionLabel(label: 'Description'),
                       const SizedBox(height: 8),
                       _FormCard(
                         child: TextFormField(
@@ -165,14 +165,14 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                           maxLines: 3,
                           textCapitalization: TextCapitalization.sentences,
                           decoration: _inputDeco(
-                            hint: 'Jelaskan detail service yang kamu tawarkan...',
+                            hint: 'Describe the service details you offer...',
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // Price range
-                      _SectionLabel(label: 'Estimasi Harga'),
+                      _SectionLabel(label: 'Price Estimate'),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -187,11 +187,11 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                                 decoration: _inputDeco(
                                   hint: '50000',
                                   prefix: 'Rp  ',
-                                  label: 'Harga Min',
+                                  label: 'Min Price',
                                 ),
                                 validator: (v) {
                                   if (v == null || v.isEmpty) {
-                                    return 'Wajib diisi';
+                                    return 'Required';
                                   }
                                   return null;
                                 },
@@ -219,7 +219,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                                 decoration: _inputDeco(
                                   hint: '150000',
                                   prefix: 'Rp  ',
-                                  label: 'Harga Max',
+                                  label: 'Max Price',
                                 ),
                               ),
                             ),
@@ -230,7 +230,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                       Padding(
                         padding: const EdgeInsets.only(left: 4),
                         child: Text(
-                          'Kosongkan harga max jika harga dimulai dari min saja.',
+                          'Leave max price empty if price starts from min only.',
                           style: TextStyle(
                             fontSize: 11,
                             color: _muted,
@@ -240,7 +240,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                       const SizedBox(height: 16),
 
                       // Duration
-                      _SectionLabel(label: 'Durasi Pengerjaan'),
+                      _SectionLabel(label: 'Service Duration'),
                       const SizedBox(height: 10),
                       Row(
                         children: [
@@ -292,7 +292,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                                   ),
                                 )
                               : Text(
-                                  isEdit ? 'Simpan Perubahan' : 'Publish Service',
+                                  isEdit ? 'Save Changes' : 'Publish Service',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
