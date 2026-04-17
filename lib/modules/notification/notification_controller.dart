@@ -13,9 +13,25 @@ class NotificationController extends GetxController {
   final RxList<NotificationItem> notifications = <NotificationItem>[].obs;
   final RxBool isLoading = true.obs;
 
+  /// Role user yang sedang login — dipakai untuk routing & filtering
+  String userRole = 'customer';
+
   StreamSubscription? _countSub;
   StreamSubscription? _listSub;
   String? _userId;
+
+  // Tipe notif yang relevan per role
+  static const _technicianTypes = {
+    NotifType.newOrder,
+    NotifType.orderCancelled,
+    NotifType.paymentConfirmed,
+  };
+  static const _customerTypes = {
+    NotifType.orderAccepted,
+    NotifType.orderDeclined,
+    NotifType.onProgress,
+    NotifType.awaitingPayment,
+  };
 
   @override
   void onInit() {
@@ -40,14 +56,33 @@ class NotificationController extends GetxController {
     if (uid == null) return;
     _userId = uid;
 
+    // Ambil role user sekali saja
+    userRole = await _authService.getUserRole(uid) ?? 'customer';
+
+    final relevantTypes = userRole == 'technician'
+        ? _technicianTypes
+        : _customerTypes;
+
     _countSub = _notifService.streamUnreadCount(uid).listen(
-      (count) => unreadCount.value = count,
+      (count) {
+        // Hitung ulang hanya dari notif yang relevan
+        final unread = notifications
+            .where((n) => !n.isRead && relevantTypes.contains(n.type))
+            .length;
+        unreadCount.value = unread;
+      },
       onError: (e) => debugPrint('NotificationController count error: $e'),
     );
 
     _listSub = _notifService.streamAll(uid).listen(
       (list) {
-        notifications.assignAll(list);
+        // Filter: hanya tampilkan notif yang sesuai role
+        final filtered = list
+            .where((n) => relevantTypes.contains(n.type))
+            .toList();
+        notifications.assignAll(filtered);
+        // Sync unread count
+        unreadCount.value = filtered.where((n) => !n.isRead).length;
         isLoading.value = false;
       },
       onError: (e) {

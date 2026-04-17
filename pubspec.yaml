@@ -55,6 +55,7 @@ dependencies:
   url_launcher: ^6.3.2
 
   flutter_native_splash: ^2.4.6
+  package_info_plus: ^10.0.0
 
 dev_dependencies:
   flutter_test:
@@ -85,21 +86,16 @@ flutter:
   # https://flutter.dev/to/asset-from-package
 
 flutter_native_splash:
-  # Light mode: logo biru di background putih
-  color: "#FFFFFF"
-  image: assets/images/electrovice_blue.png
-  # Dark mode: logo putih di background gelap
-  color_dark: "#0F172A"
-  image_dark: assets/images/electrovice_white.png
-  # Tampilkan logo di tengah, tidak di-stretch / di-crop
+  # Background biru, ikon petir putih — seperti figma
+  color: "#3254FF"
+  image: assets/images/splash_electrovice.png
   android_gravity: center
   ios_content_mode: scaleAspectFit
   web_image_mode: center
+  # Android 12+ — icon di tengah lingkaran biru
   android_12:
-    image: assets/images/electrovice_blue.png
-    color: "#FFFFFF"
-    image_dark: assets/images/electrovice_white.png
-    color_dark: "#0F172A"
+    image: assets/images/splash_electrovice.png
+    color: "#3254FF"
   fullscreen: true
 
 flutter_launcher_icons:

@@ -69,32 +69,29 @@ class NotificationPage extends GetView<NotificationController> {
   }
 
   void _onTap(NotificationItem item) {
-    // Mark as read
     if (!item.isRead) controller.markAsRead(item.id);
-
     Get.back();
 
-    // Routing berdasarkan siapa penerima notif:
-    //   Teknisi menerima: newOrder, orderCancelled, paymentConfirmed
-    //   Customer menerima: orderAccepted, orderDeclined, onProgress, awaitingPayment
+    final isTechnician = controller.userRole == 'technician';
+
     switch (item.type) {
-      // ── Teknisi ──────────────────────────────────────────────────
+      // ── Notif teknisi ─────────────────────────────────────────────
       case NotifType.newOrder:
       case NotifType.orderCancelled:
       case NotifType.paymentConfirmed:
-        Get.toNamed(AppRoutes.activeOrders);
+        if (isTechnician) Get.toNamed(AppRoutes.activeOrders);
         break;
 
-      // ── Customer: order masih bisa di-track ──────────────────────
+      // ── Notif customer: order sedang berjalan ─────────────────────
       case NotifType.orderAccepted:
       case NotifType.onProgress:
       case NotifType.awaitingPayment:
-        Get.toNamed(AppRoutes.orderTracking);
+        if (!isTechnician) Get.toNamed(AppRoutes.orderTracking);
         break;
 
-      // ── Customer: order sudah ditolak → ke list pesanan ──────────
+      // ── Notif customer: order ditolak ─────────────────────────────
       case NotifType.orderDeclined:
-        Get.toNamed(AppRoutes.customerOrders);
+        if (!isTechnician) Get.toNamed(AppRoutes.customerOrders);
         break;
 
       default:

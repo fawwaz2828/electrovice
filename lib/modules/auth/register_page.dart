@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../../config/routes.dart';
 
@@ -88,7 +89,63 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 32),
+              // ── Privacy Policy & Terms ─────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF94A3B8),
+                      height: 1.6,
+                    ),
+                    children: [
+                      const TextSpan(text: 'Dengan melanjutkan, kamu menyetujui\n'),
+                      WidgetSpan(
+                        child: GestureDetector(
+                          onTap: () => launchUrl(
+                            Uri.parse('https://electrovice.vercel.app/terms'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                          child: const Text(
+                            'Syarat & Ketentuan',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF0061FF),
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Color(0xFF0061FF),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const TextSpan(text: '  dan  '),
+                      WidgetSpan(
+                        child: GestureDetector(
+                          onTap: () => launchUrl(
+                            Uri.parse('https://electrovice.vercel.app/privacy-policy'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                          child: const Text(
+                            'Kebijakan Privasi',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF0061FF),
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Color(0xFF0061FF),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const TextSpan(text: ' kami.'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
             ],
           ),
         ),

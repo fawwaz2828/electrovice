@@ -81,54 +81,53 @@ class FcmHandler {
   // ─────────────────────────────────────────────────────────────────
   static Future<void> _navigate(Map<String, dynamic> data) async {
     final type = data['type'] as String? ?? '';
-    final bookingId = data['bookingId'] as String? ?? '';
 
     // Pastikan user sudah login sebelum navigasi
     final uid = AuthService().currentUser?.uid;
     if (uid == null) return;
 
+    // Cek role sekali untuk semua routing
+    final role = await AuthService().getUserRole(uid);
+    final isTechnician = role == 'technician';
+
     switch (type) {
       // ── Teknisi: ada booking baru masuk ────────────────────────
-      // jobDetail butuh selectedOrder di TechnicianController — tidak bisa
-      // di-set dari sini. Arahkan ke activeOrders supaya teknisi pilih sendiri.
       case 'new_order':
-        Get.toNamed(AppRoutes.activeOrders);
+        if (isTechnician) Get.toNamed(AppRoutes.activeOrders);
         break;
 
       // ── Customer: teknisi accept order ─────────────────────────
       case 'order_accepted':
       // ── Customer: teknisi sudah tiba & mulai kerja ─────────────
       case 'on_progress':
-        Get.toNamed(AppRoutes.orderTracking);
+        if (!isTechnician) Get.toNamed(AppRoutes.orderTracking);
         break;
 
       // ── Customer: tagihan siap dibayar ─────────────────────────
       case 'awaiting_payment':
-        Get.toNamed(AppRoutes.customerOrders);
+        if (!isTechnician) Get.toNamed(AppRoutes.customerOrders);
         break;
 
       // ── Teknisi: pembayaran diterima ────────────────────────────
       case 'payment_confirmed':
-        Get.toNamed(AppRoutes.technicianOrderHistory);
+        if (isTechnician) Get.toNamed(AppRoutes.technicianOrderHistory);
         break;
 
-      // ── Customer: teknisi menolak order ───────────────────────
+      // ── Customer: teknisi menolak order ────────────────────────
       case 'order_declined':
-        Get.toNamed(AppRoutes.customerOrders);
+        if (!isTechnician) Get.toNamed(AppRoutes.customerOrders);
         break;
 
-      // ── Kedua pihak: order dibatalkan ──────────────────────────
+      // ── Kedua pihak: order dibatalkan ───────────────────────────
       case 'order_cancelled':
-        // Cek role dari Firestore untuk arahkan ke halaman yang benar
-        final role = await AuthService().getUserRole(uid);
-        if (role == 'technician') {
+        if (isTechnician) {
           Get.toNamed(AppRoutes.activeOrders);
         } else {
           Get.toNamed(AppRoutes.customerOrders);
         }
         break;
 
-      // ── Chat: pesan baru masuk ─────────────────────────────────
+      // ── Chat: pesan baru masuk ──────────────────────────────────
       case 'chat':
         final chatId = data['chatId'] as String? ?? '';
         if (chatId.isNotEmpty) {
@@ -139,7 +138,6 @@ class FcmHandler {
         break;
 
       default:
-        // Type tidak dikenal — tidak navigasi
         break;
     }
   }

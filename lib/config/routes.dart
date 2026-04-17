@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../modules/splash/splash_page.dart';
 import '../modules/auth/login_page.dart';
 import '../modules/auth/register_page.dart';
 import '../modules/profile/profile_page.dart';
@@ -47,6 +48,7 @@ import '../admin/admin_home_page.dart';
 import '../admin/admin_verification_page.dart';
 
 class AppRoutes {
+  static const String splash = '/splash';
   static const String login = '/login';
   static const String register = '/register';
   static const String profilePage = '/profile';
@@ -87,6 +89,10 @@ class AppRoutes {
   static const adminVerification = '/admin-verification';
 
   static final routes = [
+    GetPage(
+      name: splash,
+      page: () => const SplashPage(),
+    ),
     GetPage(
       name: login,
       page: () => const LoginPage(),

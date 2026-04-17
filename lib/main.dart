@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
       title: 'Electrovice',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.register,
+      initialRoute: AppRoutes.splash,
       getPages: AppRoutes.routes,
       defaultTransition: Transition.noTransition,
     );
