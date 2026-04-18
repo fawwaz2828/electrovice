@@ -2,7 +2,6 @@
   <img src="assets/images/ELECTROVICE_LOGO_HD.png" alt="ElectroVice Logo" width="260"/>
 </p>
 
-<h1 align="center">ElectroVice</h1>
 <p align="center">On-Demand Electronics Repair Booking Platform</p>
 
 <p align="center">
@@ -15,23 +14,23 @@
 
 ---
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/96e43433-7d41-497a-89f4-50828eaaafce" width="55%" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/e0a05edd-c8d9-4041-9167-fd46e782b86c" width="26%" />
+  &nbsp;&nbsp;
+  <img src="https://github.com/user-attachments/assets/c0a96d19-86ca-4a74-b8c0-1d157d9b517d" width="26%" />
+</p>
+
+---
+
 ## About
 
 **ElectroVice** is a mobile application that connects customers with verified electronics repair technicians. Customers can browse nearby technicians, book a repair session, track the technician in real-time, and complete payment — all in one app.
 
 > ⚠️ This app is currently in **beta**. Payment gateway integration and some features are still under active development.
-
----
-
-## Screenshots
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/96e43433-7d41-497a-89f4-50828eaaafce" width="30%" />
-  &nbsp;
-  <img src="https://github.com/user-attachments/assets/e0a05edd-c8d9-4041-9167-fd46e782b86c" width="30%" />
-  &nbsp;
-  <img src="https://github.com/user-attachments/assets/c0a96d19-86ca-4a74-b8c0-1d157d9b517d" width="30%" />
-</p>
 
 ---
 
@@ -59,17 +58,23 @@
 
 ---
 
-## Tech Stack
+## 🧰 Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Flutter, GetX |
-| Backend / Database | Firebase Firestore |
-| Authentication | Firebase Auth |
-| Push Notifications | Firebase Cloud Messaging (FCM) |
-| File Storage | Firebase Storage |
-| Maps & Location | Mapbox, Geolocator |
-| Real-time Chat | Firestore Streams |
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Mapbox](https://img.shields.io/badge/Mapbox-000000?style=for-the-badge&logo=mapbox&logoColor=white)
+
+**Frontend**
+- **Flutter**: Cross-platform UI toolkit for building natively compiled Android applications
+- **GetX**: State management, dependency injection, and routing
+- **Mapbox**: Interactive maps for real-time technician location tracking
+
+**Backend & Services**
+- **Firebase Firestore**: Real-time NoSQL database for bookings, chats, and user data
+- **Firebase Auth**: Secure user authentication
+- **Firebase Cloud Messaging**: Push notifications for order status updates
+- **Firebase Storage**: Cloud storage for profile photos and repair documentation
 
 ---
 
@@ -122,15 +127,13 @@ flutter run
 
 ---
 
-## Team
+## 👨‍💻 Contributors
 
-**LaBuLaDa**
+This project was developed by **LaBuLaDa** for a private client:
 
-| Name | Role |
-|---|---|
-| Sulthan Syafiq Raihan | Mobile Developer |
-| Fawwaz Akbar Wibowo | Mobile Developer |
-| Syahrun Nasai Ichwan | Mobile Developer |
+- **Sulthan Syafiq Raihan** — Hustler (Project Lead & Firebase Integration)
+- **Fawwaz Akbar Wibowo** — Hipster (Frontend Developer, UI/UX Designer & QA Tester)
+- **Syahrun Nasai Ichwan** — Hacker (Frontend Developer & Idea Originator)
 
 **Client:** Maziza Kamalia
 
