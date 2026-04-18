@@ -218,7 +218,7 @@ class PayServicePage extends GetView<BookingController> {
 
                       const SizedBox(height: 28),
 
-                      // ── Payment Methods (display only for cash) ────────
+                      // ── Payment Methods ────────────────────────────
                       const Text(
                         'Payment Method',
                         style: TextStyle(
@@ -228,78 +228,7 @@ class PayServicePage extends GetView<BookingController> {
                         ),
                       ),
                       const SizedBox(height: 14),
-
-                      // Transfer Bank option
-                      _PayMethodTile(
-                        icon: Icons.account_balance_outlined,
-                        title: 'Transfer Bank',
-                        subtitle: 'BCA, MANDIRI, BNI',
-                        trailing: const Icon(Icons.chevron_right_rounded,
-                            color: Color(0xFF94A3B8)),
-                        onTap: () => Get.snackbar(
-                          'Coming soon',
-                          'Payment gateway will be available soon',
-                          snackPosition: SnackPosition.TOP,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // E-Wallet
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'E-Wallet',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                _EWalletBadge(
-                                  label: 'OVO',
-                                  color: const Color(0xFF4C3494),
-                                  onTap: () => Get.snackbar('Coming soon',
-                                      'OVO integration coming soon',
-                                      snackPosition: SnackPosition.TOP),
-                                ),
-                                const SizedBox(width: 12),
-                                _EWalletBadge(
-                                  label: 'GoPay',
-                                  color: const Color(0xFF00AED6),
-                                  onTap: () => Get.snackbar('Coming soon',
-                                      'GoPay integration coming soon',
-                                      snackPosition: SnackPosition.TOP),
-                                ),
-                                const SizedBox(width: 12),
-                                _EWalletBadge(
-                                  label: 'ShopeePay',
-                                  color: const Color(0xFFEE4D2D),
-                                  onTap: () => Get.snackbar('Coming soon',
-                                      'ShopeePay integration coming soon',
-                                      snackPosition: SnackPosition.TOP),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      const _PaymentMethodSection(),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -385,30 +314,64 @@ class _BillRow extends StatelessWidget {
   }
 }
 
-class _PayMethodTile extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────
+//  SELECTABLE PAYMENT METHOD SECTION
+// ─────────────────────────────────────────────────────────────────
+class _PaymentMethodSection extends StatelessWidget {
+  const _PaymentMethodSection();
+
+  @override
+  Widget build(BuildContext context) {
+    // Only Cash is available — other methods are not yet integrated
+    return _SelectableTile(
+      icon: Icons.payments_outlined,
+      iconColor: const Color(0xFF16A34A),
+      title: 'Cash',
+      subtitle: 'Pay directly to the technician',
+      selected: true,
+      onTap: () {},
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  SELECTABLE TILE
+// ─────────────────────────────────────────────────────────────────
+class _SelectableTile extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String title;
   final String subtitle;
-  final Widget? trailing;
-  final VoidCallback? onTap;
+  final bool selected;
+  final bool comingSoon;
+  final VoidCallback onTap;
 
-  const _PayMethodTile({
+  const _SelectableTile({
     required this.icon,
+    required this.iconColor,
     required this.title,
     required this.subtitle,
-    this.trailing,
-    this.onTap,
+    required this.selected,
+    required this.onTap,
+    this.comingSoon = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFF0061FF)
+                : const Color(0xFFE2E8F0),
+            width: selected ? 2 : 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -420,31 +383,64 @@ class _PayMethodTile extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: const Color(0xFF475569), size: 22),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A))),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF94A3B8))),
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      if (comingSoon) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7ED),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Soon',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFFF59E0B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFF94A3B8)),
+                  ),
                 ],
               ),
             ),
-            if (trailing != null) trailing!,
+            if (selected)
+              const Icon(Icons.check_circle_rounded,
+                  color: Color(0xFF0061FF), size: 22)
+            else
+              const Icon(Icons.radio_button_unchecked_rounded,
+                  color: Color(0xFFCBD5E1), size: 22),
           ],
         ),
       ),
@@ -452,13 +448,21 @@ class _PayMethodTile extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _EWalletBadge extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
+  final bool comingSoon;
+  final bool selected;
 
-  const _EWalletBadge(
-      {required this.label, required this.color, required this.onTap});
+  const _EWalletBadge({
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.comingSoon = false,
+    this.selected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -466,31 +470,64 @@ class _EWalletBadge extends StatelessWidget {
       onTap: onTap,
       child: Column(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(
-              child: Text(
-                label.substring(0, 1),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: comingSoon
+                      ? color.withValues(alpha: 0.35)
+                      : color,
+                  borderRadius: BorderRadius.circular(14),
+                  border: selected
+                      ? Border.all(color: const Color(0xFF0061FF), width: 2)
+                      : null,
+                ),
+                child: Center(
+                  child: Text(
+                    label.substring(0, 1),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              if (comingSoon)
+                Positioned(
+                  top: -6, right: -6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'Soon',
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF475569),
+              color: comingSoon
+                  ? const Color(0xFF94A3B8)
+                  : const Color(0xFF475569),
             ),
           ),
         ],

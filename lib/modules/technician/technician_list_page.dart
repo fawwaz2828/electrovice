@@ -34,15 +34,19 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
   String _sortBy = 'distance'; // 'distance' | 'rating' | 'jobs'
 
   static const _categoryFilters = [
-    {'label': 'Semua',     'value': null},
-    {'label': 'Handphone', 'value': 'electronic'},
-    {'label': 'Kendaraan', 'value': 'vehicle'},
+    {'label': 'All',         'value': null},
+    {'label': 'Smartphone',  'value': 'smartphone'},
+    {'label': 'Laptop',      'value': 'laptop'},
+    {'label': 'Appliance',   'value': 'appliance'},
+    {'label': 'AC & Cooling','value': 'ac'},
+    {'label': 'TV & Display','value': 'tv'},
+    {'label': 'Vehicle',     'value': 'vehicle'},
   ];
 
   static const _sortOptions = [
-    {'label': 'Terdekat',  'icon': Icons.near_me_rounded,       'value': 'distance'},
-    {'label': 'Rating',    'icon': Icons.star_rounded,           'value': 'rating'},
-    {'label': 'Terpopuler','icon': Icons.workspace_premium_rounded,'value': 'jobs'},
+    {'label': 'Nearest',  'icon': Icons.near_me_rounded,         'value': 'distance'},
+    {'label': 'Rating',   'icon': Icons.star_rounded,             'value': 'rating'},
+    {'label': 'Popular',  'icon': Icons.workspace_premium_rounded,'value': 'jobs'},
   ];
 
   List<TechnicianOnlineModel> get _filtered {
@@ -276,14 +280,48 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
                 child: Column(
                   children: [
                     // ── Drag handle ──────────────────────────────
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10, bottom: 4),
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFCBD5E1),
-                          borderRadius: BorderRadius.circular(2),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onVerticalDragUpdate: (details) {
+                        final screenH = MediaQuery.of(context).size.height;
+                        final delta = -details.delta.dy / screenH;
+                        final newSize =
+                            (_sheetCtrl.size + delta).clamp(0.18, 0.88);
+                        _sheetCtrl.jumpTo(newSize);
+                      },
+                      onVerticalDragEnd: (details) {
+                        const snaps = [0.18, 0.42, 0.88];
+                        final curr = _sheetCtrl.size;
+                        final nearest = snaps.reduce((a, b) =>
+                            (a - curr).abs() < (b - curr).abs() ? a : b);
+                        _sheetCtrl.animateTo(
+                          nearest,
+                          duration: const Duration(milliseconds: 280),
+                          curve: Curves.easeOut,
+                        );
+                      },
+                      onTap: () {
+                        const snaps = [0.18, 0.42, 0.88];
+                        final curr = _sheetCtrl.size;
+                        final idx = snaps.indexWhere(
+                            (s) => (s - curr).abs() < 0.05);
+                        final nextIdx =
+                            idx == -1 ? 1 : (idx + 1) % snaps.length;
+                        _sheetCtrl.animateTo(
+                          snaps[nextIdx],
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOut,
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 60),
+                        child: Container(
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFCBD5E1),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
                     ),

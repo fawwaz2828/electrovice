@@ -70,6 +70,7 @@ class _ChatRoomTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: _openChat,
+      onLongPress: () => _confirmDelete(context),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
@@ -179,6 +180,36 @@ class _ChatRoomTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Conversation',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: const Text(
+            'This conversation will be permanently deleted for both parties.',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel',
+                style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              Get.find<ChatInboxController>().deleteChat(room.chatId);
+            },
+            child: const Text('Delete',
+                style: TextStyle(
+                    color: Color(0xFFEF4444), fontWeight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
   }

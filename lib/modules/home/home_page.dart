@@ -345,7 +345,7 @@ class _HeroCTACardState extends State<_HeroCTACard> {
 
             // ── Text content (bottom-left) ───────────────────────
             Padding(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -475,7 +475,7 @@ class _SearchBar extends StatelessWidget {
 class _CurrentRepairCard extends GetView<BookingController> {
   const _CurrentRepairCard();
 
-  String _statusLabel(String status) => switch (status) {
+  static String _statusLabel(String status) => switch (status) {
         BookingStatus.pending => 'PENDING',
         BookingStatus.confirmed => 'CONFIRMED',
         BookingStatus.onProgress => 'IN PROGRESS',
@@ -484,119 +484,21 @@ class _CurrentRepairCard extends GetView<BookingController> {
         _ => 'IN PROGRESS',
       };
 
-  Color _statusBg(String status) => switch (status) {
+  static Color _statusBg(String status) => switch (status) {
         BookingStatus.pending => const Color(0xFFFFF7ED),
         BookingStatus.awaitingPayment => const Color(0xFFFFF1F2),
         BookingStatus.done => const Color(0xFFDCFCE7),
         _ => const Color(0xFFDCEDFF),
       };
 
-  Color _statusTextColor(String status) => switch (status) {
+  static Color _statusTextColor(String status) => switch (status) {
         BookingStatus.pending => const Color(0xFFD97706),
         BookingStatus.awaitingPayment => const Color(0xFFE11D48),
         BookingStatus.done => const Color(0xFF16A34A),
         _ => const Color(0xFF0061FF),
       };
 
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final booking = controller.activeBooking.value;
-
-      // Tidak ada active booking — sembunyikan card
-      if (booking == null) return const SizedBox.shrink();
-
-      final title =
-          '${booking.technicianName} • ${_damageTypeLabel(booking.damageType)}';
-      final status = booking.status;
-
-      return GestureDetector(
-        onTap: () {
-          final s = booking.status;
-          if (s == BookingStatus.done || s == BookingStatus.cancelled) {
-            Get.toNamed(AppRoutes.bookingDetail, arguments: booking);
-          } else {
-            Get.toNamed(AppRoutes.orderTracking);
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.build_rounded,
-                    color: Color(0xFF475569), size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'CURRENT REPAIR',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF94A3B8),
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: _statusBg(status),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  _statusLabel(status),
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    color: _statusTextColor(status),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    });
-  }
-
-  String _damageTypeLabel(String type) => switch (type) {
+  static String _damageTypeLabel(String type) => switch (type) {
         'screen' => 'Screen',
         'battery' => 'Battery',
         'hardware' => 'Hardware',
@@ -604,6 +506,114 @@ class _CurrentRepairCard extends GetView<BookingController> {
         'camera' => 'Camera',
         _ => 'General Repair',
       };
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final activeBookings = controller.bookingHistory
+          .where((b) => b.isActive)
+          .toList();
+
+      // No active bookings — hide section entirely
+      if (activeBookings.isEmpty) return const SizedBox.shrink();
+
+      return Column(
+        children: activeBookings.map((booking) {
+          final title =
+              '${booking.technicianName} • ${_damageTypeLabel(booking.damageType)}';
+          final status = booking.status;
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: GestureDetector(
+              onTap: () {
+                final s = booking.status;
+                if (s == BookingStatus.done || s == BookingStatus.cancelled) {
+                  Get.toNamed(AppRoutes.bookingDetail, arguments: booking);
+                } else {
+                  Get.toNamed(AppRoutes.orderTracking);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.build_rounded,
+                          color: Color(0xFF475569), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'CURRENT REPAIR',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF94A3B8),
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: _statusBg(status),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _statusLabel(status),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: _statusTextColor(status),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -665,7 +675,7 @@ class _RepairCategories extends StatelessWidget {
           const SizedBox(height: 16),
           // 1 baris scroll horizontal
           SizedBox(
-            height: 84,
+            height: 92,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.zero,
@@ -726,6 +736,8 @@ class _CategoryItem extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w700,

@@ -120,16 +120,16 @@ class AppBottomNavBar extends StatelessWidget {
       label: 'HOME',
     ),
     AppBottomNavEntry(
-      item: AppNavItem.history,
-      icon: Icons.history_rounded,
-      activeIcon: Icons.history_rounded,
-      label: 'HISTORY',
-    ),
-    AppBottomNavEntry(
       item: AppNavItem.order,
       icon: Icons.receipt_long_outlined,
       activeIcon: Icons.receipt_long_rounded,
       label: 'ORDER',
+    ),
+    AppBottomNavEntry(
+      item: AppNavItem.history,
+      icon: Icons.history_rounded,
+      activeIcon: Icons.history_rounded,
+      label: 'HISTORY',
     ),
     AppBottomNavEntry(
       item: AppNavItem.profile,

@@ -19,7 +19,48 @@ class BookingHistoryPage extends GetView<BookingController> {
       bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.history),
       body: SafeArea(
         child: Obx(() {
-          final items = controller.orderHistoryData;
+          if (controller.isLoadingHistory.value) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Order History',
+                      style: TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 14),
+                  const Row(
+                    children: [
+                      Expanded(
+                        child: Text('RECENT ORDERS',
+                            style: TextStyle(
+                              color: Color(0xFF68738A),
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 2,
+                            )),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  ...List.generate(
+                    3,
+                    (_) => const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: _HistorySkeleton(),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final allItems = controller.orderHistoryData;
+          final showAll = controller.showAllHistory.value;
+          const previewCount = 3;
+          final items = showAll
+              ? allItems
+              : allItems.take(previewCount).toList();
+          final hasMore = allItems.length > previewCount;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -31,9 +72,9 @@ class BookingHistoryPage extends GetView<BookingController> {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 14),
-                const Row(
+                Row(
                   children: [
-                    Expanded(
+                    const Expanded(
                       child: Text(
                         'RECENT ORDERS',
                         style: TextStyle(
@@ -43,7 +84,28 @@ class BookingHistoryPage extends GetView<BookingController> {
                         ),
                       ),
                     ),
-                    Text('View All', style: TextStyle(fontWeight: FontWeight.w700)),
+                    if (showAll && hasMore)
+                      GestureDetector(
+                        onTap: () => controller.showAllHistory.value = false,
+                        child: const Text(
+                          'Show Less',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    if (!showAll && hasMore)
+                      GestureDetector(
+                        onTap: () => controller.showAllHistory.value = true,
+                        child: const Text(
+                          'View All',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF4163FF),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 14),

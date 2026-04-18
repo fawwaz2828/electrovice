@@ -210,6 +210,15 @@ class TechnicianController extends GetxController {
   void _listenToOrders(String technicianId) {
     _ordersStreamActive = true;
     _trackingUid = technicianId;
+
+    // Timeout: jika stream tidak balas dalam 10 detik, hentikan loading state
+    Future.delayed(const Duration(seconds: 10), () {
+      if (isLoadingOrders.value) {
+        isLoadingOrders.value = false;
+        debugPrint('TechnicianController: orders stream timeout');
+      }
+    });
+
     _ordersSub = _bookingService
         .streamTechnicianOrders(technicianId)
         .listen(
@@ -372,6 +381,14 @@ class TechnicianController extends GetxController {
 
   /// Dipanggil setelah balik dari edit page
   Future<void> refreshProfile() async => _loadUserData();
+
+  /// Refresh semua data (orders + profile) — bisa dipanggil dari UI
+  Future<void> refreshAll() async {
+    isLoadingOrders.value = true;
+    _ordersSub?.cancel();
+    _ordersStreamActive = false;
+    await _loadUserData();
+  }
 
   void setProfile(TechnicianProfileData data) => profile.value = data;
 

@@ -146,7 +146,7 @@ class ChatService {
         .doc(chatId)
         .collection('messages')
         .orderBy('createdAt', descending: false)
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snap) => snap.docs.map(ChatMessage.fromFirestore).toList());
   }
 
@@ -172,6 +172,40 @@ class ChatService {
       });
       return rooms;
     });
+  }
+
+  // ── Delete chat room ──────────────────────────────────────────
+  Future<void> deleteChat(String chatId) async {
+    // Delete messages first (best-effort — don't block document deletion if
+    // subcollection delete fails due to security rules)
+    try {
+      var snap = await _db
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .limit(200)
+          .get();
+
+      while (snap.docs.isNotEmpty) {
+        final batch = _db.batch();
+        for (final doc in snap.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+
+        snap = await _db
+            .collection('chats')
+            .doc(chatId)
+            .collection('messages')
+            .limit(200)
+            .get();
+      }
+    } catch (_) {
+      // Ignore subcollection delete errors; proceed to delete the chat document
+    }
+
+    // Always delete the chat document itself
+    await _db.collection('chats').doc(chatId).delete();
   }
 
   // ── Mark as read ───────────────────────────────────────────────

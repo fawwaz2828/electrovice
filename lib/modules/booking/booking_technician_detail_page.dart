@@ -782,6 +782,59 @@ class _ReviewCard extends StatelessWidget {
 // ════════════════════════════════════════════════════════════════════════════
 //  ABOUT TAB
 // ════════════════════════════════════════════════════════════════════════════
+void _showCertViewer(BuildContext context, List<String> urls, int initialIndex) {
+  showDialog(
+    context: context,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: EdgeInsets.zero,
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: PageController(initialPage: initialIndex),
+            itemCount: urls.length,
+            itemBuilder: (_, i) => InteractiveViewer(
+              child: Center(
+                child: Image.network(urls[i], fit: BoxFit.contain),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 12, right: 12,
+            child: GestureDetector(
+              onTap: () => Get.back(),
+              child: Container(
+                width: 36, height: 36,
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+          if (urls.length > 1)
+            Positioned(
+              bottom: 16, left: 0, right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(urls.length, (i) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == initialIndex ? 16 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: i == initialIndex ? Colors.white : Colors.white38,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                )),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _AboutTab extends GetView<BookingController> {
   final TechnicianOnlineModel tech;
   const _AboutTab({required this.tech});
@@ -845,19 +898,38 @@ class _AboutTab extends GetView<BookingController> {
                       scrollDirection: Axis.horizontal,
                       itemCount: tech.certificationUrls.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 10),
-                      itemBuilder: (_, i) => ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          tech.certificationUrls[i],
-                          width: 140,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 140,
-                            height: 100,
-                            color: const Color(0xFFF1F5F9),
-                            child: const Icon(Icons.broken_image_outlined,
-                                color: _muted),
+                      itemBuilder: (_, i) => GestureDetector(
+                        onTap: () => _showCertViewer(context, tech.certificationUrls, i),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Stack(
+                            children: [
+                              Image.network(
+                                tech.certificationUrls[i],
+                                width: 140,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  width: 140,
+                                  height: 100,
+                                  color: const Color(0xFFF1F5F9),
+                                  child: const Icon(Icons.broken_image_outlined,
+                                      color: _muted),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 6, right: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Icon(Icons.zoom_in_rounded,
+                                      size: 14, color: Colors.white),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -1033,15 +1105,7 @@ class _AboutTab extends GetView<BookingController> {
 
         // ── Send a message ───────────────────────────────────────
         ElevatedButton.icon(
-          onPressed: () {
-            final t = controller.selectedTechnician.value;
-            if (t == null) return;
-            Get.toNamed(AppRoutes.chat, arguments: {
-              'chatId': t.uid,
-              'otherPartyName': t.name,
-              'otherPartyPhotoUrl': t.photoUrl,
-            });
-          },
+          onPressed: controller.openPreChat,
           style: ElevatedButton.styleFrom(
             backgroundColor: _ink,
             foregroundColor: Colors.white,

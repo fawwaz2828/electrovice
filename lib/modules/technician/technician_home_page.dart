@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widget/app_bottom_nav_bar.dart';
@@ -155,8 +156,10 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
       ),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+        child: RefreshIndicator(
+          onRefresh: _controller.refreshAll,
+          child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,18 +235,21 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                         const SizedBox(height: 16),
                         ...pendingOrders.map((order) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
-                              child: _RequestCard(
+                              child: _PendingRequestCard(
                                 category: order.category.toUpperCase(),
-                                categoryColor: const Color(0xFF0061FF),
-                                icon: Icons.build_rounded,
                                 distance: _formatSchedule(order.scheduledAt),
                                 title: _damageLabel(order.damageType),
                                 description: order.description.isEmpty
                                     ? 'No additional description'
                                     : order.description,
+                                deadline: order.createdAt.add(const Duration(minutes: 5)),
                                 onTap: () {
                                   _controller.selectOrder(order);
                                   Get.toNamed(AppRoutes.jobDetail);
+                                },
+                                onExpired: () async {
+                                  _controller.selectOrder(order);
+                                  await _controller.declineOrder();
                                 },
                               ),
                             )),
@@ -305,30 +311,42 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                         return Column(
                           children: displayOrders.map((order) => Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
-                                child: _RequestCard(
-                                  category: order.category.toUpperCase(),
-                                  categoryColor: _selectedFilter == _FilterTab.newOrders
-                                      ? const Color(0xFF0061FF)
-                                      : const Color(0xFF16A34A),
-                                  icon: _selectedFilter == _FilterTab.newOrders
-                                      ? Icons.build_rounded
-                                      : Icons.bolt_rounded,
-                                  distance: _formatSchedule(order.scheduledAt),
-                                  title: _damageLabel(order.damageType),
-                                  description: order.description.isEmpty
-                                      ? 'No additional description'
-                                      : order.description,
-                                  onTap: () {
-                                    _controller.selectOrder(order);
-                                    if (order.status == BookingStatus.pending) {
-                                      Get.toNamed(AppRoutes.jobDetail);
-                                    } else if (order.status == BookingStatus.confirmed) {
-                                      Get.toNamed(AppRoutes.verification);
-                                    } else {
-                                      Get.toNamed(AppRoutes.activeJob);
-                                    }
-                                  },
-                                ),
+                                child: order.status == BookingStatus.pending
+                                    ? _PendingRequestCard(
+                                        category: order.category.toUpperCase(),
+                                        distance: _formatSchedule(order.scheduledAt),
+                                        title: _damageLabel(order.damageType),
+                                        description: order.description.isEmpty
+                                            ? 'No additional description'
+                                            : order.description,
+                                        deadline: order.createdAt.add(const Duration(minutes: 5)),
+                                        onTap: () {
+                                          _controller.selectOrder(order);
+                                          Get.toNamed(AppRoutes.jobDetail);
+                                        },
+                                        onExpired: () async {
+                                          _controller.selectOrder(order);
+                                          await _controller.declineOrder();
+                                        },
+                                      )
+                                    : _RequestCard(
+                                        category: order.category.toUpperCase(),
+                                        categoryColor: const Color(0xFF16A34A),
+                                        icon: Icons.bolt_rounded,
+                                        distance: _formatSchedule(order.scheduledAt),
+                                        title: _damageLabel(order.damageType),
+                                        description: order.description.isEmpty
+                                            ? 'No additional description'
+                                            : order.description,
+                                        onTap: () {
+                                          _controller.selectOrder(order);
+                                          if (order.status == BookingStatus.confirmed) {
+                                            Get.toNamed(AppRoutes.verification);
+                                          } else {
+                                            Get.toNamed(AppRoutes.activeJob);
+                                          }
+                                        },
+                                      ),
                               )).toList(),
                         );
                       }),
@@ -340,6 +358,7 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
               const SizedBox(height: 120),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -579,6 +598,9 @@ class _EarningsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ctrl = Get.find<TechnicianController>();
     return Obx(() {
+      if (ctrl.isLoadingCompleted.value) {
+        return _EarningsSkeleton();
+      }
       final earnings = ctrl.totalEarnings;
       return Container(
         width: double.infinity,
@@ -635,6 +657,39 @@ class _EarningsCard extends StatelessWidget {
   }
 }
 
+class _EarningsSkeleton extends StatelessWidget {
+  Widget _box(Color c, {required double w, required double h, double r = 6}) =>
+      Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+            color: c, borderRadius: BorderRadius.circular(r)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final c = const Color(0xFF334155);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _box(c, w: 110, h: 10),
+          const SizedBox(height: 10),
+          _box(c, w: 180, h: 30, r: 8),
+          const SizedBox(height: 10),
+          _box(c, w: 130, h: 10),
+        ],
+      ),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────
 //  ORDERS COMPLETED CARD
 // ─────────────────────────────────────────────────────────────────
@@ -645,6 +700,39 @@ class _OrdersCompletedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ctrl = Get.find<TechnicianController>();
     return Obx(() {
+      if (ctrl.isLoadingCompleted.value) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(width: 140, height: 10,
+                  decoration: BoxDecoration(color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(6))),
+              const SizedBox(height: 12),
+              Container(width: 60, height: 36,
+                  decoration: BoxDecoration(color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(8))),
+              const SizedBox(height: 14),
+              Container(height: 6, decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(4))),
+            ],
+          ),
+        );
+      }
       final completed = ctrl.completedOrders.length;
       return Container(
         width: double.infinity,
@@ -916,6 +1004,236 @@ class _RequestCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  PENDING REQUEST CARD with countdown timer
+// ─────────────────────────────────────────────────────────────────
+class _PendingRequestCard extends StatefulWidget {
+  final String category;
+  final String distance;
+  final String title;
+  final String description;
+  final DateTime deadline;
+  final VoidCallback? onTap;
+  final Future<void> Function()? onExpired;
+
+  const _PendingRequestCard({
+    required this.category,
+    required this.distance,
+    required this.title,
+    required this.description,
+    required this.deadline,
+    this.onTap,
+    this.onExpired,
+  });
+
+  @override
+  State<_PendingRequestCard> createState() => _PendingRequestCardState();
+}
+
+class _PendingRequestCardState extends State<_PendingRequestCard> {
+  Timer? _timer;
+  Duration _remaining = Duration.zero;
+  bool _expired = false;
+  bool _autoDeclineDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateRemaining();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  void _updateRemaining() {
+    final diff = widget.deadline.difference(DateTime.now());
+    _remaining = diff.isNegative ? Duration.zero : diff;
+    _expired = diff.isNegative;
+  }
+
+  void _tick() {
+    if (!mounted) return;
+    setState(_updateRemaining);
+    if (_expired && !_autoDeclineDone) {
+      _autoDeclineDone = true;
+      widget.onExpired?.call();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String get _timerLabel {
+    final m = _remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = _remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final urgentColor = _remaining.inSeconds < 60
+        ? const Color(0xFFEF4444)
+        : const Color(0xFFF59E0B);
+
+    return Opacity(
+      opacity: _expired ? 0.5 : 1.0,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: _expired
+                ? const Color(0xFFE2E8F0)
+                : _remaining.inSeconds < 60
+                    ? const Color(0xFFEF4444).withValues(alpha: 0.3)
+                    : Colors.transparent,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              children: [
+                const SizedBox(height: 2),
+                Container(
+                  width: 46, height: 46,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.build_rounded,
+                      color: Color(0xFF475569), size: 22),
+                ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        widget.category,
+                        style: const TextStyle(
+                          fontSize: 9, fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5, color: Color(0xFF0061FF),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 3, height: 3,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFCBD5E1), shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          widget.distance,
+                          style: const TextStyle(
+                            fontSize: 9, fontWeight: FontWeight.w600,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _expired
+                              ? const Color(0xFFF1F5F9)
+                              : urgentColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _expired
+                                  ? Icons.timer_off_rounded
+                                  : Icons.timer_outlined,
+                              size: 11,
+                              color: _expired
+                                  ? const Color(0xFF94A3B8)
+                                  : urgentColor,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              _expired ? 'Expired' : _timerLabel,
+                              style: TextStyle(
+                                fontSize: 10, fontWeight: FontWeight.w800,
+                                color: _expired
+                                    ? const Color(0xFF94A3B8)
+                                    : urgentColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A), height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    widget.description,
+                    style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF64748B), height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: _expired ? null : widget.onTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: _expired
+                      ? const Color(0xFFF1F5F9)
+                      : const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _expired ? 'Expired' : 'View\nDetails',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w800,
+                    color: _expired
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF0061FF),
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -94,6 +94,11 @@ class NotificationPage extends GetView<NotificationController> {
         if (!isTechnician) Get.toNamed(AppRoutes.customerOrders);
         break;
 
+      // ── Chat: buka inbox ─────────────────────────────────────────
+      case NotifType.chat:
+        Get.toNamed(AppRoutes.chatInbox);
+        break;
+
       default:
         break;
     }
@@ -188,6 +193,7 @@ class _NotificationTile extends StatelessWidget {
         NotifType.onProgress => Icons.build_rounded,
         NotifType.awaitingPayment => Icons.receipt_long_rounded,
         NotifType.paymentConfirmed => Icons.payments_rounded,
+        NotifType.chat => Icons.chat_bubble_rounded,
         _ => Icons.notifications_rounded,
       };
 
@@ -199,6 +205,7 @@ class _NotificationTile extends StatelessWidget {
         NotifType.onProgress => const Color(0xFF4163FF),
         NotifType.awaitingPayment => const Color(0xFFF59E0B),
         NotifType.paymentConfirmed => const Color(0xFF10B981),
+        NotifType.chat => const Color(0xFF8B5CF6),
         _ => const Color(0xFF64748B),
       };
 

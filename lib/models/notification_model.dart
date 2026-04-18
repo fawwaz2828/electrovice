@@ -45,4 +45,5 @@ abstract class NotifType {
   static const onProgress = 'on_progress';       // customer: verifikasi berhasil
   static const awaitingPayment = 'awaiting_payment'; // customer: siap bayar
   static const paymentConfirmed = 'payment_confirmed'; // teknisi: bayar done
+  static const chat = 'chat';                    // both: pesan masuk di chat
 }

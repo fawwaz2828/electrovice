@@ -60,8 +60,8 @@ service cloud.firestore {
       // Create: siapapun yang login (saat buat pre-booking chat baru)
       allow create: if isSignedIn();
 
-      // Read/update: peserta chat. resource bisa null saat doc belum ada.
-      allow read, update: if isSignedIn() && (
+      // Read/update/delete: peserta chat. resource bisa null saat doc belum ada.
+      allow read, update, delete: if isSignedIn() && (
         resource == null ||
         request.auth.uid in resource.data.participants
       );

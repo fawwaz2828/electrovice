@@ -18,12 +18,41 @@ class CustomerOrdersPage extends GetView<BookingController> {
       bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.order),
       body: SafeArea(
         child: Obx(() {
+          if (controller.isLoadingHistory.value) {
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Active Orders',
+                            style: TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, __) => const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: _OrderCardSkeleton(),
+                      ),
+                      childCount: 3,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
           final activeOrders = controller.bookingHistory
               .where((b) => b.isActive)
-              .toList();
-
-          final doneOrders = controller.bookingHistory
-              .where((b) => b.status == BookingStatus.done)
               .toList();
 
           return CustomScrollView(
@@ -52,12 +81,12 @@ class CustomerOrdersPage extends GetView<BookingController> {
                   ),
                 ),
               ),
-              if (activeOrders.isEmpty && doneOrders.isEmpty)
+              if (activeOrders.isEmpty)
                 const SliverFillRemaining(
                     hasScrollBody: false, child: _EmptyOrdersState()),
               if (activeOrders.isNotEmpty)
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (ctx, i) => Padding(
@@ -71,52 +100,6 @@ class CustomerOrdersPage extends GetView<BookingController> {
                     ),
                   ),
                 ),
-              if (doneOrders.isNotEmpty) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Row(
-                      children: [
-                        const Text(
-                          'History',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(width: 8),
-                        if (doneOrders.any((b) => b.customerRating == null))
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF7ED),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '${doneOrders.where((b) => b.customerRating == null).length} pending review',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFFEA580C),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (ctx, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _DoneOrderCard(booking: doneOrders[i]),
-                      ),
-                      childCount: doneOrders.length,
-                    ),
-                  ),
-                ),
-              ],
             ],
           );
         }),
@@ -273,7 +256,8 @@ class _OrderCard extends StatelessWidget {
   }
 }
 
-// ── Done Order Card (Riwayat) ──────────────────────────────────────────────
+// ── Done Order Card ────────────────────────────────────────────────────────
+// ignore: unused_element
 class _DoneOrderCard extends StatelessWidget {
   final BookingDocument booking;
   const _DoneOrderCard({required this.booking});
@@ -425,6 +409,99 @@ class _DoneOrderCard extends StatelessWidget {
       buf.write(str[i]);
     }
     return buf.toString();
+  }
+}
+
+// ── Order Card Skeleton ────────────────────────────────────────────────────
+class _OrderCardSkeleton extends StatefulWidget {
+  const _OrderCardSkeleton();
+
+  @override
+  State<_OrderCardSkeleton> createState() => _OrderCardSkeletonState();
+}
+
+class _OrderCardSkeletonState extends State<_OrderCardSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final c = Color.lerp(
+            const Color(0xFFE2E8F0), const Color(0xFFF8FAFC), _anim.value)!;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _box(c, w: 42, h: 42, r: 10),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _box(c, w: 140, h: 14),
+                        const SizedBox(height: 6),
+                        _box(c, w: 90, h: 11),
+                      ],
+                    ),
+                  ),
+                  _box(c, w: 70, h: 26, r: 10),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(height: 1, color: const Color(0xFFF1F5F9)),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _box(c, w: 100, h: 10),
+                  const Spacer(),
+                  _box(c, w: 60, h: 10),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _box(Color color, {required double w, required double h, double r = 6}) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(r),
+      ),
+    );
   }
 }
 

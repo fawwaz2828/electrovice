@@ -47,14 +47,33 @@ class TechnicianActiveOrdersPage extends StatelessWidget {
                         o.status == BookingStatus.confirmed ||
                         o.status == BookingStatus.onProgress)
                     .length;
-                return Text(
-                  'Active Orders ($count)',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
-                    letterSpacing: -0.5,
-                  ),
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Active Orders ($count)',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: controller.isLoadingOrders.value
+                          ? null
+                          : controller.refreshAll,
+                      icon: controller.isLoadingOrders.value
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh_rounded,
+                              color: Color(0xFF4163FF)),
+                    ),
+                  ],
                 );
               }),
             ),
@@ -62,6 +81,18 @@ class TechnicianActiveOrdersPage extends StatelessWidget {
             // ── List ─────────────────────────────────────────────────
             Expanded(
               child: Obx(() {
+                if (controller.isLoadingOrders.value) {
+                  return ListView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+                    itemCount: 3,
+                    itemBuilder: (_, __) => const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: _ActiveOrderSkeleton(),
+                    ),
+                  );
+                }
+
                 final orders = controller.incomingOrders
                     .where((o) =>
                         o.status == BookingStatus.confirmed ||
@@ -69,32 +100,35 @@ class TechnicianActiveOrdersPage extends StatelessWidget {
                     .toList();
 
                 if (orders.isEmpty) {
-                  return const _EmptyState();
+                  return _EmptyState(onRefresh: controller.refreshAll);
                 }
 
-                return ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
-                  itemCount: orders.length,
-                  itemBuilder: (_, i) {
-                    final order = orders[i];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _ActiveOrderCard(
-                        order: order,
-                        damageLabel: _damageLabel(order.damageType),
-                        dateLabel: _formatDate(order.scheduledAt),
-                        onViewDetails: () {
-                          controller.selectOrder(order);
-                          if (order.status == BookingStatus.confirmed) {
-                            Get.toNamed(AppRoutes.verification);
-                          } else {
-                            Get.toNamed(AppRoutes.activeJob);
-                          }
-                        },
-                      ),
-                    );
-                  },
+                return RefreshIndicator(
+                  onRefresh: controller.refreshAll,
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+                    itemCount: orders.length,
+                    itemBuilder: (_, i) {
+                      final order = orders[i];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _ActiveOrderCard(
+                          order: order,
+                          damageLabel: _damageLabel(order.damageType),
+                          dateLabel: _formatDate(order.scheduledAt),
+                          onViewDetails: () {
+                            controller.selectOrder(order);
+                            if (order.status == BookingStatus.confirmed) {
+                              Get.toNamed(AppRoutes.verification);
+                            } else {
+                              Get.toNamed(AppRoutes.activeJob);
+                            }
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 );
               }),
             ),
@@ -231,51 +265,164 @@ class _ActiveOrderCard extends StatelessWidget {
   }
 }
 
+// ── Active Order Skeleton ──────────────────────────────────────────────────
+class _ActiveOrderSkeleton extends StatefulWidget {
+  const _ActiveOrderSkeleton();
+
+  @override
+  State<_ActiveOrderSkeleton> createState() => _ActiveOrderSkeletonState();
+}
+
+class _ActiveOrderSkeletonState extends State<_ActiveOrderSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final c = Color.lerp(
+            const Color(0xFFE2E8F0), const Color(0xFFF8FAFC), _anim.value)!;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _box(c, w: 44, h: 44, r: 12),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _box(c, w: 160, h: 14),
+                        const SizedBox(height: 6),
+                        _box(c, w: 100, h: 11),
+                      ],
+                    ),
+                  ),
+                  _box(c, w: 80, h: 28, r: 10),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(height: 1, color: const Color(0xFFF1F5F9)),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _box(c, w: 120, h: 10),
+                  const Spacer(),
+                  _box(c, w: 80, h: 32, r: 10),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _box(Color color,
+      {required double w, required double h, double r = 6}) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(r),
+      ),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────
 //  EMPTY STATE
 // ─────────────────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  final Future<void> Function()? onRefresh;
+  const _EmptyState({this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: const Icon(
-              Icons.build_circle_outlined,
-              size: 40,
-              color: Color(0xFFCBD5E1),
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Icon(
+                    Icons.build_circle_outlined,
+                    size: 40,
+                    color: Color(0xFFCBD5E1),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'No active jobs',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Accepted jobs will appear here',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFFCBD5E1),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (onRefresh != null) ...[
+                  const SizedBox(height: 20),
+                  TextButton.icon(
+                    onPressed: onRefresh,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Refresh'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF4163FF),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'No active jobs',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF94A3B8),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Accepted jobs will appear here',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFFCBD5E1),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

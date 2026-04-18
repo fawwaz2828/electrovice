@@ -74,6 +74,7 @@ class BookingController extends GetxController {
   // ── Booking history ───────────────────────────────────────────
   final RxList<BookingDocument> bookingHistory = <BookingDocument>[].obs;
   final RxBool isLoadingHistory = true.obs;
+  final RxBool showAllHistory = false.obs;
   StreamSubscription? _historySub;
 
   @override
@@ -85,8 +86,11 @@ class BookingController extends GetxController {
     loadSlotsForDate(scheduledAt.value);
   }
 
+  StreamSubscription? _authSub;
+
   @override
   void onClose() {
+    _authSub?.cancel();
     _activeSub?.cancel();
     _historySub?.cancel();
     _techLocationSub?.cancel();
@@ -173,21 +177,35 @@ class BookingController extends GetxController {
   }
 
   Future<void> _initUserStreams() async {
-    // Wait for Firebase Auth to restore persisted auth state (handles cold start
-    // where currentUser is null until the SDK finishes reading from disk).
-    String? uid = _authService.currentUser?.uid;
-    if (uid == null) {
-      try {
-        final user = await FirebaseAuth.instance
-            .authStateChanges()
-            .firstWhere((u) => u != null)
-            .timeout(const Duration(seconds: 10));
-        uid = user?.uid;
-      } catch (_) {
-        uid = _authService.currentUser?.uid;
+    // Subscribe to auth state changes so streams are always set up for the
+    // currently logged-in user — even after cold-start delays or re-login.
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user == null) {
+        // User logged out — cancel data streams
+        _activeSub?.cancel();
+        _historySub?.cancel();
+        _activeSub = null;
+        _historySub = null;
+        isLoadingHistory.value = true;
+        return;
       }
+      // User available and streams not yet started → set them up
+      if (_historySub != null) return;
+      _setupUserStreams(user.uid);
+    });
+
+    // Also try immediately if user is already available (avoids waiting for
+    // the first authStateChanges emission on controllers created mid-session)
+    final uid = _authService.currentUser?.uid;
+    if (uid != null && _historySub == null) {
+      _setupUserStreams(uid);
     }
-    if (uid == null) return;
+  }
+
+  void _setupUserStreams(String uid) {
+    // Cancel any stale subs before creating new ones
+    _activeSub?.cancel();
+    _historySub?.cancel();
 
     // Listen to active booking
     _activeSub = _bookingService.streamActiveBooking(uid).listen(

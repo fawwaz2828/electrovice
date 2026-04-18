@@ -27,6 +27,10 @@ class ChatInboxController extends GetxController {
     super.onClose();
   }
 
+  Future<void> deleteChat(String chatId) async {
+    await _chatService.deleteChat(chatId);
+  }
+
   Future<void> _initStream() async {
     int retry = 0;
     while (_authService.currentUser == null && retry < 6) {

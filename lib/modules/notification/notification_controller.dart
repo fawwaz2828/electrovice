@@ -25,12 +25,14 @@ class NotificationController extends GetxController {
     NotifType.newOrder,
     NotifType.orderCancelled,
     NotifType.paymentConfirmed,
+    NotifType.chat,
   };
   static const _customerTypes = {
     NotifType.orderAccepted,
     NotifType.orderDeclined,
     NotifType.onProgress,
     NotifType.awaitingPayment,
+    NotifType.chat,
   };
 
   @override
