@@ -31,7 +31,7 @@ class ChatInboxPage extends GetView<ChatInboxController> {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return const _ChatInboxSkeleton();
         }
         if (controller.chatRooms.isEmpty) {
           return const _EmptyInboxState();
@@ -276,6 +276,87 @@ class _EmptyInboxState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Skeleton ───────────────────────────────────────────────────────────────
+class _ChatInboxSkeleton extends StatefulWidget {
+  const _ChatInboxSkeleton();
+
+  @override
+  State<_ChatInboxSkeleton> createState() => _ChatInboxSkeletonState();
+}
+
+class _ChatInboxSkeletonState extends State<_ChatInboxSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Widget _box(Color c, {required double w, required double h, double r = 6}) =>
+      Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+            color: c, borderRadius: BorderRadius.circular(r)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final c = Color.lerp(
+            const Color(0xFFE2E8F0), const Color(0xFFF8FAFC), _anim.value)!;
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          itemCount: 5,
+          separatorBuilder: (_, __) =>
+              const Divider(height: 1, indent: 72, color: Color(0xFFEEF0F5)),
+          itemBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                _box(c, w: 52, h: 52, r: 26),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _box(c, w: 130, h: 13),
+                          _box(c, w: 36, h: 11),
+                        ],
+                      ),
+                      const SizedBox(height: 7),
+                      _box(c, w: double.infinity, h: 11),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -187,6 +187,10 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
               const SizedBox(height: 28),
 
               Obx(() {
+                if (_controller.isLoadingOrders.value) {
+                  return const _IncomingOrdersSkeleton();
+                }
+
                 final activeOrder = _controller.activeOrder.value;
                 final pendingOrders = _controller.incomingOrders
                     .where((o) => o.status == BookingStatus.pending)
@@ -1033,6 +1037,100 @@ class _PendingRequestCard extends StatefulWidget {
 
   @override
   State<_PendingRequestCard> createState() => _PendingRequestCardState();
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  SKELETON FOR INCOMING ORDERS
+// ─────────────────────────────────────────────────────────────────
+class _IncomingOrdersSkeleton extends StatefulWidget {
+  const _IncomingOrdersSkeleton();
+
+  @override
+  State<_IncomingOrdersSkeleton> createState() =>
+      _IncomingOrdersSkeletonState();
+}
+
+class _IncomingOrdersSkeletonState extends State<_IncomingOrdersSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Widget _box(Color c, {required double w, required double h, double r = 6}) =>
+      Container(
+        width: w,
+        height: h,
+        decoration:
+            BoxDecoration(color: c, borderRadius: BorderRadius.circular(r)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final c = Color.lerp(
+            const Color(0xFFE2E8F0), const Color(0xFFF8FAFC), _anim.value)!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _box(c, w: 160, h: 20, r: 8),
+            const SizedBox(height: 16),
+            ...List.generate(
+              3,
+              (_) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _box(c, w: 46, h: 46, r: 12),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _box(c, w: 80, h: 10),
+                            const SizedBox(height: 6),
+                            _box(c, w: 140, h: 14),
+                            const SizedBox(height: 6),
+                            _box(c, w: double.infinity, h: 10),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _box(c, w: 56, h: 40, r: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class _PendingRequestCardState extends State<_PendingRequestCard> {

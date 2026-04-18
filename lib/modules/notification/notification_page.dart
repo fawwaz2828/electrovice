@@ -46,7 +46,7 @@ class NotificationPage extends GetView<NotificationController> {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return const _NotificationSkeleton();
         }
         if (controller.notifications.isEmpty) {
           return const _EmptyState();
@@ -216,6 +216,86 @@ class _NotificationTile extends StatelessWidget {
     if (diff.inHours < 24) return '${diff.inHours} hours ago';
     if (diff.inDays < 7) return '${diff.inDays} days ago';
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────
+class _NotificationSkeleton extends StatefulWidget {
+  const _NotificationSkeleton();
+
+  @override
+  State<_NotificationSkeleton> createState() => _NotificationSkeletonState();
+}
+
+class _NotificationSkeletonState extends State<_NotificationSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Widget _box(Color c, {required double w, required double h, double r = 6}) =>
+      Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+            color: c, borderRadius: BorderRadius.circular(r)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final c = Color.lerp(
+            const Color(0xFFE2E8F0), const Color(0xFFF8FAFC), _anim.value)!;
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          itemCount: 6,
+          separatorBuilder: (_, __) =>
+              const Divider(height: 1, indent: 72, color: Color(0xFFEEF0F5)),
+          itemBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _box(c, w: 44, h: 44, r: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _box(c, w: 160, h: 13),
+                      const SizedBox(height: 6),
+                      _box(c, w: double.infinity, h: 11),
+                      const SizedBox(height: 4),
+                      _box(c, w: 200, h: 11),
+                      const SizedBox(height: 8),
+                      _box(c, w: 80, h: 10),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

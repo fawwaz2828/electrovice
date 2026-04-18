@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../models/technician_model.dart';
 import '../../models/booking_document.dart';
@@ -10,7 +10,7 @@ import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
 import '../../services/technician_service.dart' show TechnicianService, ServiceEstimate;
 
-class TechnicianController extends GetxController {
+class TechnicianController extends GetxController with WidgetsBindingObserver {
   final AuthService _authService = AuthService();
   final BookingService _bookingService = BookingService();
   final TechnicianService _techService = TechnicianService();
@@ -56,9 +56,8 @@ class TechnicianController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     _loadUserData();
-    // Re-subscribe streams if Firebase Auth fires a sign-out/sign-in cycle
-    // (can happen during token refresh — causes Firestore PERMISSION_DENIED)
     _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
       if (user != null && !_ordersStreamActive) {
         _ordersSub?.cancel();
@@ -69,10 +68,23 @@ class TechnicianController extends GetxController {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ordersSub?.cancel();
     _authSub?.cancel();
     _stopLocationTracking();
     super.onClose();
+  }
+
+  /// Restart dead stream when app comes back to foreground.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_ordersStreamActive) {
+      final uid = _authService.currentUser?.uid;
+      if (uid != null) {
+        _ordersSub?.cancel();
+        _listenToOrders(uid);
+      }
+    }
   }
 
   /// Total earnings dari semua order selesai
@@ -286,8 +298,25 @@ class TechnicianController extends GetxController {
             _ordersStreamActive = false;
             debugPrint('TechnicianController orders stream error: $e');
             isLoadingOrders.value = false;
+            // Auto-retry after 3 s so new orders don't require logout to appear.
+            Future.delayed(const Duration(seconds: 3), () {
+              final uid = _authService.currentUser?.uid;
+              if (uid != null && !_ordersStreamActive) {
+                _ordersSub?.cancel();
+                _listenToOrders(uid);
+              }
+            });
           },
-          onDone: () => _ordersStreamActive = false,
+          onDone: () {
+            _ordersStreamActive = false;
+            Future.delayed(const Duration(seconds: 1), () {
+              final uid = _authService.currentUser?.uid;
+              if (uid != null && !_ordersStreamActive) {
+                _ordersSub?.cancel();
+                _listenToOrders(uid);
+              }
+            });
+          },
         );
   }
 
