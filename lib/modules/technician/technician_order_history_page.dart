@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../../widgets/skeleton_widgets.dart';
 import 'technician_controller.dart';
 
 class TechnicianOrderHistoryPage extends StatefulWidget {
@@ -73,7 +74,7 @@ class _TechnicianOrderHistoryPageState
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
+                    color: Color(0xFF0A0A0A),
                     letterSpacing: -0.5,
                   ),
                 );
@@ -84,11 +85,7 @@ class _TechnicianOrderHistoryPageState
             Expanded(
               child: Obx(() {
                 if (controller.isLoadingCompleted.value) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF0061FF),
-                    ),
-                  );
+                  return const _OrderHistorySkeleton();
                 }
 
                 final orders = controller.completedOrders;
@@ -114,7 +111,7 @@ class _TechnicianOrderHistoryPageState
                         ),
                         child: _CompletedOrderCard(
                           order: order,
-                          damageLabel: _damageLabel(order.damageType),
+                          damageLabel: order.serviceName.isNotEmpty ? order.serviceName : _damageLabel(order.damageType),
                           dateLabel: _formatDate(order.updatedAt),
                           totalLabel: _rp(total),
                           rating: order.customerRating,
@@ -156,14 +153,8 @@ class _CompletedOrderCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +172,7 @@ class _CompletedOrderCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
+                        color: Color(0xFF0A0A0A),
                         height: 1.2,
                       ),
                     ),
@@ -201,8 +192,8 @@ class _CompletedOrderCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
                   'DONE',
@@ -267,6 +258,71 @@ class _CompletedOrderCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 //  EMPTY STATE
 // ─────────────────────────────────────────────────────────────────
+//  ORDER HISTORY SKELETON
+// ─────────────────────────────────────────────────────────────────
+class _OrderHistorySkeleton extends StatelessWidget {
+  const _OrderHistorySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+        itemCount: 4,
+        itemBuilder: (_, __) => const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: _OrderHistorySkeletonCard(),
+        ),
+      ),
+    );
+  }
+}
+
+class _OrderHistorySkeletonCard extends StatelessWidget {
+  const _OrderHistorySkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    SkeletonBox(width: 160, height: 16),
+                    SizedBox(height: 6),
+                    SkeletonBox(width: 100, height: 12, radius: 6),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const SkeletonBox(width: 52, height: 24, radius: 12),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const SkeletonBox(height: 1, radius: 0),
+          const SizedBox(height: 12),
+          Row(
+            children: const [
+              SkeletonBox(width: 110, height: 12, radius: 6),
+              Spacer(),
+              SkeletonBox(width: 80, height: 16, radius: 6),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
@@ -281,7 +337,7 @@ class _EmptyState extends StatelessWidget {
             height: 80,
             decoration: BoxDecoration(
               color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.history_rounded,

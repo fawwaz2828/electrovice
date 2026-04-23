@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../config/routes.dart';
@@ -108,7 +108,7 @@ class AppBottomNavBar extends StatelessWidget {
   final ValueChanged<AppNavItem> onItemSelected;
   final List<AppBottomNavEntry> items;
 
-  static const Color _background = Colors.black;
+  static const Color _background = Color(0xFF0A0A0A);
   static const Color _inactive = Color(0xFF9CA3AF);
   static const Color _active = Color(0xFF0061FF);
 
@@ -184,13 +184,6 @@ class AppBottomNavBar extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.08),
                 width: 1.5,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 24,
-                  offset: const Offset(0, 10),
-                ),
-              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -296,7 +289,7 @@ class _NavBarItemState extends State<_NavBarItem>
             color: selected
                 ? AppBottomNavBar._active.withValues(alpha: 0.15)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(100),
             border: selected
                 ? Border.all(
                     color: AppBottomNavBar._active.withValues(alpha: 0.25),

@@ -1,17 +1,18 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../models/technician_model.dart';
 import '../../services/auth_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../../config/routes.dart';
+import '../../widgets/skeleton_widgets.dart';
 import 'technician_controller.dart';
 
 class TechnicianProfilePage extends GetView<TechnicianController> {
   const TechnicianProfilePage({super.key});
 
   static const Color _bg   = Color(0xFFF2F3F7);
-  static const Color _ink  = Color(0xFF0F172A);
+  static const Color _ink  = Color(0xFF0A0A0A);
   static const Color _muted= Color(0xFF64748B);
   static const Color _red  = Color(0xFFE11D48);
 
@@ -146,7 +147,7 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
       AlertDialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text(
           'Log Out',
           style: TextStyle(fontWeight: FontWeight.w900, color: _ink),
@@ -201,15 +202,9 @@ class _IconBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
-        child: Icon(icon, color: const Color(0xFF0F172A), size: 20),
+        child: Icon(icon, color: const Color(0xFF0A0A0A), size: 20),
       ),
     );
   }
@@ -221,7 +216,7 @@ class _ProfileHero extends StatelessWidget {
   const _ProfileHero({required this.data});
 
   static const Color _blue = Color(0xFF0061FF);
-  static const Color _ink  = Color(0xFF0F172A);
+  static const Color _ink  = Color(0xFF0A0A0A);
   static const Color _muted= Color(0xFF64748B);
 
   @override
@@ -231,14 +226,8 @@ class _ProfileHero extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         children: [
@@ -251,7 +240,7 @@ class _ProfileHero extends StatelessWidget {
                 height: 96,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFEEF4FF),
+                  color: Color(0xFFEEF4FF),
                   image: (data.avatarUrl != null && data.avatarUrl!.isNotEmpty)
                       ? DecorationImage(
                           image: NetworkImage(data.avatarUrl!),
@@ -293,26 +282,8 @@ class _ProfileHero extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 10),
-          // Specialty chip
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEEF4FF),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              data.specialty.isEmpty ? 'Not filled' : data.specialty,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: _blue,
-              ),
-            ),
-          ),
           if (data.yearsExperience > 0) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               '${data.yearsExperience} years of experience',
               style: const TextStyle(
@@ -322,9 +293,61 @@ class _ProfileHero extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 14),
+          // Service Categories chips
+          _ServiceCategoriesChips(),
         ],
       ),
     );
+  }
+}
+
+// ── Service Categories chips (read-only) ─────────────────────────────────────
+class _ServiceCategoriesChips extends StatelessWidget {
+  _ServiceCategoriesChips();
+
+  static const _labels = {
+    'laptop': 'Laptop',
+    'smartphone': 'Smartphone',
+    'appliance': 'Home Appliance',
+    'ac': 'AC & Cooling',
+    'tv': 'TV & Display',
+    'vehicle': 'Vehicles',
+    'other': 'Other',
+  };
+
+  final _ctrl = Get.find<TechnicianController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final cats = _ctrl.deviceCategories;
+      if (cats.isEmpty) return const SizedBox.shrink();
+      return Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        alignment: WrapAlignment.center,
+        children: cats.map((key) {
+          final label = _labels[key] ?? key;
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: Color(0xFFEEF4FF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBDD0FF), width: 1),
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0061FF),
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    });
   }
 }
 
@@ -345,14 +368,8 @@ class _StatBox extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         children: [
@@ -366,7 +383,7 @@ class _StatBox extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
+                    color: Color(0xFF0A0A0A),
                   ),
                 ),
                 const SizedBox(width: 3),
@@ -380,7 +397,7 @@ class _StatBox extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF0F172A),
+                color: Color(0xFF0A0A0A),
               ),
             ),
           const SizedBox(height: 4),
@@ -410,14 +427,8 @@ class _MenuCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(children: children),
     );
@@ -442,14 +453,14 @@ class _MenuItem extends StatelessWidget {
     required this.onTap,
   });
 
-  static const Color _ink  = Color(0xFF0F172A);
+  static const Color _ink  = Color(0xFF0A0A0A);
   static const Color _muted= Color(0xFF64748B);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: Row(
@@ -458,7 +469,7 @@ class _MenuItem extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: (iconColor ?? const Color(0xFF0061FF))
+                color: (iconColor ?? Color(0xFF0061FF))
                     .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -515,114 +526,95 @@ class _Divider extends StatelessWidget {
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
-class _ProfileSkeleton extends StatefulWidget {
+class _ProfileSkeleton extends StatelessWidget {
   const _ProfileSkeleton();
 
   @override
-  State<_ProfileSkeleton> createState() => _ProfileSkeletonState();
-}
-
-class _ProfileSkeletonState extends State<_ProfileSkeleton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.25, end: 0.6).animate(_ctrl);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (context, child2) {
-        final c = Colors.grey.withValues(alpha: _anim.value);
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _sh(c, w: 80, h: 26),
-                  _sh(c, w: 40, h: 40, r: 12),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Column(
-                  children: [
-                    _sh(c, w: 96, h: 96, r: 48),
-                    const SizedBox(height: 16),
-                    _sh(c, w: 160, h: 22),
-                    const SizedBox(height: 10),
-                    _sh(c, w: 100, h: 28, r: 20),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _statSkeleton(c)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _statSkeleton(c)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _statSkeleton(c)),
-                ],
-              ),
-              const SizedBox(height: 28),
-              _sh(c, w: 120, h: 14),
-              const SizedBox(height: 10),
-              _sh(c, w: double.infinity, h: 180, r: 20),
-              const SizedBox(height: 12),
-              _sh(c, w: double.infinity, h: 64, r: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _sh(Color c, {double? w, required double h, double r = 8}) =>
-      Container(
-        width: w,
-        height: h,
-        decoration: BoxDecoration(
-          color: c,
-          borderRadius: BorderRadius.circular(r),
-        ),
-      );
-
-  Widget _statSkeleton(Color c) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
+    return SkeletonShimmer(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           children: [
-            _sh(c, w: 40, h: 20),
-            const SizedBox(height: 4),
-            _sh(c, w: 50, h: 10),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const SkeletonBox(width: 80, height: 26),
+                const SkeletonBox(width: 40, height: 40, radius: 12),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Color(0xFF0A0A0A), width: 1),
+              ),
+              child: const Column(
+                children: [
+                  SkeletonCircle(size: 96),
+                  SizedBox(height: 16),
+                  SkeletonBox(width: 160, height: 22),
+                  SizedBox(height: 8),
+                  SkeletonBox(width: 120, height: 14, radius: 6),
+                  SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SkeletonBox(width: 80, height: 26, radius: 20),
+                      SizedBox(width: 8),
+                      SkeletonBox(width: 80, height: 26, radius: 20),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: _StatSkeleton()),
+                const SizedBox(width: 12),
+                Expanded(child: _StatSkeleton()),
+                const SizedBox(width: 12),
+                Expanded(child: _StatSkeleton()),
+              ],
+            ),
+            const SizedBox(height: 28),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: SkeletonBox(width: 120, height: 12, radius: 6),
+            ),
+            const SizedBox(height: 10),
+            const SkeletonBox(width: double.infinity, height: 180, radius: 20),
+            const SizedBox(height: 12),
+            const SkeletonBox(width: double.infinity, height: 64, radius: 20),
+            const SizedBox(height: 120),
           ],
         ),
-      );
+      ),
+    );
+  }
+}
+
+class _StatSkeleton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
+      ),
+      child: const Column(
+        children: [
+          SkeletonBox(width: 40, height: 20),
+          SizedBox(height: 4),
+          SkeletonBox(width: 50, height: 10, radius: 5),
+        ],
+      ),
+    );
+  }
 }

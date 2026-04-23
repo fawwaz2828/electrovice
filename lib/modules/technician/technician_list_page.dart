@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox
     if (dart.library.html) '../../config/mapbox_web_stub.dart';
@@ -7,7 +7,7 @@ import '../../config/routes.dart';
 import '../../services/technician_service.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────
-const Color _ink  = Color(0xFF0F172A);
+const Color _ink  = Color(0xFF0A0A0A);
 const Color _muted= Color(0xFF64748B);
 const Color _blue = Color(0xFF0061FF);
 
@@ -209,7 +209,7 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0A0A0A),
       body: Stack(
         children: [
           // ── 1. MAP (full screen background) ──────────────────────
@@ -268,14 +268,12 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
               return Container(
                 decoration: const BoxDecoration(
                   color: Color(0xFFF2F3F7),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x22000000),
-                      blurRadius: 20,
-                      offset: Offset(0, -4),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.vertical(top: Radius.zero),
+                  border: Border(
+                    top: BorderSide(color: Color(0xFF0A0A0A), width: 1),
+                    left: BorderSide(color: Color(0xFF0A0A0A), width: 1),
+                    right: BorderSide(color: Color(0xFF0A0A0A), width: 1),
+                  ),
                 ),
                 child: Column(
                   children: [
@@ -319,8 +317,8 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
                         child: Container(
                           height: 4,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFCBD5E1),
-                            borderRadius: BorderRadius.circular(2),
+                            color: Color(0xFFCBD5E1),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),
@@ -509,9 +507,7 @@ class _TopSearchBar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.92),
                 shape: BoxShape.circle,
-                boxShadow: const [
-                  BoxShadow(color: Color(0x22000000), blurRadius: 8),
-                ],
+                border: Border.all(color: Color(0xFF0A0A0A), width: 1),
               ),
               child: const Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -527,10 +523,8 @@ class _TopSearchBar extends StatelessWidget {
               height: 46,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.96),
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: const [
-                  BoxShadow(color: Color(0x22000000), blurRadius: 10),
-                ],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Color(0xFF0A0A0A), width: 1),
               ),
               child: Row(
                 children: [
@@ -608,18 +602,12 @@ class _FilterRow extends StatelessWidget {
                 color: isSelected
                     ? Colors.white
                     : Colors.white.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isSelected
                       ? Colors.transparent
                       : Colors.white.withValues(alpha: 0.4),
                 ),
-                boxShadow: isSelected
-                    ? const [
-                        BoxShadow(
-                            color: Color(0x22000000), blurRadius: 8)
-                      ]
-                    : null,
               ),
               child: Text(
                 f['label'] as String,
@@ -678,9 +666,9 @@ class _SortRow extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFF0061FF)
+                      ? Color(0xFF0061FF)
                       : Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
                         ? Colors.transparent
@@ -733,14 +721,8 @@ class _TechnicianCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
         child: Row(
           children: [
@@ -749,14 +731,9 @@ class _TechnicianCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 6,
-                  ),
-                ],
+                border: Border.all(color: Color(0xFF0A0A0A), width: 1),
               ),
               child: technician.photoUrl != null &&
                       technician.photoUrl!.isNotEmpty
@@ -795,7 +772,7 @@ class _TechnicianCard extends StatelessWidget {
                               ? Icons.star_rounded
                               : Icons.star_outline_rounded,
                           size: 12,
-                          color: const Color(0xFFF59E0B),
+                          color: Color(0xFFF59E0B),
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -818,12 +795,12 @@ class _TechnicianCard extends StatelessWidget {
                         label: technician.specialty.isEmpty
                             ? technician.category.toUpperCase()
                             : technician.specialty.toUpperCase(),
-                        color: const Color(0xFFDCEDFF),
+                        color: Color(0xFFDCEDFF),
                         textColor: const Color(0xFF1D4ED8),
                       ),
                       _SmallTag(
                         label: technician.distanceLabel,
-                        color: const Color(0xFFF1F5F9),
+                        color: Color(0xFFF1F5F9),
                         textColor: _muted,
                       ),
                     ],
@@ -844,7 +821,7 @@ class _TechnicianCard extends StatelessWidget {
                     horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: _ink,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
                   'Book Now',
@@ -876,7 +853,7 @@ class _SmallTag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         label,
@@ -931,7 +908,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [

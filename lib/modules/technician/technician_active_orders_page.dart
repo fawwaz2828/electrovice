@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
@@ -55,7 +55,7 @@ class TechnicianActiveOrdersPage extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A0A0A),
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -115,14 +115,16 @@ class TechnicianActiveOrdersPage extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _ActiveOrderCard(
                           order: order,
-                          damageLabel: _damageLabel(order.damageType),
+                          damageLabel: order.serviceName.isNotEmpty
+                              ? order.serviceName
+                              : _damageLabel(order.damageType),
                           dateLabel: _formatDate(order.scheduledAt),
                           onViewDetails: () {
                             controller.selectOrder(order);
                             if (order.status == BookingStatus.confirmed) {
-                              Get.toNamed(AppRoutes.verification);
+                              Get.toNamed(AppRoutes.verification, arguments: order.bookingId);
                             } else {
-                              Get.toNamed(AppRoutes.activeJob);
+                              Get.toNamed(AppRoutes.activeJob, arguments: order.bookingId);
                             }
                           },
                         ),
@@ -159,21 +161,15 @@ class _ActiveOrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOnProgress = order.status == BookingStatus.onProgress;
     final statusColor =
-        isOnProgress ? const Color(0xFF0061FF) : const Color(0xFF059669);
+        isOnProgress ? const Color(0xFF0061FF) : Color(0xFF059669);
     final statusLabel = isOnProgress ? 'IN PROGRESS' : 'ON THE WAY';
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +184,7 @@ class _ActiveOrderCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
+                    color: Color(0xFF0A0A0A),
                     height: 1.2,
                   ),
                 ),
@@ -199,7 +195,7 @@ class _ActiveOrderCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   statusLabel,
@@ -241,7 +237,7 @@ class _ActiveOrderCard extends StatelessWidget {
               ElevatedButton(
                 onPressed: onViewDetails,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Color(0xFF0A0A0A),
                   foregroundColor: Colors.white,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -301,12 +297,12 @@ class _ActiveOrderSkeletonState extends State<_ActiveOrderSkeleton>
       animation: _anim,
       builder: (_, __) {
         final c = Color.lerp(
-            const Color(0xFFE2E8F0), const Color(0xFFF8FAFC), _anim.value)!;
+            const Color(0xFFE2E8F0), Color(0xFFF8FAFC), _anim.value)!;
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,7 +325,7 @@ class _ActiveOrderSkeletonState extends State<_ActiveOrderSkeleton>
                 ],
               ),
               const SizedBox(height: 14),
-              Container(height: 1, color: const Color(0xFFF1F5F9)),
+              Container(height: 1, color: Color(0xFFF1F5F9)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -380,8 +376,8 @@ class _EmptyState extends StatelessWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(24),
+                    color: Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.build_circle_outlined,
@@ -414,7 +410,7 @@ class _EmptyState extends StatelessWidget {
                     icon: const Icon(Icons.refresh_rounded, size: 18),
                     label: const Text('Refresh'),
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF4163FF),
+                      foregroundColor: Color(0xFF4163FF),
                     ),
                   ),
                 ],

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../models/notification_model.dart';
@@ -20,11 +20,11 @@ class NotificationPage extends GetView<NotificationController> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF0F172A),
+            color: Color(0xFF0A0A0A),
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
+          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0A0A0A)),
           onPressed: () => Get.back(),
         ),
         actions: [
@@ -42,11 +42,19 @@ class NotificationPage extends GetView<NotificationController> {
               ),
             );
           }),
+          Obx(() {
+            if (controller.notifications.isEmpty) return const SizedBox();
+            return IconButton(
+              icon: const Icon(Icons.delete_sweep_rounded, color: Color(0xFF94A3B8)),
+              tooltip: 'Clear all',
+              onPressed: () => _confirmClearAll(),
+            );
+          }),
         ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return const _NotificationSkeleton();
         }
         if (controller.notifications.isEmpty) {
           return const _EmptyState();
@@ -65,6 +73,36 @@ class NotificationPage extends GetView<NotificationController> {
           },
         );
       }),
+    );
+  }
+
+  void _confirmClearAll() {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text('Clear All Notifications',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF0A0A0A))),
+        content: const Text('This will permanently delete all notifications.',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          FilledButton(
+            onPressed: () {
+              Get.back();
+              controller.clearAll();
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Delete All'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -145,7 +183,7 @@ class _NotificationTile extends StatelessWidget {
                       fontSize: 14,
                       fontWeight:
                           item.isRead ? FontWeight.w600 : FontWeight.w800,
-                      color: const Color(0xFF0F172A),
+                      color: Color(0xFF0A0A0A),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -199,13 +237,13 @@ class _NotificationTile extends StatelessWidget {
 
   Color _colorFor(String type) => switch (type) {
         NotifType.newOrder => const Color(0xFF4163FF),
-        NotifType.orderAccepted => const Color(0xFF10B981),
+        NotifType.orderAccepted => Color(0xFF10B981),
         NotifType.orderDeclined => const Color(0xFFEF4444),
-        NotifType.orderCancelled => const Color(0xFFEF4444),
+        NotifType.orderCancelled => Color(0xFFEF4444),
         NotifType.onProgress => const Color(0xFF4163FF),
-        NotifType.awaitingPayment => const Color(0xFFF59E0B),
+        NotifType.awaitingPayment => Color(0xFFF59E0B),
         NotifType.paymentConfirmed => const Color(0xFF10B981),
-        NotifType.chat => const Color(0xFF8B5CF6),
+        NotifType.chat => Color(0xFF8B5CF6),
         _ => const Color(0xFF64748B),
       };
 
@@ -216,6 +254,86 @@ class _NotificationTile extends StatelessWidget {
     if (diff.inHours < 24) return '${diff.inHours} hours ago';
     if (diff.inDays < 7) return '${diff.inDays} days ago';
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────
+class _NotificationSkeleton extends StatefulWidget {
+  const _NotificationSkeleton();
+
+  @override
+  State<_NotificationSkeleton> createState() => _NotificationSkeletonState();
+}
+
+class _NotificationSkeletonState extends State<_NotificationSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Widget _box(Color c, {required double w, required double h, double r = 6}) =>
+      Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+            color: c, borderRadius: BorderRadius.circular(r)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final c = Color.lerp(
+            const Color(0xFFE2E8F0), Color(0xFFF8FAFC), _anim.value)!;
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          itemCount: 6,
+          separatorBuilder: (_, __) =>
+              const Divider(height: 1, indent: 72, color: Color(0xFFEEF0F5)),
+          itemBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _box(c, w: 44, h: 44, r: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _box(c, w: 160, h: 13),
+                      const SizedBox(height: 6),
+                      _box(c, w: double.infinity, h: 11),
+                      const SizedBox(height: 4),
+                      _box(c, w: 200, h: 11),
+                      const SizedBox(height: 8),
+                      _box(c, w: 80, h: 10),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -234,7 +352,7 @@ class _EmptyState extends StatelessWidget {
             height: 80,
             decoration: BoxDecoration(
               color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.notifications_none_rounded,
@@ -248,7 +366,7 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
+              color: Color(0xFF0A0A0A),
             ),
           ),
           const SizedBox(height: 6),

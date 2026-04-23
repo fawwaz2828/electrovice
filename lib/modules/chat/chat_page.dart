@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../services/chat_service.dart';
+import '../../widgets/skeleton_widgets.dart';
 import 'chat_controller.dart';
 
 class ChatPage extends StatelessWidget {
@@ -55,14 +56,14 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
-              color: Colors.black,
+              color: Color(0xFF0A0A0A),
             ),
           ),
         ],
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.more_vert_rounded, color: Colors.black),
+          icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF0A0A0A)),
           onPressed: () {},
         ),
       ],
@@ -104,7 +105,7 @@ class _MessageListState extends State<_MessageList> {
       final msgs = widget.ctrl.messages;
 
       if (widget.ctrl.isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
+        return const _ChatPageSkeleton();
       }
 
       if (msgs.isEmpty) {
@@ -179,8 +180,8 @@ class _DateSeparator extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFFE9EDF5),
-            borderRadius: BorderRadius.circular(20),
+            color: Color(0xFFE9EDF5),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             _label(),
@@ -239,12 +240,7 @@ class _MessageBubble extends StatelessWidget {
             if (message.isImage)
               // ── Image bubble ───────────────────────────────────
               ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isMine ? 18 : (showTail ? 4 : 18)),
-                  bottomRight: Radius.circular(isMine ? (showTail ? 4 : 18) : 18),
-                ),
+                borderRadius: BorderRadius.circular(12),
                 child: Image.network(
                   message.imageUrl!,
                   width: MediaQuery.of(context).size.width * 0.65,
@@ -267,19 +263,8 @@ class _MessageBubble extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: isMine ? myBg : otherBg,
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(18),
-                    topRight: const Radius.circular(18),
-                    bottomLeft: Radius.circular(isMine ? 18 : (showTail ? 4 : 18)),
-                    bottomRight: Radius.circular(isMine ? (showTail ? 4 : 18) : 18),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                 ),
                 child: Text(
                   message.text,
@@ -368,11 +353,11 @@ class _InputBar extends StatelessWidget {
                 hintText: 'Type a message...',
                 hintStyle: const TextStyle(color: Color(0xFFB7C0D2)),
                 filled: true,
-                fillColor: const Color(0xFFF5F7FB),
+                fillColor: Color(0xFFF5F7FB),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -389,8 +374,8 @@ class _InputBar extends StatelessWidget {
                   height: 42,
                   decoration: BoxDecoration(
                     color: ctrl.isSending.value
-                        ? const Color(0xFF94A3B8)
-                        : Colors.black,
+                        ? Color(0xFF94A3B8)
+                        : const Color(0xFF0A0A0A),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.send_rounded,
@@ -415,8 +400,8 @@ class _ClosedSessionBanner extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F3F7),
-          borderRadius: BorderRadius.circular(16),
+          color: Color(0xFFF1F3F7),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -432,6 +417,68 @@ class _ClosedSessionBanner extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Chat Page Skeleton ─────────────────────────────────────────────────────
+class _ChatPageSkeleton extends StatelessWidget {
+  const _ChatPageSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        children: const [
+          // Received bubble
+          _SkeletonBubble(isMine: false, width: 200),
+          _SkeletonBubble(isMine: false, width: 150),
+          // Sent bubble
+          _SkeletonBubble(isMine: true, width: 180),
+          // Received
+          _SkeletonBubble(isMine: false, width: 220),
+          // Sent
+          _SkeletonBubble(isMine: true, width: 130),
+          _SkeletonBubble(isMine: true, width: 200),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonBubble extends StatelessWidget {
+  final bool isMine;
+  final double width;
+  const _SkeletonBubble({required this.isMine, required this.width});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: 4,
+          bottom: 4,
+          left: isMine ? 60 : 0,
+          right: isMine ? 0 : 60,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (!isMine) ...[
+              const SkeletonCircle(size: 32),
+              const SizedBox(width: 8),
+            ],
+            SkeletonBox(width: width, height: 40, radius: 18),
+            if (isMine) ...[
+              const SizedBox(width: 8),
+              const SkeletonCircle(size: 32),
+            ],
           ],
         ),
       ),
@@ -463,7 +510,7 @@ class _AvatarCircle extends StatelessWidget {
         style: TextStyle(
           fontWeight: FontWeight.w800,
           fontSize: radius * 0.8,
-          color: const Color(0xFF3654FF),
+          color: Color(0xFF3654FF),
         ),
       ),
     );

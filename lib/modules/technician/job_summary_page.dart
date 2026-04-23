@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
@@ -27,14 +27,8 @@ class JobSummaryPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                   ),
                   child: Column(
                     children: [
@@ -43,7 +37,7 @@ class JobSummaryPage extends StatelessWidget {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
+                          color: Color(0xFFDCFCE7),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -58,7 +52,7 @@ class JobSummaryPage extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A0A0A),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -82,9 +76,9 @@ class JobSummaryPage extends StatelessWidget {
                         child: FilledButton(
                           onPressed: () => Get.offAllNamed(AppRoutes.technicianHome),
                           style: FilledButton.styleFrom(
-                            backgroundColor: Colors.black,
+                            backgroundColor: Color(0xFF0A0A0A),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: const Text(

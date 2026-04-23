@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -176,7 +176,7 @@ class TechnicianOnboardingController extends GetxController {
         data: ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
             primary: Colors.white,
-            onPrimary: Colors.black,
+            onPrimary: Color(0xFF0A0A0A),
             surface: Color(0xFF1A1A1A),
             onSurface: Colors.white,
           ),
@@ -212,7 +212,7 @@ class TechnicianOnboardingController extends GetxController {
         data: ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
             primary: Colors.white,
-            onPrimary: Colors.black,
+            onPrimary: Color(0xFF0A0A0A),
           ),
         ),
         child: child!,

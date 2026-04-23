@@ -68,4 +68,15 @@ class NotificationService {
     }
     await batch.commit();
   }
+
+  // ── Delete all notifications ────────────────────────────────────
+  Future<void> clearAll(String userId) async {
+    final snap = await _items(userId).get();
+    if (snap.docs.isEmpty) return;
+    final batch = _db.batch();
+    for (final doc in snap.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
 }

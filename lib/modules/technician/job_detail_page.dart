@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/routes.dart';
+import '../../models/booking_document.dart';
 import '../../services/auth_service.dart';
 import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../../widgets/skeleton_widgets.dart';
 import '../technician/technician_controller.dart';
 
 class JobDetailPage extends StatefulWidget {
@@ -20,6 +22,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
   bool _isDeclining = false;
   bool _isCalling = false;
   String? _customerPhotoUrl;
+  bool _isLoadingCustomer = true;
 
   @override
   void initState() {
@@ -28,11 +31,25 @@ class _JobDetailPageState extends State<JobDetailPage> {
   }
 
   Future<void> _loadCustomerInfo() async {
-    final order = Get.find<TechnicianController>().selectedOrder.value;
-    if (order == null) return;
-    final user = await AuthService().getUserModel(order.userId);
-    if (mounted) {
-      setState(() => _customerPhotoUrl = user?.photoUrl);
+    try {
+      final ctrl = Get.find<TechnicianController>();
+      final order = ctrl.selectedOrder.value
+          ?? (Get.arguments is BookingDocument ? Get.arguments as BookingDocument : null);
+      if (order == null) {
+        if (mounted) setState(() => _isLoadingCustomer = false);
+        return;
+      }
+      // Ensure selectedOrder is populated even if caller forgot to set it
+      if (ctrl.selectedOrder.value == null) ctrl.selectOrder(order);
+      final user = await AuthService().getUserModel(order.userId);
+      if (mounted) {
+        setState(() {
+          _customerPhotoUrl = user?.photoUrl;
+          _isLoadingCustomer = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingCustomer = false);
     }
   }
 
@@ -95,7 +112,9 @@ class _JobDetailPageState extends State<JobDetailPage> {
       bottomNavigationBar: const TechnicianNavBar(selectedItem: AppNavItem.home),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
+        child: _isLoadingCustomer
+            ? const _JobDetailSkeleton()
+            : SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -107,7 +126,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                 children: [
                   GestureDetector(
                     onTap: () => Get.back(),
-                    child: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+                    child: const Icon(Icons.arrow_back, color: Color(0xFF0A0A0A), size: 24),
                   ),
                   const SizedBox(width: 16),
                   const Text(
@@ -115,7 +134,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF0A0A0A),
                     ),
                   ),
                 ],
@@ -183,7 +202,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                            color: Color(0xFF0A0A0A),
                           ),
                         ),
                       ],
@@ -202,14 +221,8 @@ class _JobDetailPageState extends State<JobDetailPage> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                 ),
                 child: Column(
                   children: [
@@ -267,7 +280,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                               icon: Icons.chat_bubble_outline_rounded,
                               label: 'MESSAGE',
                               color: const Color(0xFFF5F6FA),
-                              textColor: const Color(0xFF111111),
+                              textColor: Color(0xFF111111),
                               onTap: o == null
                                   ? null
                                   : () => Get.toNamed(
@@ -286,7 +299,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                           child: _ActionButton(
                             icon: Icons.phone_outlined,
                             label: 'CALL',
-                            color: const Color(0xFFF5F6FA),
+                            color: Color(0xFFF5F6FA),
                             textColor: const Color(0xFF111111),
                             onTap: _isCalling ? null : _callCustomer,
                           ),
@@ -306,7 +319,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                 final lat = order?.latitude;
                 final lng = order?.longitude;
                 return ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(12),
                   child: SizedBox(
                     height: 160,
                     width: double.infinity,
@@ -358,11 +371,11 @@ class _JobDetailPageState extends State<JobDetailPage> {
                             fontSize: 14, fontWeight: FontWeight.w800),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
+                        backgroundColor: Color(0xFF0A0A0A),
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 52),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                            borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
                     ),
@@ -375,14 +388,14 @@ class _JobDetailPageState extends State<JobDetailPage> {
               // ── Issue Identified Section ───────────────────────────
               Obx(() {
                 final order = controller.selectedOrder.value;
-                final issueTitle = _damageLabel(order?.damageType ?? '');
+                final issueTitle = (order?.serviceName.isNotEmpty ?? false) ? order!.serviceName : _damageLabel(order?.damageType ?? '');
                 final description = order?.description ?? '-';
                 final categoryLabel = (order?.category ?? 'repair').toUpperCase();
                 return Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,8 +415,8 @@ class _JobDetailPageState extends State<JobDetailPage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFEDD5),
-                            borderRadius: BorderRadius.circular(8),
+                            color: Color(0xFFFFEDD5),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             categoryLabel,
@@ -422,7 +435,7 @@ class _JobDetailPageState extends State<JobDetailPage> {
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
+                        color: Color(0xFF0A0A0A),
                         height: 1.25,
                       ),
                     ),
@@ -450,25 +463,16 @@ class _JobDetailPageState extends State<JobDetailPage> {
                 return Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                 ),
                 child: Column(
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      decoration: const BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                        ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0A0A0A),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -549,10 +553,10 @@ class _JobDetailPageState extends State<JobDetailPage> {
                               }
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
+                        backgroundColor: const Color(0xFF0A0A0A),
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 60),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 4,
                       ),
                       child: _isAccepting
@@ -589,9 +593,9 @@ class _JobDetailPageState extends State<JobDetailPage> {
                             },
                       style: TextButton.styleFrom(
                         backgroundColor: const Color(0xFFE2E8F0),
-                        foregroundColor: const Color(0xFF475569),
+                        foregroundColor: Color(0xFF475569),
                         minimumSize: const Size(double.infinity, 60),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: _isDeclining
                           ? const SizedBox(
@@ -614,6 +618,137 @@ class _JobDetailPageState extends State<JobDetailPage> {
               const SizedBox(height: 120),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  JOB DETAIL SKELETON
+// ─────────────────────────────────────────────────────────────────
+class _JobDetailSkeleton extends StatelessWidget {
+  const _JobDetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 10),
+            // Top bar
+            Row(
+              children: const [
+                SkeletonBox(width: 24, height: 24, radius: 6),
+                SizedBox(width: 16),
+                SkeletonBox(width: 80, height: 20, radius: 8),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Status + arrival row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 90, height: 10, radius: 5),
+                    SizedBox(height: 6),
+                    SkeletonBox(width: 110, height: 16, radius: 8),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    SkeletonBox(width: 110, height: 10, radius: 5),
+                    SizedBox(height: 6),
+                    SkeletonBox(width: 100, height: 16, radius: 8),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            // Customer profile card skeleton
+            SkeletonCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Row(
+                    children: const [
+                      SkeletonCircle(size: 78),
+                      SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SkeletonBox(width: 140, height: 22, radius: 8),
+                            SizedBox(height: 12),
+                            SkeletonBox(height: 12, radius: 6),
+                            SizedBox(height: 4),
+                            SkeletonBox(width: 160, height: 12, radius: 6),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: const [
+                      Expanded(child: SkeletonBox(height: 44, radius: 12)),
+                      SizedBox(width: 12),
+                      Expanded(child: SkeletonBox(height: 44, radius: 12)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Map placeholder
+            const SkeletonBox(height: 160, radius: 20),
+            const SizedBox(height: 16),
+            // Issue card
+            SkeletonCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SkeletonBox(width: 120, height: 11, radius: 5),
+                  SizedBox(height: 12),
+                  SkeletonBox(width: 200, height: 20, radius: 8),
+                  SizedBox(height: 14),
+                  SkeletonBox(height: 12, radius: 6),
+                  SizedBox(height: 4),
+                  SkeletonBox(width: 220, height: 12, radius: 6),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Estimate card
+            SkeletonCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SkeletonBox(width: 90, height: 10, radius: 5),
+                  SizedBox(height: 8),
+                  SkeletonBox(width: 160, height: 34, radius: 8),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Action buttons
+            Row(
+              children: const [
+                Expanded(flex: 2, child: SkeletonBox(height: 60, radius: 16)),
+                SizedBox(width: 12),
+                Expanded(child: SkeletonBox(height: 60, radius: 16)),
+              ],
+            ),
+            const SizedBox(height: 120),
+          ],
         ),
       ),
     );
@@ -669,20 +804,12 @@ class _AvatarCard extends StatelessWidget {
     return Container(
       width: 78,
       height: 78,
-      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
+        shape: BoxShape.circle,
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(13),
+      child: ClipOval(
         child: (imageUrl != null && imageUrl!.isNotEmpty)
             ? Image.network(
                 imageUrl!,

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../models/booking_model.dart';
@@ -7,7 +7,7 @@ import 'booking_controller.dart';
 // ── Palette ──────────────────────────────────────────────────────────────────
 const Color _bg   = Color(0xFFF2F3F7);
 const Color _card = Colors.white;
-const Color _ink  = Color(0xFF0F172A);
+const Color _ink  = Color(0xFF0A0A0A);
 const Color _muted= Color(0xFF64748B);
 const Color _blue = Color(0xFF0061FF);
 
@@ -80,7 +80,7 @@ class CheckoutPage extends GetView<BookingController> {
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
                     ),
@@ -148,14 +148,8 @@ class _CurrentRepairCard extends GetView<BookingController> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,8 +181,8 @@ class _CurrentRepairCard extends GetView<BookingController> {
                 width: 48,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
+                  color: Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.laptop_mac_rounded, color: _muted, size: 20),
               ),
@@ -199,8 +193,8 @@ class _CurrentRepairCard extends GetView<BookingController> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFFEEF4FF),
-              borderRadius: BorderRadius.circular(10),
+              color: Color(0xFFEEF4FF),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -237,14 +231,8 @@ class _JadwalRepairCard extends GetView<BookingController> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,8 +329,8 @@ class _JadwalRepairCard extends GetView<BookingController> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
                     'GPS',
@@ -377,14 +365,8 @@ class _BiayaTambahanCard extends GetView<BookingController> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: _card,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,14 +456,8 @@ class _CostBreakdown extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,7 +552,7 @@ class _CheckoutFooterBadges extends StatelessWidget {
         Container(
           width: 1,
           height: 12,
-          color: const Color(0xFFE2E8F0),
+          color: Color(0xFFE2E8F0),
         ),
         const SizedBox(width: 20),
         const Icon(Icons.verified_user_outlined, size: 12, color: _muted),

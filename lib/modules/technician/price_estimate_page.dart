@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -24,7 +24,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
   final List<File> _workPhotos = [];
   bool _isSubmitting = false;
 
-  static const Color _ink = Color(0xFF0F172A);
+  static const Color _ink = Color(0xFF0A0A0A);
   static const Color _muted = Color(0xFF64748B);
   static const Color _bg = Color(0xFFF7F8FC);
 
@@ -341,7 +341,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
                             border: Border.all(
-                                color: const Color(0xFFE2E8F0),
+                                color: Color(0xFFE2E8F0),
                                 style: BorderStyle.solid),
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -372,8 +372,8 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(20),
+                          color: Color(0xFF0A0A0A),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,8 +429,8 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 7, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFDC2626),
-                                borderRadius: BorderRadius.circular(6),
+                                color: Color(0xFFDC2626),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(
                                 'Required',
@@ -476,7 +476,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: const Color(0xFFE2E8F0),
+                                    color: Color(0xFFE2E8F0),
                                     style: BorderStyle.solid,
                                   ),
                                 ),
@@ -579,7 +579,7 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF2F2),
+                          color: Color(0xFFFEF2F2),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: const Color(0xFFFECACA)),
                         ),
@@ -617,11 +617,11 @@ class _PriceEstimatePageState extends State<PriceEstimatePage> {
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _confirm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: Color(0xFF0A0A0A),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 60),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
@@ -671,7 +671,7 @@ class _PriceField extends StatelessWidget {
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       onChanged: onChanged,
       style: const TextStyle(
-          fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+          fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0A0A0A)),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle:

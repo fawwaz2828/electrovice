@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
@@ -12,7 +12,7 @@ class BookingDetailPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        backgroundColor: Colors.black,
+        backgroundColor: const Color(0xFF0A0A0A),
         insetPadding: EdgeInsets.zero,
         child: Stack(
           children: [
@@ -34,7 +34,7 @@ class BookingDetailPage extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.black54,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.close, color: Colors.white, size: 22),
                 ),
@@ -110,7 +110,7 @@ class BookingDetailPage extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                        color: Color(0xFF0F172A)),
+                        color: Color(0xFF0A0A0A)),
                     onPressed: () => Get.back(),
                   ),
                   const Text(
@@ -118,7 +118,7 @@ class BookingDetailPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF0A0A0A),
                     ),
                   ),
                 ],
@@ -138,7 +138,7 @@ class BookingDetailPage extends StatelessWidget {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,8 +148,8 @@ class BookingDetailPage extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEEF2FF),
-                              borderRadius: BorderRadius.circular(8),
+                              color: Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               'ORDER #${_orderNumber(booking.bookingId)}',
@@ -163,11 +163,11 @@ class BookingDetailPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            _damageLabel(booking.damageType),
+                            booking.serviceName.isNotEmpty ? booking.serviceName : _damageLabel(booking.damageType),
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF0F172A),
+                              color: Color(0xFF0A0A0A),
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -187,8 +187,8 @@ class BookingDetailPage extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF8F9FB),
-                                borderRadius: BorderRadius.circular(10),
+                                color: Color(0xFFF8F9FB),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,7 +221,7 @@ class BookingDetailPage extends StatelessWidget {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +237,7 @@ class BookingDetailPage extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A),
+                                  color: Color(0xFF0A0A0A),
                                 ),
                               ),
                               const Spacer(),
@@ -345,7 +345,7 @@ class BookingDetailPage extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,7 +360,7 @@ class BookingDetailPage extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F172A),
+                                    color: Color(0xFF0A0A0A),
                                   ),
                                 ),
                                 const Spacer(),
@@ -386,7 +386,7 @@ class BookingDetailPage extends StatelessWidget {
                                     onTap: () => _showPhotoViewer(
                                         ctx, booking.workPhotoUrls, i),
                                     child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(12),
                                       child: Image.network(
                                         booking.workPhotoUrls[i],
                                         width: 100,
@@ -423,7 +423,7 @@ class BookingDetailPage extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
@@ -431,7 +431,7 @@ class BookingDetailPage extends StatelessWidget {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDCE7FB),
+                              color: Color(0xFFDCE7FB),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: booking.technicianPhotoUrl != null &&
@@ -491,10 +491,10 @@ class BookingDetailPage extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 52),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        side: const BorderSide(color: Color(0xFF0F172A)),
-                        backgroundColor: Colors.black,
+                        side: const BorderSide(color: Color(0xFF0A0A0A)),
+                        backgroundColor: Color(0xFF0A0A0A),
                         foregroundColor: Colors.white,
                       ),
                       icon: const Icon(Icons.download_rounded, size: 18),
@@ -513,7 +513,7 @@ class BookingDetailPage extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 52),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         side: const BorderSide(color: Color(0xFFE2E8F0)),
                       ),
@@ -537,10 +537,10 @@ class BookingDetailPage extends StatelessWidget {
                         onPressed: () =>
                             Get.toNamed(AppRoutes.review, arguments: booking),
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF4163FF),
+                          backgroundColor: Color(0xFF4163FF),
                           minimumSize: const Size(double.infinity, 52),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         icon: const Icon(Icons.star_outline_rounded, size: 18),
@@ -607,7 +607,7 @@ class _InvoiceRow extends StatelessWidget {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+              color: Color(0xFF0A0A0A),
             ),
           ),
         ],

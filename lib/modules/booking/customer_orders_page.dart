@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../config/routes.dart';
@@ -93,7 +93,10 @@ class CustomerOrdersPage extends GetView<BookingController> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _OrderCard(
                           booking: activeOrders[i],
-                          onTap: () => Get.toNamed(AppRoutes.orderTracking),
+                          onTap: () {
+                            controller.watchBooking(activeOrders[i]);
+                            Get.toNamed(AppRoutes.orderTracking);
+                          },
                         ),
                       ),
                       childCount: activeOrders.length,
@@ -125,14 +128,8 @@ class _OrderCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,8 +141,8 @@ class _OrderCard extends StatelessWidget {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F3F7),
-                    borderRadius: BorderRadius.circular(14),
+                    color: Color(0xFFF1F3F7),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(_categoryIcon(booking.category),
                       color: const Color(0xFF4B5563)),
@@ -156,7 +153,9 @@ class _OrderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _damageTypeLabel(booking.damageType),
+                        booking.serviceName.isNotEmpty
+                            ? booking.serviceName
+                            : _damageTypeLabel(booking.damageType),
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w700),
                       ),
@@ -174,7 +173,7 @@ class _OrderCard extends StatelessWidget {
                       horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: badge.$1.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     badge.$2,
@@ -216,9 +215,9 @@ class _OrderCard extends StatelessWidget {
 
   (Color, String) _statusBadge(String status) => switch (status) {
         BookingStatus.pending => (const Color(0xFF6B7280), 'PENDING'),
-        BookingStatus.confirmed => (const Color(0xFF3B82F6), 'CONFIRMED'),
+        BookingStatus.confirmed => (Color(0xFF3B82F6), 'CONFIRMED'),
         BookingStatus.onProgress => (const Color(0xFFF59E0B), 'IN PROGRESS'),
-        BookingStatus.awaitingPayment => (const Color(0xFF10B981), 'PAY'),
+        BookingStatus.awaitingPayment => (Color(0xFF10B981), 'PAY'),
         _ => (const Color(0xFF6B7280), status.toUpperCase()),
       };
 
@@ -274,14 +273,8 @@ class _DoneOrderCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,8 +286,8 @@ class _DoneOrderCard extends StatelessWidget {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F3F7),
-                    borderRadius: BorderRadius.circular(14),
+                    color: Color(0xFFF1F3F7),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     booking.category == 'vehicle'
@@ -309,7 +302,9 @@ class _DoneOrderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _damageTypeLabel(booking.damageType),
+                        booking.serviceName.isNotEmpty
+                            ? booking.serviceName
+                            : _damageTypeLabel(booking.damageType),
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w700),
                       ),
@@ -327,8 +322,8 @@ class _DoneOrderCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF7ED),
-                      borderRadius: BorderRadius.circular(10),
+                      color: Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
                       'WRITE REVIEW',
@@ -347,7 +342,7 @@ class _DoneOrderCard extends StatelessWidget {
                         Icons.star_rounded,
                         size: 14,
                         color: i < (booking.customerRating ?? 0)
-                            ? const Color(0xFFFBBF24)
+                            ? Color(0xFFFBBF24)
                             : const Color(0xFFE2E8F0),
                       ),
                     ),
@@ -449,12 +444,12 @@ class _OrderCardSkeletonState extends State<_OrderCardSkeleton>
       animation: _anim,
       builder: (_, __) {
         final c = Color.lerp(
-            const Color(0xFFE2E8F0), const Color(0xFFF8FAFC), _anim.value)!;
+            const Color(0xFFE2E8F0), Color(0xFFF8FAFC), _anim.value)!;
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,7 +472,7 @@ class _OrderCardSkeletonState extends State<_OrderCardSkeleton>
                 ],
               ),
               const SizedBox(height: 14),
-              Container(height: 1, color: const Color(0xFFF1F5F9)),
+              Container(height: 1, color: Color(0xFFF1F5F9)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -520,7 +515,7 @@ class _EmptyOrdersState extends StatelessWidget {
             height: 80,
             decoration: BoxDecoration(
               color: const Color(0xFFEEF2FF),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.receipt_long_outlined,
                 size: 38, color: Color(0xFF6366F1)),
@@ -540,7 +535,7 @@ class _EmptyOrdersState extends StatelessWidget {
           FilledButton(
             onPressed: () => Get.offNamed(AppRoutes.home),
             style: FilledButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: Color(0xFF0A0A0A),
                 foregroundColor: Colors.white),
             child: const Text('Find Technician',
                 style: TextStyle(fontWeight: FontWeight.w700)),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox
@@ -7,12 +7,13 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox
 import '../../config/routes.dart';
 import '../../services/technician_service.dart';
 import '../../utils/maps_launcher.dart';
+import '../../widgets/skeleton_widgets.dart';
 import 'booking_controller.dart';
 
 // ── Palette ──────────────────────────────────────────────────────────────────
 const Color _bg    = Color(0xFFF2F3F7);
 const Color _card  = Colors.white;
-const Color _ink   = Color(0xFF0F172A);
+const Color _ink   = Color(0xFF0A0A0A);
 const Color _muted = Color(0xFF64748B);
 const Color _blue  = Color(0xFF0061FF);
 
@@ -29,7 +30,7 @@ class BookingTechnicianDetailPage extends GetView<BookingController> {
           child: Obx(() {
             final tech = controller.selectedTechnician.value;
             if (tech == null) {
-              return const Center(child: CircularProgressIndicator());
+              return const _TechnicianDetailSkeleton();
             }
             return Column(
               children: [
@@ -161,17 +162,18 @@ class _ProfileHeader extends GetView<BookingController> {
                       spacing: 6,
                       runSpacing: 4,
                       children: [
-                        _Tag(
-                          label: tech.specialty.isEmpty
-                              ? tech.category.toUpperCase()
-                              : tech.specialty.toUpperCase(),
-                          color: const Color(0xFFDCEDFF),
-                          textColor: const Color(0xFF1D4ED8),
-                        ),
+                        ...( tech.deviceCategories.isNotEmpty
+                            ? tech.deviceCategories
+                            : [tech.specialty.isEmpty ? tech.category : tech.specialty]
+                          ).map((cat) => _Tag(
+                            label: cat.toUpperCase(),
+                            color: Color(0xFFDCEDFF),
+                            textColor: const Color(0xFF1D4ED8),
+                          )),
                         if (tech.accreditations.isNotEmpty)
                           _Tag(
                             label: tech.accreditations.first.toUpperCase(),
-                            color: const Color(0xFFE0F2FE),
+                            color: Color(0xFFE0F2FE),
                             textColor: const Color(0xFF0369A1),
                           ),
                       ],
@@ -247,21 +249,14 @@ class _Avatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(size * 0.22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        shape: BoxShape.circle,
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: photoUrl != null && photoUrl!.isNotEmpty
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(size * 0.22),
+          ? ClipOval(
               child: Image.network(photoUrl!, fit: BoxFit.cover),
             )
-          : Icon(Icons.person_rounded, color: const Color(0xFF94A3B8), size: size * 0.45),
+          : Icon(Icons.person_rounded, color: Color(0xFF94A3B8), size: size * 0.45),
     );
   }
 }
@@ -278,7 +273,7 @@ class _Tag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         label,
@@ -303,7 +298,7 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
@@ -372,14 +367,8 @@ class _ServiceCard extends GetView<BookingController> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,8 +459,8 @@ class _ServiceTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(5),
+        color: Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         label,
@@ -492,8 +481,8 @@ class _NotListedCard extends GetView<BookingController> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
+        color: Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
@@ -514,7 +503,7 @@ class _NotListedCard extends GetView<BookingController> {
             style: OutlinedButton.styleFrom(
               foregroundColor: _blue,
               side: const BorderSide(color: _blue),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             icon: const Icon(Icons.chat_rounded, size: 15),
             label: const Text('START CHAT',
@@ -554,7 +543,7 @@ class _ReviewsTab extends GetView<BookingController> {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.isLoadingReviews.value) {
-        return const Center(child: CircularProgressIndicator());
+        return const _ReviewsTabSkeleton();
       }
 
       final reviews = controller.technicianReviews;
@@ -577,7 +566,7 @@ class _ReviewsTab extends GetView<BookingController> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: _card,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -601,7 +590,7 @@ class _ReviewsTab extends GetView<BookingController> {
                               ? Icons.star_rounded
                               : Icons.star_outline_rounded,
                           size: 16,
-                          color: const Color(0xFFF59E0B),
+                          color: Color(0xFFF59E0B),
                         ),
                       ),
                     ),
@@ -635,11 +624,11 @@ class _ReviewsTab extends GetView<BookingController> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(12),
                                 child: LinearProgressIndicator(
                                   value: pct.toDouble(),
                                   minHeight: 6,
-                                  backgroundColor: const Color(0xFFE2E8F0),
+                                  backgroundColor: Color(0xFFE2E8F0),
                                   color: _ratingBarColor(star),
                                 ),
                               ),
@@ -711,7 +700,7 @@ class _ReviewCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -720,7 +709,7 @@ class _ReviewCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: const Color(0xFFF1F5F9),
+                backgroundColor: Color(0xFFF1F5F9),
                 child: Text(
                   name.isNotEmpty ? name[0].toUpperCase() : '?',
                   style: const TextStyle(
@@ -756,7 +745,7 @@ class _ReviewCard extends StatelessWidget {
                   (i) => Icon(
                     i < rating ? Icons.star_rounded : Icons.star_outline_rounded,
                     size: 13,
-                    color: const Color(0xFFF59E0B),
+                    color: Color(0xFFF59E0B),
                   ),
                 ),
               ),
@@ -786,7 +775,7 @@ void _showCertViewer(BuildContext context, List<String> urls, int initialIndex) 
   showDialog(
     context: context,
     builder: (_) => Dialog(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0A0A0A),
       insetPadding: EdgeInsets.zero,
       child: Stack(
         children: [
@@ -824,7 +813,7 @@ void _showCertViewer(BuildContext context, List<String> urls, int initialIndex) 
                   height: 8,
                   decoration: BoxDecoration(
                     color: i == initialIndex ? Colors.white : Colors.white38,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 )),
               ),
@@ -901,7 +890,7 @@ class _AboutTab extends GetView<BookingController> {
                       itemBuilder: (_, i) => GestureDetector(
                         onTap: () => _showCertViewer(context, tech.certificationUrls, i),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           child: Stack(
                             children: [
                               Image.network(
@@ -912,7 +901,7 @@ class _AboutTab extends GetView<BookingController> {
                                 errorBuilder: (_, __, ___) => Container(
                                   width: 140,
                                   height: 100,
-                                  color: const Color(0xFFF1F5F9),
+                                  color: Color(0xFFF1F5F9),
                                   child: const Icon(Icons.broken_image_outlined,
                                       color: _muted),
                                 ),
@@ -923,7 +912,7 @@ class _AboutTab extends GetView<BookingController> {
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
                                     color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(Icons.zoom_in_rounded,
                                       size: 14, color: Colors.white),
@@ -947,8 +936,8 @@ class _AboutTab extends GetView<BookingController> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEEF4FF),
-                                borderRadius: BorderRadius.circular(8),
+                                color: Color(0xFFEEF4FF),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -995,7 +984,7 @@ class _AboutTab extends GetView<BookingController> {
                   child: tech.lat != null && tech.lng != null
                       ? _WorkshopMap(lat: tech.lat!, lng: tech.lng!)
                       : Container(
-                          color: const Color(0xFFE2E8F0),
+                          color: Color(0xFFE2E8F0),
                           child: const Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -1055,7 +1044,7 @@ class _AboutTab extends GetView<BookingController> {
                         foregroundColor: _blue,
                         side: const BorderSide(color: _blue),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
@@ -1084,7 +1073,7 @@ class _AboutTab extends GetView<BookingController> {
                         foregroundColor: _muted,
                         side: const BorderSide(color: Color(0xFFE2E8F0)),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
@@ -1110,7 +1099,7 @@ class _AboutTab extends GetView<BookingController> {
             backgroundColor: _ink,
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             elevation: 0,
           ),
           icon: const Icon(Icons.send_rounded, size: 17),
@@ -1138,14 +1127,8 @@ class _SectionCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1193,7 +1176,7 @@ class _DetailRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: isGreen ? const Color(0xFF10B981) : _ink,
+                color: isGreen ? Color(0xFF10B981) : _ink,
               ),
             ),
           ),
@@ -1251,6 +1234,235 @@ class _WorkshopMapState extends State<_WorkshopMap> {
         zoom: 14.0,
       ),
       onMapCreated: _onMapCreated,
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SKELETON WIDGETS
+// ════════════════════════════════════════════════════════════════════════════
+
+class _TechnicianDetailSkeleton extends StatelessWidget {
+  const _TechnicianDetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: Column(
+        children: [
+          // Top bar
+          Container(
+            color: _card,
+            padding: const EdgeInsets.fromLTRB(4, 6, 6, 6),
+            child: Row(
+              children: const [
+                SizedBox(width: 48),
+                Expanded(child: SkeletonBox(width: 140, height: 16)),
+                SizedBox(width: 48),
+              ],
+            ),
+          ),
+          // Profile header
+          Container(
+            color: _card,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SkeletonCircle(size: 80),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          SkeletonBox(width: 150, height: 18),
+                          SizedBox(height: 6),
+                          SkeletonBox(width: 200, height: 12, radius: 6),
+                          SizedBox(height: 10),
+                          Row(
+                            children: [
+                              SkeletonBox(width: 60, height: 20, radius: 6),
+                              SizedBox(width: 6),
+                              SkeletonBox(width: 60, height: 20, radius: 6),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const SkeletonStatRow(),
+                const SizedBox(height: 12),
+                const SkeletonBox(height: 44, radius: 12),
+              ],
+            ),
+          ),
+          // Tab bar placeholder
+          Container(
+            color: _card,
+            height: 48,
+            child: Row(
+              children: const [
+                Expanded(child: Center(child: SkeletonBox(width: 60, height: 12))),
+                Expanded(child: Center(child: SkeletonBox(width: 60, height: 12))),
+                Expanded(child: Center(child: SkeletonBox(width: 60, height: 12))),
+              ],
+            ),
+          ),
+          // Service card skeletons
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              children: const [
+                _SkeletonServiceCard(),
+                SizedBox(height: 14),
+                _SkeletonServiceCard(),
+                SizedBox(height: 14),
+                _SkeletonServiceCard(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonServiceCard extends StatelessWidget {
+  const _SkeletonServiceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Row(
+            children: [
+              Expanded(child: SkeletonBox(height: 16)),
+              SizedBox(width: 12),
+              SkeletonBox(width: 70, height: 16),
+            ],
+          ),
+          SizedBox(height: 10),
+          Row(
+            children: [
+              SkeletonBox(width: 80, height: 20, radius: 5),
+              SizedBox(width: 6),
+              SkeletonBox(width: 80, height: 20, radius: 5),
+            ],
+          ),
+          SizedBox(height: 14),
+          SkeletonBox(height: 44, radius: 12),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReviewsTabSkeleton extends StatelessWidget {
+  const _ReviewsTabSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        children: [
+          // Rating summary card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _card,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Column(
+                  children: const [
+                    SkeletonBox(width: 60, height: 48),
+                    SizedBox(height: 6),
+                    SkeletonBox(width: 80, height: 12, radius: 6),
+                    SizedBox(height: 4),
+                    SkeletonBox(width: 60, height: 11, radius: 6),
+                  ],
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    children: List.generate(
+                      5,
+                      (_) => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 3),
+                        child: SkeletonBox(height: 6, radius: 4),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Review card skeletons
+          ...List.generate(
+            3,
+            (_) => const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: _SkeletonReviewCard(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonReviewCard extends StatelessWidget {
+  const _SkeletonReviewCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              SkeletonCircle(size: 32),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 100, height: 14),
+                    SizedBox(height: 4),
+                    SkeletonBox(width: 70, height: 11, radius: 6),
+                  ],
+                ),
+              ),
+              SkeletonBox(width: 60, height: 12, radius: 6),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const SkeletonBox(height: 12, radius: 6),
+          const SizedBox(height: 6),
+          const SkeletonBox(width: 200, height: 12, radius: 6),
+        ],
+      ),
     );
   }
 }

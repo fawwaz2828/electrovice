@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../models/technician_model.dart';
 import '../../models/booking_document.dart';
@@ -10,7 +10,7 @@ import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
 import '../../services/technician_service.dart' show TechnicianService, ServiceEstimate;
 
-class TechnicianController extends GetxController {
+class TechnicianController extends GetxController with WidgetsBindingObserver {
   final AuthService _authService = AuthService();
   final BookingService _bookingService = BookingService();
   final TechnicianService _techService = TechnicianService();
@@ -29,7 +29,10 @@ class TechnicianController extends GetxController {
   final RxList<BookingDocument> completedOrders = <BookingDocument>[].obs;
   final RxBool isLoadingCompleted = false.obs;
 
-  /// Booking yang sedang aktif dikerjakan (on_progress)
+  /// Semua order yang sedang aktif (confirmed / on_progress / awaiting_payment)
+  final RxList<BookingDocument> activeOrders = <BookingDocument>[].obs;
+
+  /// Booking yang sedang aktif dikerjakan — first active order for backward compat
   final Rxn<BookingDocument> activeOrder = Rxn<BookingDocument>();
 
   /// Booking yang sedang dibuka detail / verifikasi
@@ -38,6 +41,10 @@ class TechnicianController extends GetxController {
   // ── Service estimates (My Service page) ──────────────────────
   final RxList<ServiceEstimate> serviceEstimates = <ServiceEstimate>[].obs;
   final RxBool isLoadingServices = false.obs;
+
+  // ── Service categories & method ──────────────────────────────
+  final RxList<String> deviceCategories = <String>[].obs;
+  final RxList<String> serviceMethod = <String>[].obs;
 
   // ── Legacy Rx untuk backward compat dengan home page UI ───────
   /// currentJob dipakai oleh TechnicianHomePage via .value
@@ -56,9 +63,8 @@ class TechnicianController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     _loadUserData();
-    // Re-subscribe streams if Firebase Auth fires a sign-out/sign-in cycle
-    // (can happen during token refresh — causes Firestore PERMISSION_DENIED)
     _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
       if (user != null && !_ordersStreamActive) {
         _ordersSub?.cancel();
@@ -69,10 +75,23 @@ class TechnicianController extends GetxController {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ordersSub?.cancel();
     _authSub?.cancel();
     _stopLocationTracking();
     super.onClose();
+  }
+
+  /// Restart dead stream when app comes back to foreground.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_ordersStreamActive) {
+      final uid = _authService.currentUser?.uid;
+      if (uid != null) {
+        _ordersSub?.cancel();
+        _listenToOrders(uid);
+      }
+    }
   }
 
   /// Total earnings dari semua order selesai
@@ -104,6 +123,13 @@ class TechnicianController extends GetxController {
         serviceHistory: const [],
         certifications: const [],
       );
+
+      // Also load deviceCategories & serviceMethod from technicians_online
+      final techOnline = await _techService.getTechnicianDetail(user.uid);
+      if (techOnline != null) {
+        deviceCategories.value = techOnline.deviceCategories;
+        serviceMethod.value = techOnline.serviceMethod;
+      }
 
       _listenToOrders(user.uid);
       _loadServices(user.uid);
@@ -238,7 +264,7 @@ class TechnicianController extends GetxController {
               orders
                   .where((o) => o.status == BookingStatus.pending)
                   .map((o) => TechnicianJobRecord(
-                        title: _damageLabel(o.damageType),
+                        title: o.serviceName.isNotEmpty ? o.serviceName : _damageLabel(o.damageType),
                         clientName: o.userName,
                         amount: o.estimatedPrice.toDouble(),
                         rating: 0,
@@ -247,13 +273,20 @@ class TechnicianController extends GetxController {
                   .toList(),
             );
 
-            // activeOrder = confirmed / on_progress / awaiting_payment
-            final active = orders
+            // activeOrders = all confirmed / on_progress / awaiting_payment
+            final activeList = orders
                 .where((o) =>
                     o.status == BookingStatus.confirmed ||
                     o.status == BookingStatus.onProgress ||
                     o.status == BookingStatus.awaitingPayment)
-                .firstOrNull;
+                .toList();
+            activeOrders.assignAll(activeList);
+            // Prefer selectedOrder if it's still active, else fall back to first
+            final sel = selectedOrder.value;
+            final active = sel != null &&
+                    activeList.any((o) => o.bookingId == sel.bookingId)
+                ? activeList.firstWhere((o) => o.bookingId == sel.bookingId)
+                : activeList.firstOrNull;
             activeOrder.value = active;
 
             // Kirim lokasi real-time hanya saat status `confirmed` (menuju lokasi)
@@ -273,7 +306,7 @@ class TechnicianController extends GetxController {
             currentJob.value = active == null
                 ? null
                 : TechnicianJobRecord(
-                    title: _damageLabel(active.damageType),
+                    title: active.serviceName.isNotEmpty ? active.serviceName : _damageLabel(active.damageType),
                     clientName: active.userName,
                     amount: active.estimatedPrice.toDouble(),
                     rating: 0,
@@ -286,8 +319,25 @@ class TechnicianController extends GetxController {
             _ordersStreamActive = false;
             debugPrint('TechnicianController orders stream error: $e');
             isLoadingOrders.value = false;
+            // Auto-retry after 3 s so new orders don't require logout to appear.
+            Future.delayed(const Duration(seconds: 3), () {
+              final uid = _authService.currentUser?.uid;
+              if (uid != null && !_ordersStreamActive) {
+                _ordersSub?.cancel();
+                _listenToOrders(uid);
+              }
+            });
           },
-          onDone: () => _ordersStreamActive = false,
+          onDone: () {
+            _ordersStreamActive = false;
+            Future.delayed(const Duration(seconds: 1), () {
+              final uid = _authService.currentUser?.uid;
+              if (uid != null && !_ordersStreamActive) {
+                _ordersSub?.cancel();
+                _listenToOrders(uid);
+              }
+            });
+          },
         );
   }
 
@@ -311,13 +361,19 @@ class TechnicianController extends GetxController {
   /// Set order yang akan diverifikasi
   void selectOrder(BookingDocument order) {
     selectedOrder.value = order;
+    // Sync activeOrder immediately so verification/active-job pages show the correct order
+    if (order.status == BookingStatus.confirmed ||
+        order.status == BookingStatus.onProgress ||
+        order.status == BookingStatus.awaitingPayment) {
+      activeOrder.value = order;
+    }
   }
 
   /// Teknisi accept order → status pending → confirmed + generate kode verifikasi
+  /// Supports multiple simultaneous active orders.
   Future<void> acceptOrder() async {
     final order = selectedOrder.value;
     if (order == null) throw Exception('No order selected');
-    // Jika sudah confirmed, langsung lanjut ke verifikasi tanpa memanggil Firestore lagi
     if (order.status == BookingStatus.confirmed) return;
     if (order.status != BookingStatus.pending) {
       throw Exception('Invalid order status: ${order.status}');

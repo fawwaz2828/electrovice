@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
@@ -6,15 +6,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-import 'package:url_launcher/url_launcher.dart';
-
 import '../../config/mapbox_config.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
 import '../../models/booking_model.dart';
-import '../../services/auth_service.dart';
 import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../../widgets/skeleton_widgets.dart';
 import 'booking_controller.dart';
 
 class BookingTrackingPage extends GetView<BookingController> {
@@ -35,7 +33,7 @@ class BookingTrackingPage extends GetView<BookingController> {
           if (booking == null) {
             // Masih loading (history stream belum selesai)
             if (controller.isLoadingHistory.value) {
-              return const Center(child: CircularProgressIndicator());
+              return const _TrackingSkeleton();
             }
             return _NoActiveOrderState(
               onGoToHistory: () =>
@@ -317,7 +315,7 @@ class _LiveMapCardState extends State<_LiveMapCard> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -329,10 +327,8 @@ class _LiveMapCardState extends State<_LiveMapCard> {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x11000000), blurRadius: 10)
-                    ],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                   ),
                   child: Text(widget.title,
                       style: const TextStyle(
@@ -342,16 +338,16 @@ class _LiveMapCardState extends State<_LiveMapCard> {
               // Legend: customer dot + tech dot (only when tech is streaming)
               if (widget.techLat != null) ...[
                 const SizedBox(width: 8),
-                _MapLegendDot(color: const Color(0xFF3654FF), label: 'You'),
+                _MapLegendDot(color: Color(0xFF3654FF), label: 'You'),
                 const SizedBox(width: 8),
                 _MapLegendDot(
-                    color: const Color(0xFFF97316), label: 'Technician'),
+                    color: Color(0xFFF97316), label: 'Technician'),
               ],
             ],
           ),
           const SizedBox(height: 10),
           ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             child: SizedBox(
               height: 205,
               child: hasCustomer
@@ -437,7 +433,7 @@ class _StatusCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -460,7 +456,7 @@ class _StatusStepTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = step.isCurrent ? const Color(0xFF4163FF) : const Color(0xFFE7EBF2);
+    final activeColor = step.isCurrent ? const Color(0xFF4163FF) : Color(0xFFE7EBF2);
     final iconColor = step.isCurrent || step.isComplete ? Colors.white : const Color(0xFF9CA5B6);
 
     return IntrinsicHeight(
@@ -494,7 +490,7 @@ class _StatusStepTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: step.isCurrent ? FontWeight.w800 : FontWeight.w600,
-                      color: step.isCurrent ? Colors.black : const Color(0xFF9CA5B6),
+                      color: step.isCurrent ? Color(0xFF0A0A0A) : const Color(0xFF9CA5B6),
                     ),
                   ),
                   if (step.subtitle.isNotEmpty) ...[
@@ -502,7 +498,7 @@ class _StatusStepTile extends StatelessWidget {
                     Text(
                       step.subtitle,
                       style: TextStyle(
-                        color: step.isCurrent ? const Color(0xFF60697A) : const Color(0xFFB1B8C6),
+                        color: step.isCurrent ? Color(0xFF60697A) : const Color(0xFFB1B8C6),
                       ),
                     ),
                   ],
@@ -527,7 +523,7 @@ class _SecurityCodeCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
           const Text(
@@ -539,7 +535,7 @@ class _SecurityCodeCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7ED),
+                color: Color(0xFFFFF7ED),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFFDE68A)),
               ),
@@ -572,8 +568,8 @@ class _SecurityCodeCard extends StatelessWidget {
                     width: 36,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF2F5FB),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Color(0xFFF2F5FB),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
                       child: Text(
@@ -601,7 +597,7 @@ class _SecurityCodeCard extends StatelessWidget {
   }
 }
 
-class _TechnicianContactCard extends StatefulWidget {
+class _TechnicianContactCard extends StatelessWidget {
   const _TechnicianContactCard({
     required this.name,
     required this.role,
@@ -617,39 +613,11 @@ class _TechnicianContactCard extends StatefulWidget {
   final BookingDocument? bookingDoc;
 
   @override
-  State<_TechnicianContactCard> createState() => _TechnicianContactCardState();
-}
-
-class _TechnicianContactCardState extends State<_TechnicianContactCard> {
-  bool _isCalling = false;
-
-  Future<void> _callTechnician() async {
-    final techId = widget.bookingDoc?.technicianId;
-    if (techId == null || techId.isEmpty) return;
-    setState(() => _isCalling = true);
-    try {
-      final user = await AuthService().getUserModel(techId);
-      final phone = (user?.phone ?? '').trim();
-      if (phone.isEmpty) {
-        Get.snackbar('Not available', 'Technician phone number is not registered',
-            snackPosition: SnackPosition.TOP);
-        return;
-      }
-      await launchUrl(Uri(scheme: 'tel', path: phone));
-    } catch (e) {
-      Get.snackbar('Failed', 'Unable to open phone app',
-          snackPosition: SnackPosition.TOP);
-    } finally {
-      if (mounted) setState(() => _isCalling = false);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
           Row(
@@ -658,7 +626,7 @@ class _TechnicianContactCardState extends State<_TechnicianContactCard> {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -672,11 +640,11 @@ class _TechnicianContactCardState extends State<_TechnicianContactCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
-                    Text(widget.role, style: const TextStyle(color: Color(0xFF727B8B), fontSize: 12)),
+                    Text(role, style: const TextStyle(color: Color(0xFF727B8B), fontSize: 12)),
                     const SizedBox(height: 4),
-                    Text(widget.partnerLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                    Text(partnerLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                   ],
                 ),
               ),
@@ -687,19 +655,19 @@ class _TechnicianContactCardState extends State<_TechnicianContactCard> {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: widget.bookingDoc == null
+                  onPressed: bookingDoc == null
                       ? null
                       : () => Get.toNamed(
                             '/chat',
                             arguments: {
-                              'chatId': widget.bookingDoc!.bookingId,
-                              'otherPartyName': widget.bookingDoc!.technicianName,
-                              'otherPartyPhotoUrl': widget.bookingDoc!.technicianPhotoUrl,
-                              'bookingDoc': widget.bookingDoc,
+                              'chatId': bookingDoc!.bookingId,
+                              'otherPartyName': bookingDoc!.technicianName,
+                              'otherPartyPhotoUrl': bookingDoc!.technicianPhotoUrl,
+                              'bookingDoc': bookingDoc,
                             },
                           ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: const Color(0xFF0A0A0A),
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(46),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -709,30 +677,11 @@ class _TechnicianContactCardState extends State<_TechnicianContactCard> {
                 ),
               ),
               const SizedBox(width: 10),
-              // ── Call Technician ──────────────────────────────────
-              GestureDetector(
-                onTap: _isCalling ? null : _callTechnician,
-                child: Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F4F8),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: _isCalling
-                      ? const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.phone_outlined, color: Color(0xFF4163FF)),
-                ),
-              ),
-              const SizedBox(width: 10),
               // ── Navigate ─────────────────────────────────────────
               GestureDetector(
                 onTap: () {
-                  final lat = widget.bookingDoc?.latitude;
-                  final lng = widget.bookingDoc?.longitude;
+                  final lat = bookingDoc?.latitude;
+                  final lng = bookingDoc?.longitude;
                   if (lat != null && lng != null) {
                     MapsLauncher.navigateTo(lat: lat, lng: lng);
                   } else {
@@ -785,8 +734,8 @@ class _PayNowBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
-        borderRadius: BorderRadius.circular(18),
+        color: Color(0xFFEEF2FF),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFBFCBFF)),
       ),
       child: Column(
@@ -798,7 +747,7 @@ class _PayNowBanner extends StatelessWidget {
               const SizedBox(width: 8),
               const Text(
                 'Payment Ready',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF0A0A0A)),
               ),
             ],
           ),
@@ -811,7 +760,7 @@ class _PayNowBanner extends StatelessWidget {
           FilledButton(
             onPressed: () => Get.toNamed(AppRoutes.payService),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF4163FF),
+              backgroundColor: Color(0xFF4163FF),
               foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(46),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -833,7 +782,7 @@ class _CancelOrderButton extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text(
           'Cancel Order?',
           style: TextStyle(fontWeight: FontWeight.w800),
@@ -882,8 +831,8 @@ class _CancelOrderButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF1F2),
-          borderRadius: BorderRadius.circular(16),
+          color: Color(0xFFFFF1F2),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFFFCDD2)),
         ),
         child: const Row(
@@ -923,8 +872,8 @@ class _NoActiveOrderState extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(20),
+                color: Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.receipt_long_outlined,
@@ -938,7 +887,7 @@ class _NoActiveOrderState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
+                color: Color(0xFF0A0A0A),
               ),
             ),
             const SizedBox(height: 8),
@@ -955,11 +904,11 @@ class _NoActiveOrderState extends StatelessWidget {
             FilledButton(
               onPressed: onGoToHistory,
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: Color(0xFF0A0A0A),
                 foregroundColor: Colors.white,
                 minimumSize: const Size(200, 48),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('View History',
                   style: TextStyle(fontWeight: FontWeight.w800)),
@@ -994,8 +943,8 @@ class _ReviewBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFDDE7FB),
-        borderRadius: BorderRadius.circular(18),
+        color: Color(0xFFDDE7FB),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1019,13 +968,160 @@ class _ReviewBanner extends StatelessWidget {
           FilledButton(
             onPressed: () => Get.toNamed(AppRoutes.review, arguments: booking),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.black,
+              backgroundColor: Color(0xFF0A0A0A),
               foregroundColor: Colors.white,
             ),
             child: const Text('WRITE REVIEW',
                 style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SKELETON
+// ════════════════════════════════════════════════════════════════════════════
+
+class _TrackingSkeleton extends StatelessWidget {
+  const _TrackingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            const Row(
+              children: [
+                Expanded(child: SkeletonBox(width: 160, height: 22)),
+                SkeletonCircle(size: 24),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Map card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SkeletonBox(height: 28, radius: 10),
+                  SizedBox(height: 10),
+                  SkeletonBox(width: double.infinity, height: 205, radius: 16),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Status card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SkeletonBox(width: 120, height: 14),
+                  const SizedBox(height: 18),
+                  ...List.generate(
+                    3,
+                    (_) => const Padding(
+                      padding: EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SkeletonCircle(size: 26),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SkeletonBox(height: 16),
+                                SizedBox(height: 6),
+                                SkeletonBox(width: 180, height: 12, radius: 6),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Verification code card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  const SkeletonBox(width: 140, height: 14),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      6,
+                      (_) => const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: SkeletonBox(width: 36, height: 44, radius: 8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Contact card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  const Row(
+                    children: [
+                      SkeletonBox(width: 52, height: 52, radius: 12),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SkeletonBox(width: 130, height: 14),
+                            SizedBox(height: 6),
+                            SkeletonBox(width: 90, height: 12, radius: 6),
+                            SizedBox(height: 6),
+                            SkeletonBox(width: 70, height: 11, radius: 6),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  const SkeletonBox(height: 46, radius: 12),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

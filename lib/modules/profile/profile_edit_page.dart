@@ -1,9 +1,10 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
+import '../../widgets/skeleton_widgets.dart';
 import 'profile_controller.dart';
 
 class ProfileEditPage extends StatefulWidget {
@@ -27,7 +28,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   bool _isLoading = false;
   bool _isFetching = true;
 
-  static const Color _ink = Color(0xFF0F172A);
+  static const Color _ink = Color(0xFF0A0A0A);
   static const Color _muted = Color(0xFF64748B);
   static const Color _bg = Color(0xFFF8F9FD);
   static const Color _accent = Color(0xFF0061FF);
@@ -154,7 +155,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         ],
       ),
       body: _isFetching
-          ? const Center(child: CircularProgressIndicator())
+          ? const _ProfileEditSkeleton()
           : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
@@ -170,12 +171,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                           Container(
                             width: 100,
                             height: 100,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(16),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF1F5F9),
+                              shape: BoxShape.circle,
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
+                            child: ClipOval(
                               child: _newPhotoFile != null
                                   ? Image.file(_newPhotoFile!,
                                       fit: BoxFit.cover)
@@ -256,14 +256,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Color(0xFF0A0A0A), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,9 +303,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             ),
             prefixIcon: Icon(icon, color: _muted, size: 20),
             filled: true,
-            fillColor: const Color(0xFFF8F9FB),
+            fillColor: Color(0xFFF8F9FB),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
             contentPadding: const EdgeInsets.symmetric(
@@ -319,6 +313,47 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+class _ProfileEditSkeleton extends StatelessWidget {
+  const _ProfileEditSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Center(child: SkeletonCircle(size: 100)),
+            const SizedBox(height: 32),
+            const SkeletonBox(width: 60, height: 11, radius: 6),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Color(0xFF0A0A0A), width: 1),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonLabelField(),
+                  SizedBox(height: 16),
+                  SkeletonLabelField(),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
     );
   }
 }

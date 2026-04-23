@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/theme.dart';
 import '../../config/routes.dart';
@@ -85,8 +85,8 @@ class _SignupPageState extends State<SignupPage> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 10))],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +98,7 @@ class _SignupPageState extends State<SignupPage> {
                       decoration: InputDecoration(
                         hintText: 'John Doe',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                        filled: true, fillColor: const Color(0xFFF1F5F9),
+                        filled: true, fillColor: Color(0xFFF1F5F9),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                         prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF64748B)),
                         contentPadding: const EdgeInsets.symmetric(vertical: 18),
@@ -114,7 +114,7 @@ class _SignupPageState extends State<SignupPage> {
                       decoration: InputDecoration(
                         hintText: 'name@email.com',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                        filled: true, fillColor: const Color(0xFFF1F5F9),
+                        filled: true, fillColor: Color(0xFFF1F5F9),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                         prefixIcon: const Icon(Icons.mail_outline, color: Color(0xFF64748B)),
                         contentPadding: const EdgeInsets.symmetric(vertical: 18),
@@ -130,11 +130,11 @@ class _SignupPageState extends State<SignupPage> {
                       decoration: InputDecoration(
                         hintText: '••••••••',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8), letterSpacing: 4),
-                        filled: true, fillColor: const Color(0xFFF1F5F9),
+                        filled: true, fillColor: Color(0xFFF1F5F9),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                         prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: const Color(0xFF64748B)),
+                          icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Color(0xFF64748B)),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                         contentPadding: const EdgeInsets.symmetric(vertical: 18),
@@ -153,7 +153,7 @@ class _SignupPageState extends State<SignupPage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
+                        backgroundColor: const Color(0xFF0A0A0A),
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 56),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -208,7 +208,7 @@ class _SignupPageState extends State<SignupPage> {
                         children: [
                           Image.asset('assets/images/google.png', width: 24, height: 24),
                           const SizedBox(width: 12),
-                          const Text('Sign up with Google', style: TextStyle(color: Color(0xFF0F172A), fontSize: 15, fontWeight: FontWeight.w600)),
+                          const Text('Sign up with Google', style: TextStyle(color: Color(0xFF0A0A0A), fontSize: 15, fontWeight: FontWeight.w600)),
                         ],
                       ),
                     )),

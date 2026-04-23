@@ -1,3 +1,4 @@
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart' hide Position;
@@ -17,7 +18,7 @@ class HomePage extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F3F7),
+      backgroundColor: Colors.white,
       extendBody: true,
       bottomNavigationBar: const CustomerNavBar(selectedItem: AppNavItem.home),
       body: SafeArea(
@@ -48,12 +49,12 @@ class HomePage extends GetView<HomeController> {
                       ),
                       Row(
                         children: [
+                          _NotifBell(),
+                          const SizedBox(width: 8),
                           _HeaderIconButton(
-                            icon: Icons.chat_bubble_outline_rounded,
+                            icon: Icons.send_rounded,
                             onTap: () => Get.toNamed(AppRoutes.chatInbox),
                           ),
-                          const SizedBox(width: 8),
-                          _NotifBell(),
                         ],
                       ),
                     ],
@@ -87,7 +88,15 @@ class HomePage extends GetView<HomeController> {
                 // ── Repair Categories ────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: const _RepairCategories(),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Color(0xFF0A0A0A), width: 1.5),
+                    ),
+                    child: const _RepairCategories(),
+                  ),
                 ),
 
                 const SizedBox(height: 24),
@@ -126,13 +135,13 @@ class _HeaderIconButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: const Color(0xFF0A0A0A).withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Icon(icon, color: const Color(0xFF1E293B), size: 20),
+        child: Icon(icon, color: Color(0xFF1E293B), size: 20),
       ),
     );
   }
@@ -161,7 +170,7 @@ class _NotifBell extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
+                    color: const Color(0xFF0A0A0A).withValues(alpha: 0.06),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -293,27 +302,27 @@ class _HeroCTACardState extends State<_HeroCTACard> {
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.technicianList),
       child: Container(
-        height: 190,
+        height: 200,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           color: const Color(0xFF0D1117),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
+              color: Color(0xFF0A0A0A).withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: Stack(
-          children: [
-            // ── Live Mapbox map ──────────────────────────────────
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: SizedBox.expand(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            children: [
+              // ── Live Mapbox map (full bleed) ─────────────────
+              SizedBox.expand(
                 child: MapWidget(
                   key: const ValueKey('home_hero_map'),
-                  styleUri: MapboxStyles.OUTDOORS,
+                  styleUri: MapboxStyles.DARK,
                   cameraOptions: CameraOptions(
                     center: Point(
                       coordinates: Position(_lng, _lat),
@@ -323,88 +332,98 @@ class _HeroCTACardState extends State<_HeroCTACard> {
                   onMapCreated: _onMapCreated,
                 ),
               ),
-            ),
 
-            // ── Gradient overlay (left-heavy, matches Figma) ─────
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Color(0xEE0D1117),
-                    Color(0xAA0D1117),
-                    Color(0x440D1117),
-                    Colors.transparent,
-                  ],
-                  stops: [0.0, 0.4, 0.65, 1.0],
-                ),
-              ),
-            ),
-
-            // ── Text content (bottom-left) ───────────────────────
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Find Nearby\nTechnicians',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Obx(() {
-                    final ctrl = Get.find<HomeController>();
-                    final count = ctrl.technicianCount.value;
-                    final label = count > 0
-                        ? '$count active specialists\navailable now'
-                        : 'Find specialists\nnear you';
-                    return Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFCBD5E1),
-                        fontWeight: FontWeight.w500,
-                        height: 1.4,
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.explore_rounded,
-                            size: 14, color: Color(0xFF0D1117)),
-                        SizedBox(width: 6),
-                        Text(
-                          'Explore Map',
-                          style: TextStyle(
-                            color: Color(0xFF0D1117),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
+              // ── Glassmorphism panel (bottom) ─────────────────
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF1C1C1E).withValues(alpha: 0.65),
+                        border: Border(
+                          top: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            width: 1,
                           ),
                         ),
-                      ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // ── Text ──────────────────────────
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'Find Nearby\nTechnicians',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    height: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Obx(() {
+                                  final ctrl = Get.find<HomeController>();
+                                  final count = ctrl.technicianCount.value;
+                                  final label = count > 0
+                                      ? '$count active specialists available now'
+                                      : 'Find specialists near you';
+                                  return Text(
+                                    label,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFFADB5BD),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // ── Explore Map button ─────────────
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.explore_rounded,
+                                    size: 14, color: Color(0xFF0D1117)),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Explore Map',
+                                  style: TextStyle(
+                                    color: Color(0xFF0D1117),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -423,11 +442,12 @@ class _SearchBar extends StatelessWidget {
         height: 52,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(100),
+          border: Border.all(color: const Color(0xFF0A0A0A), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
+              color: const Color(0xFF0A0A0A).withValues(alpha: 0.06),
+              blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ],
@@ -452,9 +472,9 @@ class _SearchBar extends StatelessWidget {
               margin: const EdgeInsets.all(6),
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(10),
+              decoration: const BoxDecoration(
+                color: Color(0xFF0A0A0A),
+                shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.search_rounded,
@@ -486,16 +506,16 @@ class _CurrentRepairCard extends GetView<BookingController> {
 
   static Color _statusBg(String status) => switch (status) {
         BookingStatus.pending => const Color(0xFFFFF7ED),
-        BookingStatus.awaitingPayment => const Color(0xFFFFF1F2),
+        BookingStatus.awaitingPayment => Color(0xFFFFF1F2),
         BookingStatus.done => const Color(0xFFDCFCE7),
-        _ => const Color(0xFFDCEDFF),
+        _ => Color(0xFF0061FF),
       };
 
   static Color _statusTextColor(String status) => switch (status) {
         BookingStatus.pending => const Color(0xFFD97706),
-        BookingStatus.awaitingPayment => const Color(0xFFE11D48),
+        BookingStatus.awaitingPayment => Color(0xFFE11D48),
         BookingStatus.done => const Color(0xFF16A34A),
-        _ => const Color(0xFF0061FF),
+        _ => Colors.white,
       };
 
   static String _damageTypeLabel(String type) => switch (type) {
@@ -520,7 +540,7 @@ class _CurrentRepairCard extends GetView<BookingController> {
       return Column(
         children: activeBookings.map((booking) {
           final title =
-              '${booking.technicianName} • ${_damageTypeLabel(booking.damageType)}';
+              '${booking.technicianName} • ${booking.serviceName.isNotEmpty ? booking.serviceName : _damageTypeLabel(booking.damageType)}';
           final status = booking.status;
 
           return Padding(
@@ -531,19 +551,21 @@ class _CurrentRepairCard extends GetView<BookingController> {
                 if (s == BookingStatus.done || s == BookingStatus.cancelled) {
                   Get.toNamed(AppRoutes.bookingDetail, arguments: booking);
                 } else {
+                  controller.watchBooking(booking);
                   Get.toNamed(AppRoutes.orderTracking);
                 }
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  color: const Color(0xFF000000),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF0A0A0A), width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: const Color(0xFF000000).withValues(alpha: 0.50),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -553,11 +575,11 @@ class _CurrentRepairCard extends GetView<BookingController> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(10),
+                        color: Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.build_rounded,
-                          color: Color(0xFF475569), size: 20),
+                      child: const Icon(Icons.assignment_rounded,
+                          color: Color(0xFF94A3B8), size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -569,7 +591,7 @@ class _CurrentRepairCard extends GetView<BookingController> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF94A3B8),
+                              color: Color(0xFF64748B),
                               letterSpacing: 0.8,
                             ),
                           ),
@@ -579,7 +601,7 @@ class _CurrentRepairCard extends GetView<BookingController> {
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF0F172A),
+                              color: Colors.white,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -593,7 +615,7 @@ class _CurrentRepairCard extends GetView<BookingController> {
                           horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: _statusBg(status),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         _statusLabel(status),
@@ -617,82 +639,153 @@ class _CurrentRepairCard extends GetView<BookingController> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  REPAIR CATEGORIES  (matches Figma: TV & AUDIO, COMPUTERS, etc)
+//  REPAIR CATEGORIES
 // ═══════════════════════════════════════════════════════════════
 class _RepairCategories extends StatelessWidget {
   const _RepairCategories();
 
   static const _categories = [
-    {'icon': Icons.phone_android_rounded, 'label': 'PHONE',      'category': 'electronic'},
-    {'icon': Icons.laptop_rounded,        'label': 'COMPUTER',   'category': 'electronic'},
-    {'icon': Icons.tv_rounded,            'label': 'TV & AUDIO', 'category': 'electronic'},
-    {'icon': Icons.kitchen_rounded,       'label': 'ELECTRONICS','category': 'electronic'},
-    {'icon': Icons.ac_unit_rounded,       'label': 'AC / FRIDGE','category': 'electronic'},
-    {'icon': Icons.directions_car_rounded,'label': 'VEHICLE',    'category': 'vehicle'},
+    {'icon': Icons.smartphone_rounded,     'label': 'SMARTPHONE', 'category': 'smartphone'},
+    {'icon': Icons.laptop_rounded,         'label': 'LAPTOP',     'category': 'laptop'},
+    {'icon': Icons.kitchen_rounded,        'label': 'APPLIANCE',  'category': 'appliance'},
+    {'icon': Icons.directions_car_rounded, 'label': 'VEHICLE',    'category': 'vehicle'},
   ];
+
+  static const _allCategories = [
+    {'icon': Icons.smartphone_rounded,     'label': 'SMARTPHONE',  'category': 'smartphone'},
+    {'icon': Icons.laptop_rounded,         'label': 'LAPTOP',      'category': 'laptop'},
+    {'icon': Icons.kitchen_rounded,        'label': 'APPLIANCE',   'category': 'appliance'},
+    {'icon': Icons.ac_unit_rounded,        'label': 'AC & COOLING','category': 'ac'},
+    {'icon': Icons.tv_rounded,             'label': 'TV & DISPLAY','category': 'tv'},
+    {'icon': Icons.directions_car_rounded, 'label': 'VEHICLE',     'category': 'vehicle'},
+    {'icon': Icons.build_rounded,          'label': 'ELECTRONIC',  'category': 'electronic'},
+    {'icon': Icons.memory_rounded,         'label': 'HARDWARE',    'category': 'hardware'},
+  ];
+
+  void _showAllSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'All Categories',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0A0A0A),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 4,
+              childAspectRatio: 0.82,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 8,
+              children: _allCategories.map((c) {
+                return GestureDetector(
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(
+                      AppRoutes.technicianList,
+                      arguments: {'category': c['category']},
+                    );
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              color: const Color(0xFF0A0A0A), width: 1.5),
+                        ),
+                        child: Icon(c['icon'] as IconData,
+                            color: const Color(0xFF334155), size: 22),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        c['label'] as String,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF64748B),
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Service Categories',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E293B),
-                ),
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Repair Categories',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E293B),
               ),
-              GestureDetector(
-                onTap: () => Get.toNamed(AppRoutes.technicianList),
-                child: const Text(
-                  'See All',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0061FF),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // 1 baris scroll horizontal
-          SizedBox(
-            height: 92,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.zero,
-              itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, i) {
-                final c = _categories[i];
-                return _CategoryItem(
-                  icon: c['icon'] as IconData,
-                  label: c['label'] as String,
-                  category: c['category'] as String,
-                );
-              },
             ),
-          ),
-        ],
-      ),
+            GestureDetector(
+              onTap: () => _showAllSheet(context),
+              child: const Text(
+                'View All',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0061FF),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: _categories.map((c) => _CategoryItem(
+            icon: c['icon'] as IconData,
+            label: c['label'] as String,
+            category: c['category'] as String,
+          )).toList(),
+        ),
+      ],
     );
   }
 }
@@ -711,42 +804,31 @@ class _CategoryItem extends StatelessWidget {
         AppRoutes.technicianList,
         arguments: {'category': category},
       ),
-      child: SizedBox(
-        width: 72,
-        child: Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 54,
-            height: 54,
+            width: 68,
+            height: 68,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF0A0A0A), width: 1.5),
             ),
-            child: Icon(icon, color: const Color(0xFF475569), size: 24),
+            child: Icon(icon, color: Color(0xFF334155), size: 26),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             label,
             textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 9,
+              fontSize: 10,
               fontWeight: FontWeight.w700,
               color: Color(0xFF64748B),
-              letterSpacing: 0.3,
+              letterSpacing: 0.2,
             ),
           ),
         ],
-      ),
       ),
     );
   }
@@ -815,7 +897,7 @@ class _FeaturedSpecialistsSection extends GetView<HomeController> {
           return Column(
             children: controller.nearbyTechnicians
                 .map((t) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 16),
                       child: _TechnicianCard(technician: t),
                     ))
                 .toList(),
@@ -833,135 +915,150 @@ class _TechnicianCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Get.toNamed(
-        AppRoutes.technicianDetail,
-        arguments: technician,
+    final categoryLabel = technician.specialty.isNotEmpty
+        ? technician.specialty.toUpperCase()
+        : technician.category.toUpperCase();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A0A0A).withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+      child: Row(
+        children: [
+          // ── Circular avatar ──────────────────────────────────
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFF1F5F9),
             ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Avatar
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(16),
-              ),
+            child: ClipOval(
               child: technician.photoUrl != null &&
                       technician.photoUrl!.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.network(technician.photoUrl!,
-                          fit: BoxFit.cover),
+                  ? Image.network(
+                      technician.photoUrl!,
+                      fit: BoxFit.cover,
                     )
                   : const Icon(Icons.person_rounded,
-                      color: Color(0xFF94A3B8), size: 32),
+                      color: Color(0xFF94A3B8), size: 36),
             ),
-            const SizedBox(width: 14),
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    technician.name,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    technician.specialty.isEmpty
-                        ? technician.category.toUpperCase()
-                        : technician.specialty.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1D4ED8),
-                      letterSpacing: 0.5,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_rounded,
-                          size: 12, color: Color(0xFF94A3B8)),
-                      const SizedBox(width: 3),
-                      Text(
-                        technician.distanceLabel,
+          ),
+          const SizedBox(width: 14),
+
+          // ── Info + button ────────────────────────────────────
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Name + rating
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        technician.name,
                         style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0A0A0A),
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (technician.totalJobs >= 200) ...[
-                        const SizedBox(width: 8),
-                        const Text(
-                          '•',
-                          style: TextStyle(color: Color(0xFFCBD5E1)),
-                        ),
-                        const SizedBox(width: 8),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded,
+                            size: 14, color: Color(0xFFFBBF24)),
+                        const SizedBox(width: 3),
                         Text(
-                          '${technician.totalJobs}+ Jobs',
+                          technician.rating.toStringAsFixed(1),
                           style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0A0A0A),
                           ),
                         ),
                       ],
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // Distance + category chip
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_rounded,
+                        size: 12, color: Color(0xFF94A3B8)),
+                    const SizedBox(width: 3),
+                    Text(
+                      technician.distanceLabel,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        categoryLabel,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1D4ED8),
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // Book Now button
+                GestureDetector(
+                  onTap: () => Get.toNamed(
+                    AppRoutes.technicianDetail,
+                    arguments: technician,
                   ),
-                ],
-              ),
-            ),
-            // Rating badge
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.star_rounded,
-                      size: 14, color: Color(0xFF0061FF)),
-                  const SizedBox(width: 4),
-                  Text(
-                    technician.rating.toStringAsFixed(1),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF0A0A0A),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Book Now',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1005,13 +1102,13 @@ class _TechnicianCardSkeletonState extends State<_TechnicianCardSkeleton>
       animation: _anim,
       builder: (context, child) {
         final shimmerColor =
-            Color.lerp(const Color(0xFFE2E8F0), const Color(0xFFF8FAFC),
+            Color.lerp(const Color(0xFFE2E8F0), Color(0xFFF8FAFC),
                 _anim.value)!;
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [

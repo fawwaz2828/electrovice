@@ -130,6 +130,8 @@ class BookingController extends GetxController {
           certificationUrls: fresh.certificationUrls,
           serviceEstimates: fresh.serviceEstimates,
           diagnosisFee: fresh.diagnosisFee,
+          deviceCategories: fresh.deviceCategories,
+          serviceMethod: fresh.serviceMethod,
           photoUrl: fresh.photoUrl,
           lat: fresh.lat,
           lng: fresh.lng,
@@ -209,31 +211,7 @@ class BookingController extends GetxController {
 
     // Listen to active booking
     _activeSub = _bookingService.streamActiveBooking(uid).listen(
-      (doc) {
-        final prev = activeBooking.value;
-        activeBooking.value = doc;
-
-        // Mulai stream lokasi teknisi saat status `confirmed` (teknisi menuju lokasi)
-        if (doc != null && doc.status == BookingStatus.confirmed) {
-          _startTechLocationStream(doc.technicianId);
-        } else if (prev?.status == BookingStatus.confirmed &&
-            doc?.status != BookingStatus.confirmed) {
-          _stopTechLocationStream();
-        }
-
-        // Auto-navigate ke review page saat status berubah ke done & belum dirating
-        if (doc != null &&
-            doc.status == BookingStatus.done &&
-            doc.customerRating == null &&
-            prev?.status != BookingStatus.done) {
-          // Delay kecil agar halaman tracking render dulu
-          Future.delayed(const Duration(milliseconds: 600), () {
-            if (Get.currentRoute == AppRoutes.orderTracking) {
-              Get.toNamed(AppRoutes.review, arguments: doc);
-            }
-          });
-        }
-      },
+      (doc) => _onActiveBookingUpdate(doc),
       onError: (e) => debugPrint('BookingController active stream error: $e'),
     );
 
@@ -248,6 +226,42 @@ class BookingController extends GetxController {
         isLoadingHistory.value = false;
       },
     );
+  }
+
+  // ── Tracking Page: select a specific booking ─────────────────
+
+  /// Called from CustomerOrdersPage when user taps a specific order.
+  /// Replaces the generic active-booking stream with one scoped to [booking].
+  void watchBooking(BookingDocument booking) {
+    activeBooking.value = booking;
+    _activeSub?.cancel();
+    _activeSub = _bookingService.streamBookingById(booking.bookingId).listen(
+      (doc) => _onActiveBookingUpdate(doc),
+      onError: (e) => debugPrint('watchBooking stream error: $e'),
+    );
+  }
+
+  void _onActiveBookingUpdate(BookingDocument? doc) {
+    final prev = activeBooking.value;
+    activeBooking.value = doc;
+
+    if (doc != null && doc.status == BookingStatus.confirmed) {
+      _startTechLocationStream(doc.technicianId);
+    } else if (prev?.status == BookingStatus.confirmed &&
+        doc?.status != BookingStatus.confirmed) {
+      _stopTechLocationStream();
+    }
+
+    if (doc != null &&
+        doc.status == BookingStatus.done &&
+        doc.customerRating == null &&
+        prev?.status != BookingStatus.done) {
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (Get.currentRoute == AppRoutes.orderTracking) {
+          Get.toNamed(AppRoutes.review, arguments: doc);
+        }
+      });
+    }
   }
 
   // ── Technician Live Location (tracking page) ─────────────────
@@ -338,7 +352,26 @@ class BookingController extends GetxController {
   void setDescription(String value) => description.value = value;
   void setDamageType(String value) => damageType.value = value;
   void setUserAddress(String value) => userAddress.value = value;
-  void setSelectedService(tech_svc.ServiceEstimate s) => selectedService.value = s;
+  void setSelectedService(tech_svc.ServiceEstimate s) {
+    selectedService.value = s;
+    damageType.value = _inferDamageType(s.service);
+  }
+
+  static String _inferDamageType(String serviceName) {
+    final lower = serviceName.toLowerCase();
+    if (lower.contains('screen') || lower.contains('lcd') || lower.contains('display')) {
+      return 'screen';
+    } else if (lower.contains('battery') || lower.contains('baterai')) {
+      return 'battery';
+    } else if (lower.contains('camera') || lower.contains('kamera')) {
+      return 'camera';
+    } else if (lower.contains('water') || lower.contains('air')) {
+      return 'water';
+    } else if (lower.contains('hardware')) {
+      return 'hardware';
+    }
+    return 'other';
+  }
 
   /// Buka Mapbox location picker → set lat/lng + isi teks alamat secara otomatis.
   Future<void> pickLocationFromMap(
@@ -602,15 +635,20 @@ class BookingController extends GetxController {
               : 0);
 
       // 1. Buat booking dulu (tanpa foto)
+      final resolvedName = (userModel?.name ?? '').isNotEmpty
+          ? userModel!.name
+          : (user.email ?? 'Customer');
       final bookingId = await _bookingService.createBooking(
         userId: user.uid,
-        userName: userModel?.name ?? user.email ?? 'Customer',
+        userName: resolvedName,
+        userPhone: userModel?.phone ?? '',
         technicianId: tech.uid,
         technicianName: tech.name,
         technicianPhotoUrl: tech.photoUrl,
         category: tech.category,
         description: description.value.trim(),
         damageType: damageType.value.isEmpty ? 'other' : damageType.value,
+        serviceName: selectedService.value?.service ?? '',
         scheduledAt: scheduledAt.value,
         estimatedPrice: estimatedPrice,
         userAddress: userAddress.value.trim(),
@@ -744,7 +782,7 @@ class BookingController extends GetxController {
       };
 
       return OrderHistoryRecord(
-        title: _damageTypeLabel(b.damageType),
+        title: b.serviceName.isNotEmpty ? b.serviceName : _damageTypeLabel(b.damageType),
         subtitle: b.technicianName,
         dateLabel: _formatDate(b.createdAt),
         amountLabel: b.estimatedPrice > 0

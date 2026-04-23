@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart' hide Position;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
@@ -17,6 +17,7 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
   CircleAnnotationManager? _annotationManager;
   CircleAnnotation? _currentAnnotation;
   Point? _selectedPoint;
+  bool _mapReady = false;
 
   // Fallback koordinat — Makassar
   static const double _defaultLat = -5.1477;
@@ -71,9 +72,21 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFFF7F8FC),
       body: Stack(
         children: [
+          // ── Loading placeholder ─────────────────────────────────
+          if (!_mapReady)
+            const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: Color(0xFF3254FF)),
+                  SizedBox(height: 16),
+                  Text('Loading map...', style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
+                ],
+              ),
+            ),
           // ── Mapbox Map ──────────────────────────────────────────
           SizedBox.expand(
             child: MapWidget(
@@ -107,17 +120,12 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 8,
-                            ),
-                          ],
+                          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                         ),
                         child: const Icon(
                           Icons.arrow_back_ios_new_rounded,
                           size: 18,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A0A0A),
                         ),
                       ),
                     ),
@@ -131,12 +139,7 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 8,
-                            ),
-                          ],
+                          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                         ),
                         child: Text(
                           _selectedPoint == null
@@ -148,7 +151,7 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
                             fontWeight: FontWeight.w600,
                             color: _selectedPoint == null
                                 ? const Color(0xFF64748B)
-                                : const Color(0xFF3254FF),
+                                : Color(0xFF3254FF),
                           ),
                         ),
                       ),
@@ -171,13 +174,7 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                 ),
                 child: const Icon(
                   Icons.my_location_rounded,
@@ -201,12 +198,12 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
                   child: ElevatedButton(
                     onPressed: _selectedPoint == null ? null : _confirmLocation,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3254FF),
+                      backgroundColor: Color(0xFF3254FF),
                       disabledBackgroundColor: const Color(0xFF94A3B8),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
                     ),
@@ -231,6 +228,7 @@ class _MapboxLocationPickerPageState extends State<MapboxLocationPickerPage> {
 
   Future<void> _onMapCreated(MapboxMap mapboxMap) async {
     _mapboxMap = mapboxMap;
+    setState(() => _mapReady = true);
 
     // Aktifkan location puck (titik biru posisi user)
     await mapboxMap.location.updateSettings(

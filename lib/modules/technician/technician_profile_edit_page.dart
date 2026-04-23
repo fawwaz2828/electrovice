@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +6,7 @@ import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/technician_service.dart';
 import '../../config/routes.dart';
+import '../../widgets/skeleton_widgets.dart';
 
 class TechnicianProfileEditPage extends StatefulWidget {
   const TechnicianProfileEditPage({super.key});
@@ -32,7 +33,8 @@ class _TechnicianProfileEditPageState
   final _newAccreditationController = TextEditingController();
 
   // State
-  String _category = 'electronic';
+  List<String> _deviceCategories = [];
+  List<String> _serviceMethod = [];
   int _yearsExperience = 0;
   double _serviceRadius = 10;
   bool _isAvailable = false;
@@ -49,7 +51,7 @@ class _TechnicianProfileEditPageState
   bool _isLoading = false;
   bool _isFetching = true;
 
-  static const Color _ink = Color(0xFF0F172A);
+  static const Color _ink = Color(0xFF0A0A0A);
   static const Color _muted = Color(0xFF64748B);
   static const Color _bg = Color(0xFFF2F3F7);
   static const Color _accent = Color(0xFF3254FF);
@@ -81,13 +83,14 @@ class _TechnicianProfileEditPageState
       _currentPhotoUrl = userModel.photoUrl;
       _specialtyController.text = tp?.specialty ?? '';
       _bioController.text = tp?.bio ?? '';
-      _category = tp?.category ?? 'electronic';
       _yearsExperience = tp?.yearsExperience ?? 0;
       _serviceRadius = tp?.serviceRadius ?? 10;
 
       if (techOnline != null) {
         _isAvailable = techOnline.isAvailable;
         _workshopAddressController.text = techOnline.workshopAddress;
+        _deviceCategories = List.from(techOnline.deviceCategories);
+        _serviceMethod = List.from(techOnline.serviceMethod);
         _accreditations = List.from(techOnline.accreditations);
         _certUrls = List.from(techOnline.certificationUrls);
         // Pad _certNewFiles and _certUrls to match _accreditations length
@@ -161,7 +164,6 @@ class _TechnicianProfileEditPageState
         user.uid,
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
-        category: _category,
         specialty: _specialtyController.text.trim(),
         bio: _bioController.text.trim(),
         yearsExperience: _yearsExperience,
@@ -174,6 +176,8 @@ class _TechnicianProfileEditPageState
         certificationUrls: finalCertUrls,
         serviceEstimates: _serviceEstimates,
         diagnosisFee: diagFee,
+        deviceCategories: _deviceCategories,
+        serviceMethod: _serviceMethod,
       );
 
       // Update diagnosisFee juga di users collection jika ada
@@ -307,7 +311,7 @@ class _TechnicianProfileEditPageState
         ],
       ),
       body: _isFetching
-          ? const Center(child: CircularProgressIndicator())
+          ? const _TechProfileEditSkeleton()
           : SingleChildScrollView(
               padding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -325,11 +329,11 @@ class _TechnicianProfileEditPageState
                             width: 100,
                             height: 100,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(16),
+                              color: Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(12),
                               child: _newPhotoFile != null
                                   ? Image.file(_newPhotoFile!,
                                       fit: BoxFit.cover)
@@ -390,9 +394,15 @@ class _TechnicianProfileEditPageState
                   ]),
                   const SizedBox(height: 24),
 
-                  // ── KATEGORI ───────────────────────────────────
-                  _buildSection('SERVICE CATEGORY', [
-                    _buildCategoryToggle(),
+                  // ── SERVICE CATEGORIES ─────────────────────────
+                  _buildSection('SERVICE CATEGORIES', [
+                    _buildServiceCategoriesCheckboxes(),
+                  ]),
+                  const SizedBox(height: 24),
+
+                  // ── SERVICE METHOD ──────────────────────────────
+                  _buildSection('SERVICE METHOD', [
+                    _buildServiceMethodCards(),
                   ]),
                   const SizedBox(height: 24),
 
@@ -488,14 +498,8 @@ class _TechnicianProfileEditPageState
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Color(0xFF0A0A0A), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,7 +532,7 @@ class _TechnicianProfileEditPageState
               style: TextStyle(
                 fontSize: 12,
                 color: _isAvailable
-                    ? const Color(0xFF16A34A)
+                    ? Color(0xFF16A34A)
                     : const Color(0xFF94A3B8),
                 fontWeight: FontWeight.w500,
               ),
@@ -562,7 +566,7 @@ class _TechnicianProfileEditPageState
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8F9FB),
+                color: Color(0xFFF8F9FB),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
@@ -572,7 +576,7 @@ class _TechnicianProfileEditPageState
                   GestureDetector(
                     onTap: () => _pickCertPhoto(i),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       child: hasPhoto
                           ? (newFile != null
                               ? Image.file(newFile,
@@ -638,9 +642,9 @@ class _TechnicianProfileEditPageState
                     fontWeight: FontWeight.w400,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFF8F9FB),
+                  fillColor: Color(0xFFF8F9FB),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -656,7 +660,7 @@ class _TechnicianProfileEditPageState
                 height: 44,
                 decoration: BoxDecoration(
                   color: _accent,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.add_rounded,
                     color: Colors.white, size: 22),
@@ -698,8 +702,8 @@ class _TechnicianProfileEditPageState
               padding: const EdgeInsets.symmetric(
                   horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8F9FB),
-                borderRadius: BorderRadius.circular(10),
+                color: Color(0xFFF8F9FB),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
@@ -765,13 +769,13 @@ class _TechnicianProfileEditPageState
                 horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: _lat != null
-                  ? const Color(0xFFEEF2FF)
+                  ? Color(0xFFEEF2FF)
                   : const Color(0xFFF8F9FB),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _lat != null
                     ? _accent.withOpacity(0.3)
-                    : const Color(0xFFE2E8F0),
+                    : Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
@@ -864,9 +868,9 @@ class _TechnicianProfileEditPageState
               fontWeight: FontWeight.w400,
             ),
             filled: true,
-            fillColor: const Color(0xFFF8F9FB),
+            fillColor: Color(0xFFF8F9FB),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
             contentPadding: const EdgeInsets.symmetric(
@@ -877,41 +881,169 @@ class _TechnicianProfileEditPageState
     );
   }
 
-  // ── CATEGORY TOGGLE ──────────────────────────────────────────────
-  Widget _buildCategoryToggle() {
-    return Row(
+  // ── SERVICE CATEGORIES CHECKBOXES ───────────────────────────────
+  static const _categoryOptions = [
+    ('Laptop',         'laptop',      Icons.laptop_rounded),
+    ('Smartphone',     'smartphone',  Icons.smartphone_rounded),
+    ('Home Appliance', 'appliance',   Icons.kitchen_rounded),
+    ('AC & Cooling',   'ac',          Icons.ac_unit_rounded),
+    ('TV & Display',   'tv',          Icons.tv_rounded),
+    ('Vehicles',       'vehicle',     Icons.directions_car_rounded),
+    ('Other',          'other',       Icons.build_circle_outlined),
+  ];
+
+  Widget _buildServiceCategoriesCheckboxes() {
+    return Column(
+      children: _categoryOptions.map((opt) {
+        final label = opt.$1;
+        final key   = opt.$2;
+        final icon  = opt.$3;
+        final selected = _deviceCategories.contains(key);
+        return InkWell(
+          onTap: () => setState(() {
+            if (selected) {
+              _deviceCategories.remove(key);
+            } else {
+              _deviceCategories.add(key);
+            }
+          }),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? _accent.withValues(alpha: 0.12)
+                        : Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon,
+                      size: 18,
+                      color: selected ? _accent : _muted),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: selected ? _ink : _muted,
+                    ),
+                  ),
+                ),
+                Checkbox(
+                  value: selected,
+                  onChanged: (_) => setState(() {
+                    if (selected) {
+                      _deviceCategories.remove(key);
+                    } else {
+                      _deviceCategories.add(key);
+                    }
+                  }),
+                  activeColor: _accent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  side: BorderSide(
+                    color: selected ? _accent : const Color(0xFFCBD5E1),
+                    width: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ── SERVICE METHOD CARDS ─────────────────────────────────────────
+  Widget _buildServiceMethodCards() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _categoryChip('electronic', Icons.devices_rounded, 'Electronics'),
-        const SizedBox(width: 12),
-        _categoryChip(
-            'vehicle', Icons.directions_car_rounded, 'Vehicle'),
+        const Text(
+          'You can select both',
+          style: TextStyle(fontSize: 12, color: _muted),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _serviceMethodCard(
+              key: 'pickup',
+              title: 'Pick-up',
+              subtitle: 'Collect from\ncustomer location',
+              icon: Icons.directions_car_outlined,
+            ),
+            const SizedBox(width: 10),
+            _serviceMethodCard(
+              key: 'dropoff',
+              title: 'Drop-in',
+              subtitle: 'Accept visits at\nyour workshop',
+              icon: Icons.store_outlined,
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _categoryChip(String value, IconData icon, String label) {
-    final bool selected = _category == value;
+  Widget _serviceMethodCard({
+    required String key,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    final selected = _serviceMethod.contains(key);
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _category = value),
+        onTap: () => setState(() {
+          if (selected) {
+            _serviceMethod.remove(key);
+          } else {
+            _serviceMethod.add(key);
+          }
+        }),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: selected ? _accent : const Color(0xFFF1F5F9),
+            color: selected
+                ? _accent.withValues(alpha: 0.08)
+                : Color(0xFFF8F9FB),
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? _accent : const Color(0xFFE2E8F0),
+              width: selected ? 1.5 : 1,
+            ),
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(icon,
-                  color: selected ? Colors.white : _muted, size: 22),
-              const SizedBox(height: 6),
+                  size: 22,
+                  color: selected ? _accent : _muted),
+              const SizedBox(height: 8),
               Text(
-                label,
+                title,
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : _muted,
+                  fontWeight: FontWeight.w800,
+                  color: selected ? _accent : _ink,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: _muted,
+                  height: 1.4,
                 ),
               ),
             ],
@@ -975,7 +1107,7 @@ class _TechnicianProfileEditPageState
         height: 36,
         decoration: BoxDecoration(
           color: const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, size: 18, color: _ink),
       ),
@@ -1012,7 +1144,7 @@ class _TechnicianProfileEditPageState
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: _accent,
-            inactiveTrackColor: const Color(0xFFE2E8F0),
+            inactiveTrackColor: Color(0xFFE2E8F0),
             thumbColor: _accent,
             overlayColor: _accent.withOpacity(0.1),
             trackHeight: 4,
@@ -1033,6 +1165,63 @@ class _TechnicianProfileEditPageState
             Text('50 km',
                 style: TextStyle(fontSize: 11, color: _muted)),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+class _TechProfileEditSkeleton extends StatelessWidget {
+  const _TechProfileEditSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Center(child: SkeletonBox(width: 100, height: 100, radius: 16)),
+            const SizedBox(height: 24),
+            _sectionSkeleton(fieldCount: 2),
+            const SizedBox(height: 24),
+            _sectionSkeleton(fieldCount: 1),
+            const SizedBox(height: 24),
+            _sectionSkeleton(fieldCount: 3),
+            const SizedBox(height: 24),
+            _sectionSkeleton(fieldCount: 2),
+            const SizedBox(height: 24),
+            _sectionSkeleton(fieldCount: 1),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionSkeleton({required int fieldCount}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SkeletonBox(width: 100, height: 11, radius: 6),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Color(0xFF0A0A0A), width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(fieldCount * 2 - 1, (i) {
+              if (i.isOdd) return const SizedBox(height: 16);
+              return const SkeletonLabelField();
+            }),
+          ),
         ),
       ],
     );

@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -70,7 +70,7 @@ class _SplashPageState extends State<SplashPage>
       builder: (_) => PopScope(
         canPop: false,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -79,8 +79,8 @@ class _SplashPageState extends State<SplashPage>
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
-                  borderRadius: BorderRadius.circular(16),
+                  color: Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.system_update_rounded,
@@ -114,7 +114,7 @@ class _SplashPageState extends State<SplashPage>
                           )
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3254FF),
+                    backgroundColor: Color(0xFF3254FF),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -168,7 +168,7 @@ class _SplashPageState extends State<SplashPage>
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black.withValues(alpha: 0.35),
+                  color: Color(0xFF0A0A0A).withValues(alpha: 0.35),
                   letterSpacing: 0.5,
                 ),
               ),

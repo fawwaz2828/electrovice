@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../utils/maps_launcher.dart';
@@ -93,8 +93,8 @@ class _VerificationPageState extends State<VerificationPage> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+                    onTap: () => Get.back(),
+                    child: const Icon(Icons.arrow_back, color: Color(0xFF0A0A0A), size: 24),
                   ),
                   const SizedBox(width: 16),
                   const Text(
@@ -102,7 +102,7 @@ class _VerificationPageState extends State<VerificationPage> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF0A0A0A),
                     ),
                   ),
                 ],
@@ -175,11 +175,11 @@ class _VerificationPageState extends State<VerificationPage> {
               child: ElevatedButton(
                 onPressed: _isVerifying ? null : _onVerify,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Color(0xFF0A0A0A),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 60),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
+                      borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
                 child: _isVerifying
@@ -228,7 +228,8 @@ class _ClientSummaryCard extends StatelessWidget {
     final ctrl = Get.find<TechnicianController>();
     return Obx(() {
       final order = ctrl.selectedOrder.value ?? ctrl.activeOrder.value;
-      final customerName = order?.userName ?? '-';
+      final customerName = (order?.userName ?? '').isNotEmpty ? order!.userName : '-';
+      final phone = (order?.userPhone ?? '').isNotEmpty ? order!.userPhone : null;
       final address = (order?.userAddress.isNotEmpty ?? false)
           ? order!.userAddress
           : 'Address not available';
@@ -240,21 +241,15 @@ class _ClientSummaryCard extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
         child: Column(
           children: [
             // ── Map (real Mapbox jika lat/lng tersedia, placeholder jika tidak) ──
             ClipRRect(
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(28)),
+                  const BorderRadius.vertical(top: Radius.zero),
               child: SizedBox(
                 height: 170,
                 width: double.infinity,
@@ -270,8 +265,8 @@ class _ClientSummaryCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.85),
-                                borderRadius: BorderRadius.circular(10),
+                                color: Color(0xFF0A0A0A).withValues(alpha: 0.85),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -310,14 +305,7 @@ class _ClientSummaryCard extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.12),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
+                                  border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -341,7 +329,7 @@ class _ClientSummaryCard extends StatelessWidget {
                         ],
                       )
                     : Container(
-                        color: const Color(0xFFE8EDF5),
+                        color: Color(0xFFE8EDF5),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -392,13 +380,30 @@ class _ClientSummaryCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (phone != null) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.phone_outlined, size: 16, color: Color(0xFF6F88AE)),
+                        const SizedBox(width: 8),
+                        Text(
+                          phone,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF6F88AE),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   // Issue Summary Card
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F6FA),
-                      borderRadius: BorderRadius.circular(16),
+                      color: Color(0xFFF5F6FA),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
@@ -469,7 +474,7 @@ class _PinBox extends StatelessWidget {
         style: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.w800,
-          color: value.isEmpty ? const Color(0xFFCBD5E1) : const Color(0xFF111111),
+          color: value.isEmpty ? Color(0xFFCBD5E1) : const Color(0xFF111111),
         ),
       ),
     );
@@ -501,7 +506,7 @@ class _Numpad extends StatelessWidget {
           onTap: key == '⌫' ? onDelete : () => onTap(key),
           child: Container(
             decoration: BoxDecoration(
-              color: key == '⌫' ? const Color(0xFFFFE4E4) : const Color(0xFFF1F5F9),
+              color: key == '⌫' ? const Color(0xFFFFE4E4) : Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,
@@ -510,7 +515,7 @@ class _Numpad extends StatelessWidget {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: key == '⌫' ? const Color(0xFFE11D48) : const Color(0xFF0F172A),
+                color: key == '⌫' ? const Color(0xFFE11D48) : Color(0xFF0A0A0A),
               ),
             ),
           ),
@@ -537,14 +542,8 @@ class _VerificationResultDialog extends StatelessWidget {
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 40,
-              offset: const Offset(0, 20),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -555,7 +554,7 @@ class _VerificationResultDialog extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 color: success
-                    ? const Color(0xFFDCFCE7)
+                    ? Color(0xFFDCFCE7)
                     : const Color(0xFFFEE2E2),
                 shape: BoxShape.circle,
               ),
@@ -564,7 +563,7 @@ class _VerificationResultDialog extends StatelessWidget {
                     ? Icons.check_circle_rounded
                     : Icons.error_rounded,
                 color: success
-                    ? const Color(0xFF16A34A)
+                    ? Color(0xFF16A34A)
                     : const Color(0xFFDC2626),
                 size: 44,
               ),
@@ -577,7 +576,7 @@ class _VerificationResultDialog extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF0F172A),
+                color: Color(0xFF0A0A0A),
                 letterSpacing: -0.5,
               ),
             ),
@@ -602,11 +601,11 @@ class _VerificationResultDialog extends StatelessWidget {
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: Color(0xFF0A0A0A),
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 56),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 0,
               ),
@@ -650,8 +649,8 @@ class _ServiceParametersCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(24),
+          color: Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

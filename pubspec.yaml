@@ -77,6 +77,23 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/fonts/
+
+  fonts:
+    - family: Switzer
+      fonts:
+        - asset: assets/fonts/Switzer-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Switzer-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Switzer-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Switzer-Bold.otf
+          weight: 700
+        - asset: assets/fonts/Switzer-ExtraBold.otf
+          weight: 800
+        - asset: assets/fonts/Switzer-Black.otf
+          weight: 900
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

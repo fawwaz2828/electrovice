@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,7 +24,7 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
 
   Future<void> _callCustomer() async {
     final ctrl = Get.find<TechnicianController>();
-    final order = ctrl.activeOrder.value ?? ctrl.selectedOrder.value;
+    final order = ctrl.selectedOrder.value ?? ctrl.activeOrder.value;
     if (order == null) return;
     setState(() => _isCalling = true);
     try {
@@ -57,7 +57,8 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
   }
 
   void _startElapsedTimer() {
-    final order = Get.find<TechnicianController>().activeOrder.value;
+    final ctrl = Get.find<TechnicianController>();
+    final order = ctrl.selectedOrder.value ?? ctrl.activeOrder.value;
     final startTime = order?.codeVerifiedAt ?? order?.updatedAt;
     if (startTime != null) {
       _elapsed = DateTime.now().difference(startTime);
@@ -98,7 +99,7 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Obx(() {
-            final order = controller.activeOrder.value ?? controller.selectedOrder.value;
+            final order = controller.selectedOrder.value ?? controller.activeOrder.value;
             return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -107,8 +108,9 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
               // ── Main Work Order Card ───────────────────────────────
               _WorkOrderHeader(
                 bookingId: order?.bookingId.substring(0, 8).toUpperCase() ?? '--------',
-                issueTitle: _damageLabel(order?.damageType ?? ''),
-                customerName: order?.userName ?? '-',
+                issueTitle: (order?.serviceName.isNotEmpty ?? false) ? order!.serviceName : _damageLabel(order?.damageType ?? ''),
+                customerName: (order?.userName ?? '').isNotEmpty ? order!.userName : '-',
+                userPhone: (order?.userPhone ?? '').isNotEmpty ? order!.userPhone : null,
                 userAddress: order?.userAddress ?? 'Address not available',
                 status: order?.status ?? BookingStatus.onProgress,
                 elapsedLabel: _elapsedLabel,
@@ -165,11 +167,11 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 56),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   side: const BorderSide(
                       color: Color(0xFF0061FF), width: 1.5),
-                  foregroundColor: const Color(0xFF0061FF),
+                  foregroundColor: Color(0xFF0061FF),
                 ),
                 child: const Text(
                   'Update price',
@@ -197,11 +199,11 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                         if (mounted) setState(() => _isCompleting = false);
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: const Color(0xFF0A0A0A),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 64),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(32),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 0,
                 ),
@@ -255,6 +257,7 @@ class _WorkOrderHeader extends StatelessWidget {
   final String bookingId;
   final String issueTitle;
   final String customerName;
+  final String? userPhone;
   final String userAddress;
   final String status;
   final String elapsedLabel;
@@ -265,6 +268,7 @@ class _WorkOrderHeader extends StatelessWidget {
     required this.bookingId,
     required this.issueTitle,
     required this.customerName,
+    this.userPhone,
     required this.userAddress,
     required this.status,
     required this.elapsedLabel,
@@ -278,7 +282,7 @@ class _WorkOrderHeader extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,8 +305,8 @@ class _WorkOrderHeader extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -311,7 +315,7 @@ class _WorkOrderHeader extends StatelessWidget {
                       width: 6,
                       height: 6,
                       decoration: const BoxDecoration(
-                        color: Colors.black,
+                        color: Color(0xFF0A0A0A),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -340,7 +344,35 @@ class _WorkOrderHeader extends StatelessWidget {
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.person_outline, size: 15, color: Color(0xFF94A3B8)),
+              const SizedBox(width: 6),
+              Text(
+                customerName,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF475569),
+                ),
+              ),
+              if (userPhone != null) ...[
+                const SizedBox(width: 16),
+                const Icon(Icons.phone_outlined, size: 15, color: Color(0xFF94A3B8)),
+                const SizedBox(width: 6),
+                Text(
+                  userPhone!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 20),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
           const SizedBox(height: 20),
 
@@ -367,8 +399,8 @@ class _TimeElapsedCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F3F7),
-        borderRadius: BorderRadius.circular(20),
+        color: Color(0xFFF2F3F7),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,8 +454,8 @@ class _LocationCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F3F7),
-        borderRadius: BorderRadius.circular(20),
+        color: Color(0xFFF2F3F7),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,8 +555,8 @@ class _TaskProgressSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: completed
                       ? const Color(0xFF3254FF)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(4),
+                      : Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             );
@@ -555,14 +587,14 @@ class _ActionCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFEEF2FF),
+              color: Color(0xFFEEF2FF),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: const Color(0xFF3254FF), size: 24),
@@ -626,7 +658,7 @@ class _SystemEstimateCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
@@ -634,12 +666,9 @@ class _SystemEstimateCard extends StatelessWidget {
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: const BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0A0A0A),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -736,7 +765,7 @@ class _EstimateRow extends StatelessWidget {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+              color: Color(0xFF0A0A0A),
             ),
           ),
         ],

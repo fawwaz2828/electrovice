@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../services/auth_service.dart';
@@ -25,7 +25,7 @@ class TechnicianPendingPage extends StatelessWidget {
                 height: 96,
                 decoration: BoxDecoration(
                   color: isDeclined
-                      ? const Color(0xFFFEF2F2)
+                      ? Color(0xFFFEF2F2)
                       : const Color(0xFFF0FDF4),
                   shape: BoxShape.circle,
                 ),
@@ -35,7 +35,7 @@ class TechnicianPendingPage extends StatelessWidget {
                       : Icons.hourglass_top_rounded,
                   size: 48,
                   color: isDeclined
-                      ? const Color(0xFFEF4444)
+                      ? Color(0xFFEF4444)
                       : const Color(0xFFF59E0B),
                 ),
               ),
@@ -45,7 +45,7 @@ class TechnicianPendingPage extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: Color(0xFF0A0A0A),
                   letterSpacing: -0.5,
                 ),
                 textAlign: TextAlign.center,
@@ -68,8 +68,8 @@ class TechnicianPendingPage extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Color(0xFFE2E8F0)),
                   ),
                   child: const Row(
                     children: [
@@ -97,7 +97,7 @@ class TechnicianPendingPage extends StatelessWidget {
                 FilledButton(
                   onPressed: () => Get.offAllNamed(AppRoutes.technicianOnboarding),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F172A),
+                    backgroundColor: Color(0xFF0A0A0A),
                     minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),

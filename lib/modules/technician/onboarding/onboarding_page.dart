@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -12,7 +12,7 @@ const _bg = Color(0xFFF8F9FD);
 const _surface = Colors.white;
 const _card = Colors.white;
 const _border = Color(0xFFE2E8F0);
-const _white = Color(0xFF0F172A);
+const _white = Color(0xFF0A0A0A);
 const _secondary = Color(0xFF64748B);
 const _hint = Color(0xFF94A3B8);
 
@@ -303,7 +303,7 @@ class _Step1 extends StatelessWidget {
                           border: Border.all(color: _bg, width: 2),
                         ),
                         child: const Icon(Icons.edit_rounded,
-                            color: Colors.black, size: 15),
+                            color: Color(0xFF0A0A0A), size: 15),
                       ),
                     ),
                   ],
@@ -431,7 +431,7 @@ class _GenderChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? _white : _card,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: isSelected ? _white : _border, width: 1.5),
         ),
         child: Text(
@@ -557,7 +557,7 @@ class _PhotoUploadCard extends StatelessWidget {
             ? Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(11),
+                    borderRadius: BorderRadius.circular(12),
                     child: Image.file(file!,
                         width: double.infinity,
                         height: double.infinity,
@@ -571,7 +571,7 @@ class _PhotoUploadCard extends StatelessWidget {
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.greenAccent.shade700,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text('✓ Uploaded',
                           style: TextStyle(
@@ -699,7 +699,7 @@ class _Step3 extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: _card,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: _border),
             ),
             child: Column(
@@ -733,7 +733,7 @@ class _Step3 extends StatelessWidget {
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
-                                color: isSelected ? _white : const Color(0xFFF1F5F9),
+                                color: isSelected ? _white : Color(0xFFF1F5F9),
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                     color: isSelected ? _white : _border),
@@ -743,7 +743,7 @@ class _Step3 extends StatelessWidget {
                                   _days[i],
                                   style: TextStyle(
                                     color: isSelected
-                                        ? Colors.black
+                                        ? const Color(0xFF0A0A0A)
                                         : _secondary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
@@ -861,7 +861,7 @@ class _MiniMapPickerState extends State<_MiniMapPicker> {
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(11),
+            borderRadius: BorderRadius.circular(12),
             child: hasLoc
                 ? Stack(
                     children: [
@@ -887,8 +887,8 @@ class _MiniMapPickerState extends State<_MiniMapPicker> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.75),
-                            borderRadius: BorderRadius.circular(8),
+                            color: Color(0xFF0A0A0A).withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -944,8 +944,8 @@ class _TimePickerButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(10),
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _border),
         ),
         child: Row(
@@ -1004,12 +1004,12 @@ class _Step4 extends StatelessWidget {
         children: [
           const _StepHeader(
             title: 'What can\nyou fix?',
-            subtitle: 'Select all device categories you specialize in.',
+            subtitle: 'Select all service categories you specialize in.',
           ),
           const SizedBox(height: 28),
 
-          // ── Device Categories ──
-          _Label('DEVICE CATEGORIES'),
+          // ── Service Categories ──
+          _Label('SERVICE CATEGORIES'),
           const SizedBox(height: 10),
           Obx(() => Wrap(
                 spacing: 8,
@@ -1067,7 +1067,7 @@ class _Step4 extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: _card,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: _border),
             ),
             child: Column(
@@ -1128,10 +1128,10 @@ class _ServiceMethodCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFD6E4FF) : const Color(0xFFF1F5F9),
+            color: isSelected ? Color(0xFFD6E4FF) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? const Color(0xFF3654FF) : _border,
+              color: isSelected ? Color(0xFF3654FF) : _border,
               width: 1.5,
             ),
           ),
@@ -1144,7 +1144,7 @@ class _ServiceMethodCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(title,
                   style: TextStyle(
-                    color: isSelected ? const Color(0xFF1E2A4A) : _white,
+                    color: isSelected ? Color(0xFF1E2A4A) : _white,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                   )),
@@ -1152,7 +1152,7 @@ class _ServiceMethodCard extends StatelessWidget {
               Text(subtitle,
                   style: TextStyle(
                       color: isSelected
-                          ? const Color(0xFF4B6BB5)
+                          ? Color(0xFF4B6BB5)
                           : _hint,
                       fontSize: 11)),
             ],
@@ -1203,13 +1203,13 @@ class _CertItemState extends State<_CertItem> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
           color: _card,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _border)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(12),
             child: Image.file(widget.file,
                 width: 48, height: 48, fit: BoxFit.cover),
           ),
@@ -1260,7 +1260,7 @@ class _AddCertButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: _card,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _border),
         ),
         child: const Row(
@@ -1303,7 +1303,7 @@ class _Step5 extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFBEB),
+              color: Color(0xFFFFFBEB),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFFDE68A)),
             ),
@@ -1454,7 +1454,7 @@ class _Step6 extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
+                  color: Color(0xFFF0FDF4),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFBBF7D0)),
                 ),
@@ -1657,7 +1657,7 @@ class _SelectChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? _white : _card,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
               color: isSelected ? _white : _border, width: 1.5),
         ),

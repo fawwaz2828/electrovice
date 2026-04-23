@@ -10,7 +10,6 @@ class TechnicianService {
     String uid, {
     required String name,
     String phone = '',
-    required String category,
     required String specialty,
     required String bio,
     required int yearsExperience,
@@ -23,8 +22,16 @@ class TechnicianService {
     List<String> certificationUrls = const [],
     required List<Map<String, dynamic>> serviceEstimates,
     int diagnosisFee = 0,
+    List<String> deviceCategories = const [],
+    List<String> serviceMethod = const [],
   }) async {
     final GeoFirePoint point = GeoFirePoint(GeoPoint(lat, lng));
+
+    // Derive category from deviceCategories for backward compat with list filtering
+    final String category = deviceCategories.contains('vehicle') &&
+            deviceCategories.length == 1
+        ? 'vehicle'
+        : 'electronic';
 
     // Update collection users
     await _firestore.collection('users').doc(uid).update({
@@ -35,6 +42,10 @@ class TechnicianService {
       'technicianProfile.bio': bio,
       'technicianProfile.yearsExperience': yearsExperience,
       'technicianProfile.serviceRadius': serviceRadius,
+      if (deviceCategories.isNotEmpty)
+        'technicianProfile.deviceCategories': deviceCategories,
+      if (serviceMethod.isNotEmpty)
+        'technicianProfile.serviceMethod': serviceMethod,
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
@@ -51,6 +62,8 @@ class TechnicianService {
       'certificationUrls': certificationUrls,
       'serviceEstimates': serviceEstimates,
       'serviceRadius': serviceRadius,
+      'deviceCategories': deviceCategories,
+      'serviceMethod': serviceMethod,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     // merge: true supaya rating & totalJobs tidak tertimpa
@@ -268,6 +281,8 @@ class TechnicianOnlineModel {
   final List<String> certificationUrls; // foto sertifikat
   final List<ServiceEstimate> serviceEstimates;
   final int diagnosisFee;
+  final List<String> deviceCategories;
+  final List<String> serviceMethod;
   // Koordinat workshop — null jika belum pernah di-set
   final double? lat;
   final double? lng;
@@ -287,6 +302,8 @@ class TechnicianOnlineModel {
     required this.certificationUrls,
     required this.serviceEstimates,
     required this.diagnosisFee,
+    required this.deviceCategories,
+    required this.serviceMethod,
     this.photoUrl,
     this.lat,
     this.lng,
@@ -297,6 +314,11 @@ class TechnicianOnlineModel {
     double distanceKm = 0,
     bool injectDiagnosa = false,
   }) {
+    final List<String> deviceCategories =
+        (map['deviceCategories'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+
     final List<String> accreditations =
         (map['accreditations'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
@@ -350,6 +372,10 @@ class TechnicianOnlineModel {
       certificationUrls: certUrls,
       serviceEstimates: estimates,
       diagnosisFee: diagFee,
+      deviceCategories: deviceCategories,
+      serviceMethod: (map['serviceMethod'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
       lat: lat,
       lng: lng,
     );

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'technician_controller.dart';
 
@@ -20,7 +20,7 @@ class _TechnicianEditProfilePageState extends State<TechnicianEditProfilePage> {
   final List<TextEditingController> _certsControllers = [];
   String? _currentAvatarUrl;
 
-  static const Color _ink = Color(0xFF0F172A);
+  static const Color _ink = Color(0xFF0A0A0A);
   static const Color _blue = Color(0xFF3254FF);
 
   @override
@@ -71,7 +71,7 @@ class _TechnicianEditProfilePageState extends State<TechnicianEditProfilePage> {
         padding: const EdgeInsets.all(24),
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.zero),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -110,7 +110,7 @@ class _TechnicianEditProfilePageState extends State<TechnicianEditProfilePage> {
         width: 80,
         height: 80,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           image: DecorationImage(image: NetworkImage(url), fit: BoxFit.cover),
           border: _currentAvatarUrl == url ? Border.all(color: _blue, width: 3) : null,
         ),
@@ -172,13 +172,13 @@ class _TechnicianEditProfilePageState extends State<TechnicianEditProfilePage> {
                     children: [
                       InkWell(
                         onTap: _showAvatarPicker,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(12),
                         child: Container(
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(30),
+                            color: Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
                             image: _currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty
                                 ? DecorationImage(image: NetworkImage(_currentAvatarUrl!), fit: BoxFit.cover)
                                 : null,
@@ -282,11 +282,11 @@ class _TechnicianEditProfilePageState extends State<TechnicianEditProfilePage> {
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: Color(0xFFF8FAFC),
         contentPadding: const EdgeInsets.all(16),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: _blue, width: 2)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _blue, width: 2)),
       ),
     );
   }
@@ -294,7 +294,7 @@ class _TechnicianEditProfilePageState extends State<TechnicianEditProfilePage> {
   Widget _buildInfoBox() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+      decoration: BoxDecoration(color: Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
       child: const Row(
         children: [
           Icon(Icons.info_outline_rounded, color: Color(0xFF64748B), size: 20),

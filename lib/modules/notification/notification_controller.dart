@@ -103,4 +103,9 @@ class NotificationController extends GetxController {
     if (_userId == null) return;
     await _notifService.markAllRead(_userId!);
   }
+
+  Future<void> clearAll() async {
+    if (_userId == null) return;
+    await _notifService.clearAll(_userId!);
+  }
 }

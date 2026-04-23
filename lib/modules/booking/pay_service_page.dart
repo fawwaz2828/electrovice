@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import 'booking_controller.dart';
@@ -11,7 +11,7 @@ class PayServicePage extends GetView<BookingController> {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        backgroundColor: Colors.black,
+        backgroundColor: const Color(0xFF0A0A0A),
         insetPadding: EdgeInsets.zero,
         child: Stack(
           children: [
@@ -80,7 +80,7 @@ class PayServicePage extends GetView<BookingController> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: Color(0xFF0F172A)),
+                          color: Color(0xFF0A0A0A)),
                       onPressed: () => Get.back(),
                     ),
                     const Text(
@@ -88,7 +88,7 @@ class PayServicePage extends GetView<BookingController> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
+                        color: Color(0xFF0A0A0A),
                       ),
                     ),
                   ],
@@ -109,7 +109,7 @@ class PayServicePage extends GetView<BookingController> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF0F172A),
+                            color: Color(0xFF0A0A0A),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -160,7 +160,7 @@ class PayServicePage extends GetView<BookingController> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A0A0A),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -169,14 +169,8 @@ class PayServicePage extends GetView<BookingController> {
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                         ),
                         child: Column(
                           children: [
@@ -199,7 +193,7 @@ class PayServicePage extends GetView<BookingController> {
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F172A),
+                                    color: Color(0xFF0A0A0A),
                                   ),
                                 ),
                                 Text(
@@ -224,7 +218,7 @@ class PayServicePage extends GetView<BookingController> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A0A0A),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -246,11 +240,11 @@ class PayServicePage extends GetView<BookingController> {
                             ? null
                             : () => controller.confirmPayment(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
+                          backgroundColor: Color(0xFF0A0A0A),
                           foregroundColor: Colors.white,
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           elevation: 0,
                         ),
@@ -307,7 +301,7 @@ class _BillRow extends StatelessWidget {
           style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A)),
+              color: Color(0xFF0A0A0A)),
         ),
       ],
     );
@@ -365,20 +359,13 @@ class _SelectableTile extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
-                ? const Color(0xFF0061FF)
+                ? Color(0xFF0061FF)
                 : const Color(0xFFE2E8F0),
             width: selected ? 2 : 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Row(
           children: [
@@ -387,7 +374,7 @@ class _SelectableTile extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: iconColor, size: 20),
             ),
@@ -403,7 +390,7 @@ class _SelectableTile extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A0A0A),
                         ),
                       ),
                       if (comingSoon) ...[
@@ -412,8 +399,8 @@ class _SelectableTile extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF7ED),
-                            borderRadius: BorderRadius.circular(6),
+                            color: Color(0xFFFFF7ED),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Text(
                             'Soon',
@@ -481,9 +468,9 @@ class _EWalletBadge extends StatelessWidget {
                   color: comingSoon
                       ? color.withValues(alpha: 0.35)
                       : color,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                   border: selected
-                      ? Border.all(color: const Color(0xFF0061FF), width: 2)
+                      ? Border.all(color: Color(0xFF0061FF), width: 2)
                       : null,
                 ),
                 child: Center(
@@ -504,8 +491,8 @@ class _EWalletBadge extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 5, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B),
-                      borderRadius: BorderRadius.circular(6),
+                      color: Color(0xFFF59E0B),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
                       'Soon',
@@ -526,7 +513,7 @@ class _EWalletBadge extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: comingSoon
-                  ? const Color(0xFF94A3B8)
+                  ? Color(0xFF94A3B8)
                   : const Color(0xFF475569),
             ),
           ),

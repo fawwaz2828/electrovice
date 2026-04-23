@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../config/routes.dart';
@@ -199,8 +199,8 @@ class _AdminHomePageState extends State<AdminHomePage>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(10),
+          color: Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
         child: Column(
@@ -297,7 +297,7 @@ class _AdminHomePageState extends State<AdminHomePage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: Color(0xFFE5E7EB)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,7 +307,7 @@ class _AdminHomePageState extends State<AdminHomePage>
               height: 44,
               decoration: BoxDecoration(
                 color: const Color(0xFF374151),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: Text(
@@ -350,7 +350,7 @@ class _AdminHomePageState extends State<AdminHomePage>
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: statusColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 status,
@@ -370,11 +370,11 @@ class _AdminHomePageState extends State<AdminHomePage>
   Widget _buildChip(String label) {
     final Map<String, Color> colorMap = {
       'Laptop': const Color(0xFF3B82F6),
-      'Smartphone': const Color(0xFF8B5CF6),
+      'Smartphone': Color(0xFF8B5CF6),
       'AC & Cooling': const Color(0xFF06B6D4),
-      'TV & Display': const Color(0xFFF59E0B),
+      'TV & Display': Color(0xFFF59E0B),
       'Home Appliance': const Color(0xFF10B981),
-      'Vehicles': const Color(0xFFEF4444),
+      'Vehicles': Color(0xFFEF4444),
       'Printer': const Color(0xFF6B7280),
     };
     final color = colorMap[label] ?? const Color(0xFF6B7280);
@@ -382,7 +382,7 @@ class _AdminHomePageState extends State<AdminHomePage>
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(label,
           style: TextStyle(

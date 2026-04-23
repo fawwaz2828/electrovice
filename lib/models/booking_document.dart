@@ -26,12 +26,14 @@ class BookingDocument {
   final String bookingId;
   final String userId;
   final String userName;
+  final String userPhone;
   final String technicianId;
   final String technicianName;
   final String? technicianPhotoUrl;
   final String category; // electronic | vehicle
   final String description; // keluhan dari customer
   final String damageType; // screen | battery | hardware | water | camera | other
+  final String serviceName; // nama service asli dari teknisi, misal "Battery Replacement"
   final DateTime scheduledAt;
   final String paymentMethod;
   final int estimatedPrice; // dalam Rupiah, 0 = diskusi di lokasi
@@ -60,11 +62,13 @@ class BookingDocument {
     required this.bookingId,
     required this.userId,
     required this.userName,
+    this.userPhone = '',
     required this.technicianId,
     required this.technicianName,
     required this.category,
     required this.description,
     required this.damageType,
+    this.serviceName = '',
     required this.scheduledAt,
     required this.paymentMethod,
     required this.estimatedPrice,
@@ -94,12 +98,14 @@ class BookingDocument {
       bookingId: doc.id,
       userId: data['userId'] as String? ?? '',
       userName: data['userName'] as String? ?? '',
+      userPhone: data['userPhone'] as String? ?? '',
       technicianId: data['technicianId'] as String? ?? '',
       technicianName: data['technicianName'] as String? ?? '',
       technicianPhotoUrl: data['technicianPhotoUrl'] as String?,
       category: data['category'] as String? ?? 'electronic',
       description: data['description'] as String? ?? '',
       damageType: data['damageType'] as String? ?? 'other',
+      serviceName: data['serviceName'] as String? ?? '',
       scheduledAt: (data['scheduledAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       paymentMethod: data['paymentMethod'] as String? ?? PaymentMethod.cash,
       estimatedPrice: (data['estimatedPrice'] as num?)?.toInt() ?? 0,
@@ -135,12 +141,14 @@ class BookingDocument {
       'bookingId': bookingId,
       'userId': userId,
       'userName': userName,
+      'userPhone': userPhone,
       'technicianId': technicianId,
       'technicianName': technicianName,
       'technicianPhotoUrl': technicianPhotoUrl,
       'category': category,
       'description': description,
       'damageType': damageType,
+      'serviceName': serviceName,
       'scheduledAt': Timestamp.fromDate(scheduledAt),
       'paymentMethod': paymentMethod,
       'estimatedPrice': estimatedPrice,

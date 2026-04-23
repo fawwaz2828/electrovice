@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../config/routes.dart';
 import '../../services/auth_service.dart';
 import '../../services/technician_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../../widgets/skeleton_widgets.dart';
 
 class TechnicianSavedAddressPage extends StatefulWidget {
   const TechnicianSavedAddressPage({super.key});
@@ -25,7 +26,7 @@ class _TechnicianSavedAddressPageState
   bool _isFetching = true;
   bool _isSaving = false;
 
-  static const Color _ink = Color(0xFF0F172A);
+  static const Color _ink = Color(0xFF0A0A0A);
   static const Color _muted = Color(0xFF64748B);
   static const Color _bg = Color(0xFFF2F3F7);
   static const Color _accent = Color(0xFF3254FF);
@@ -151,7 +152,7 @@ class _TechnicianSavedAddressPageState
         ],
       ),
       body: _isFetching
-          ? const Center(child: CircularProgressIndicator())
+          ? const _SavedAddressSkeleton()
           : SingleChildScrollView(
               padding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -176,14 +177,8 @@ class _TechnicianSavedAddressPageState
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,9 +208,9 @@ class _TechnicianSavedAddressPageState
                               fontWeight: FontWeight.w400,
                             ),
                             filled: true,
-                            fillColor: const Color(0xFFF8F9FB),
+                            fillColor: Color(0xFFF8F9FB),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -233,13 +228,13 @@ class _TechnicianSavedAddressPageState
                                 horizontal: 16, vertical: 14),
                             decoration: BoxDecoration(
                               color: _lat != null
-                                  ? const Color(0xFFEEF2FF)
+                                  ? Color(0xFFEEF2FF)
                                   : const Color(0xFFF8F9FB),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: _lat != null
                                     ? _accent.withValues(alpha: 0.3)
-                                    : const Color(0xFFE2E8F0),
+                                    : Color(0xFFE2E8F0),
                               ),
                             ),
                             child: Row(
@@ -298,8 +293,8 @@ class _TechnicianSavedAddressPageState
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(14),
+                      color: Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,6 +320,44 @@ class _TechnicianSavedAddressPageState
                 ],
               ),
             ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  SAVED ADDRESS SKELETON
+// ─────────────────────────────────────────────────────────────────
+class _SavedAddressSkeleton extends StatelessWidget {
+  const _SavedAddressSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SkeletonBox(width: 140, height: 11, radius: 6),
+            const SizedBox(height: 12),
+            SkeletonCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SkeletonBox(width: 120, height: 12, radius: 6),
+                  SizedBox(height: 8),
+                  SkeletonBox(height: 80, radius: 10),
+                  SizedBox(height: 16),
+                  SkeletonBox(height: 48, radius: 10),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            const SkeletonBox(height: 64, radius: 14),
+          ],
+        ),
+      ),
     );
   }
 }

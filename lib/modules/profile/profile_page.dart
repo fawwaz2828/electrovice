@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../config/routes.dart';
@@ -150,7 +150,7 @@ class ProfilePage extends GetView<ProfileController> {
           },
           icon: const Icon(
             Icons.settings_outlined,
-            color: Colors.black,
+            color: Color(0xFF0A0A0A),
             size: 26,
           ),
           splashRadius: 22,
@@ -162,21 +162,14 @@ class ProfilePage extends GetView<ProfileController> {
   Widget _buildLogoutButton(BuildContext context) {
     return InkWell(
       onTap: () => _showLogoutDialog(context),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFF0BEB8), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFE11D48).withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFFF0BEB8), width: 1.5),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -207,7 +200,7 @@ class ProfilePage extends GetView<ProfileController> {
       AlertDialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text(
           'Log Out',
           style: TextStyle(fontWeight: FontWeight.w900, color: _title),
@@ -261,22 +254,15 @@ class _AvatarCard extends StatelessWidget {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x14000000),
-                blurRadius: 24,
-                offset: Offset(0, 10),
-              ),
-            ],
+            shape: BoxShape.circle,
+            border: Border.all(color: Color(0xFF0A0A0A), width: 1),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+          child: ClipOval(
             child: isUploading
                 ? const Center(
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF0A0A0A),
                     ),
                   )
                 : (imageUrl != null && imageUrl!.isNotEmpty)
@@ -295,7 +281,7 @@ class _AvatarCard extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: Colors.black,
+              color: Color(0xFF0A0A0A),
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2.5),
             ),
@@ -406,14 +392,8 @@ class _CardShell extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: ProfilePage._cardBackground,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D14213D),
-            blurRadius: 20,
-            offset: Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: child,
     );
@@ -448,7 +428,7 @@ class _InfoField extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           decoration: BoxDecoration(
             color: ProfilePage._fieldBackground,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             value,
@@ -494,7 +474,7 @@ class _PhoneField extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           decoration: BoxDecoration(
             color: ProfilePage._fieldBackground,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
@@ -515,8 +495,8 @@ class _PhoneField extends StatelessWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEDEFF4),
-                    borderRadius: BorderRadius.circular(6),
+                    color: Color(0xFFEDEFF4),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
@@ -524,13 +504,13 @@ class _PhoneField extends StatelessWidget {
                       Icon(
                         Icons.verified,
                         size: 14,
-                        color: Colors.black,
+                        color: Color(0xFF0A0A0A),
                       ),
                       SizedBox(width: 5),
                       Text(
                         'VERIFIED',
                         style: TextStyle(
-                          color: Colors.black,
+                          color: const Color(0xFF0A0A0A),
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                         ),
@@ -565,7 +545,7 @@ class _NodeTile extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               color: visual.backgroundColor,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(visual.icon, color: visual.iconColor, size: 22),
           ),
@@ -624,20 +604,20 @@ class _NodeVisual {
       case 'home':
         return const _NodeVisual(
           icon: Icons.home_outlined,
-          backgroundColor: Colors.black,
+          backgroundColor: Color(0xFF0A0A0A),
           iconColor: Colors.white,
         );
       case 'hq':
         return const _NodeVisual(
           icon: Icons.handyman_outlined,
           backgroundColor: Color(0xFFDCE8FB),
-          iconColor: Colors.black,
+          iconColor: Color(0xFF0A0A0A),
         );
       default:
         return const _NodeVisual(
           icon: Icons.place_outlined,
           backgroundColor: Color(0xFFECEFF6),
-          iconColor: Colors.black,
+          iconColor: Color(0xFF0A0A0A),
         );
     }
   }
@@ -658,7 +638,7 @@ class _SecurityTile extends StatelessWidget {
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      leading: Icon(icon, color: Colors.black, size: 23),
+      leading: Icon(icon, color: Color(0xFF0A0A0A), size: 23),
       title: Text(
         option.title,
         style: const TextStyle(
@@ -716,7 +696,7 @@ class _ProfileSkeletonState extends State<_ProfileSkeleton>
       builder: (context, child) {
         final c = Color.lerp(
           const Color(0xFFE2E8F0),
-          const Color(0xFFF8FAFC),
+          Color(0xFFF8FAFC),
           _anim.value,
         )!;
         return SingleChildScrollView(
@@ -742,7 +722,7 @@ class _ProfileSkeletonState extends State<_ProfileSkeleton>
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -765,7 +745,7 @@ class _ProfileSkeletonState extends State<_ProfileSkeleton>
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

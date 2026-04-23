@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
@@ -60,19 +60,19 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: _selectedRole != null ? () {
-                  Get.toNamed(AppRoutes.signup, arguments: {'role': _selectedRole});
+                  Get.toNamed(AppRoutes.login, arguments: {'role': _selectedRole});
                 } : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: const Color(0xFF0A0A0A),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    Text('Log In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     SizedBox(width: 8),
                     Icon(Icons.arrow_forward, size: 20, color: Colors.white),
                   ],
@@ -82,10 +82,10 @@ class _RegisterPageState extends State<RegisterPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Already have an account? ', style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
+                  const Text("Don't have an account? ", style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
                   GestureDetector(
-                    onTap: () => Get.toNamed(AppRoutes.login, arguments: {'role': _selectedRole}),
-                    child: const Text('Log In', style: TextStyle(color: Color(0xFF0061FF), fontSize: 14, fontWeight: FontWeight.w700)),
+                    onTap: () => Get.toNamed(AppRoutes.signup, arguments: {'role': _selectedRole}),
+                    child: const Text('Sign Up', style: TextStyle(color: Color(0xFF0061FF), fontSize: 14, fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),
@@ -181,12 +181,11 @@ class RoleCard extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? Colors.black : Colors.transparent,
+                color: isSelected ? Color(0xFF0A0A0A) : Colors.transparent,
                 width: 2,
               ),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -194,31 +193,33 @@ class RoleCard extends StatelessWidget {
                 Container(
                   width: 56, height: 56,
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.black : const Color(0xFFF1F5F9),
+                    color: isSelected ? const Color(0xFF0A0A0A) : Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: isSelected ? Colors.white : Colors.black, size: 28),
+                  child: Icon(icon, color: isSelected ? Colors.white : const Color(0xFF0A0A0A), size: 28),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                      Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0A0A0A))),
                       const SizedBox(height: 4),
                       Text(description, style: const TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4)),
                     ],
                   ),
                 ),
                 const SizedBox(width: 12),
-                if (isSelected)
-                  Container(
-                    width: 22, height: 22,
-                    decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
-                    child: const Icon(Icons.check, color: Colors.white, size: 14),
-                  )
-                else
-                  const Icon(Icons.chevron_right, color: Color(0xFFCBD5E1)),
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: isSelected
+                      ? Container(
+                          decoration: const BoxDecoration(color: Color(0xFF0A0A0A), shape: BoxShape.circle),
+                          child: const Icon(Icons.check, color: Colors.white, size: 14),
+                        )
+                      : const Icon(Icons.chevron_right, color: Color(0xFFCBD5E1), size: 24),
+                ),
               ],
             ),
           ),
@@ -227,7 +228,7 @@ class RoleCard extends StatelessWidget {
               top: -12, right: 24,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: Color(0xFF0A0A0A), borderRadius: BorderRadius.circular(12)),
                 child: const Text('SELECTED', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
               ),
             ),

@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/theme.dart';
@@ -47,13 +47,13 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text(
           'Reset Password',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: Color(0xFF0A0A0A),
           ),
         ),
         content: Column(
@@ -69,12 +69,12 @@ class _LoginPageState extends State<LoginPage> {
               controller: resetEmailCtrl,
               keyboardType: TextInputType.emailAddress,
               autofocus: true,
-              style: const TextStyle(color: Color(0xFF0F172A), fontSize: 14),
+              style: const TextStyle(color: Color(0xFF0A0A0A), fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'email@example.com',
                 hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                 filled: true,
-                fillColor: const Color(0xFFF1F5F9),
+                fillColor: Color(0xFFF1F5F9),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -100,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                 Get.snackbar(
                   'Email Sent',
                   'Password reset link sent to $email',
-                  backgroundColor: const Color(0xFF0F172A),
+                  backgroundColor: const Color(0xFF0A0A0A),
                   colorText: Colors.white,
                   snackPosition: SnackPosition.TOP,
                   borderRadius: 12,
@@ -123,8 +123,8 @@ class _LoginPageState extends State<LoginPage> {
               }
             },
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF0F172A),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              backgroundColor: const Color(0xFF0A0A0A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text('Send Link'),
           ),
@@ -148,11 +148,23 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height -
+                        MediaQuery.of(context).padding.top -
+                        MediaQuery.of(context).padding.bottom -
+                        kToolbarHeight,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
               const SizedBox(height: 12),
               Image.asset(
                 'assets/images/ELECTROVICE_LOGO_HD.png',
@@ -176,14 +188,8 @@ class _LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Color(0xFF0A0A0A), width: 1),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +213,7 @@ class _LoginPageState extends State<LoginPage> {
                             : 'name@email.com',
                         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
                         filled: true,
-                        fillColor: const Color(0xFFF1F5F9),
+                        fillColor: Color(0xFFF1F5F9),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -259,7 +265,7 @@ class _LoginPageState extends State<LoginPage> {
                           letterSpacing: 4,
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF1F5F9),
+                        fillColor: Color(0xFFF1F5F9),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -273,7 +279,7 @@ class _LoginPageState extends State<LoginPage> {
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: const Color(0xFF64748B),
+                            color: Color(0xFF64748B),
                           ),
                           onPressed: () => setState(
                             () => _obscurePassword = !_obscurePassword,
@@ -298,7 +304,7 @@ class _LoginPageState extends State<LoginPage> {
                                 );
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
+                          backgroundColor: const Color(0xFF0A0A0A),
                           foregroundColor: Colors.white,
                           minimumSize: const Size(double.infinity, 56),
                           shape: RoundedRectangleBorder(
@@ -398,7 +404,7 @@ class _LoginPageState extends State<LoginPage> {
                             const Text(
                               'Continue with Google',
                               style: TextStyle(
-                                color: Color(0xFF0F172A),
+                                color: Color(0xFF0A0A0A),
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -484,8 +490,13 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
               const SizedBox(height: 32),
-            ],
-          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

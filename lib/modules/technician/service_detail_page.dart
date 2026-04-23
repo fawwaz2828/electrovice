@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -15,7 +15,7 @@ class ServiceDetailPage extends StatefulWidget {
 class _ServiceDetailPageState extends State<ServiceDetailPage> {
   static const Color _bg   = Color(0xFFF2F3F7);
   static const Color _card = Colors.white;
-  static const Color _ink  = Color(0xFF0F172A);
+  static const Color _ink  = Color(0xFF0A0A0A);
   static const Color _muted= Color(0xFF64748B);
   static const Color _blue = Color(0xFF0061FF);
 
@@ -278,7 +278,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                             backgroundColor: _blue,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 0,
                           ),
@@ -351,7 +351,7 @@ class _SectionLabel extends StatelessWidget {
         style: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF0F172A),
+          color: Color(0xFF0A0A0A),
         ),
       ),
     );
@@ -367,14 +367,8 @@ class _FormCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: child,
     );
@@ -404,24 +398,15 @@ class _DurationChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: selected
-                ? const Color(0xFF0061FF)
+                ? Color(0xFF0061FF)
                 : Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected
                   ? const Color(0xFF0061FF)
-                  : const Color(0xFFE2E8F0),
+                  : Color(0xFFE2E8F0),
               width: 1.5,
             ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF0061FF).withValues(alpha: 0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : [],
           ),
           child: Text(
             label,

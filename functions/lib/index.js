@@ -23,8 +23,8 @@ exports.onBookingCreated = (0, firestore_1.onDocumentCreated)("bookings/{booking
     const userName = (_c = data.userName) !== null && _c !== void 0 ? _c : "Customer";
     const category = (_d = data.category) !== null && _d !== void 0 ? _d : "";
     await _sendNotif(technicianId, {
-        title: "Pesanan Masuk!",
-        body: `${userName} membutuhkan bantuan servis ${category}.`,
+        title: "New Order!",
+        body: `${userName} needs help with ${category} repair.`,
         type: "new_order",
         bookingId,
     });
@@ -46,47 +46,45 @@ exports.onBookingStatusChanged = (0, firestore_1.onDocumentUpdated)("bookings/{b
     const bookingId = event.params.bookingId;
     const userId = (_c = after.userId) !== null && _c !== void 0 ? _c : "";
     const technicianId = (_d = after.technicianId) !== null && _d !== void 0 ? _d : "";
-    const technicianName = (_e = after.technicianName) !== null && _e !== void 0 ? _e : "Teknisi";
+    const technicianName = (_e = after.technicianName) !== null && _e !== void 0 ? _e : "Technician";
     const userName = (_f = after.userName) !== null && _f !== void 0 ? _f : "Customer";
     const cancelledBy = (_g = after.cancelledBy) !== null && _g !== void 0 ? _g : "";
     switch (after.status) {
         case "pending":
             await _sendNotif(technicianId, {
-                title: "Pesanan Masuk!",
-                body: `${userName} membutuhkan bantuan servis ${(_h = after.category) !== null && _h !== void 0 ? _h : ""}.`,
+                title: "New Order!",
+                body: `${userName} needs help with ${(_h = after.category) !== null && _h !== void 0 ? _h : ""} repair.`,
                 type: "new_order",
                 bookingId,
             });
             break;
         case "confirmed":
             await _sendNotif(userId, {
-                title: "Pesanan Diterima!",
-                body: `${technicianName} sedang dalam perjalanan ke lokasi kamu.`,
+                title: "Order Accepted!",
+                body: `${technicianName} is on the way to your location.`,
                 type: "order_accepted",
                 bookingId,
             });
             break;
         case "cancelled":
             if (cancelledBy === "technician") {
-                // Teknisi decline → hanya notify customer dengan pesan spesifik
                 await _sendNotif(userId, {
-                    title: "Pesanan Ditolak",
-                    body: `${technicianName} tidak bisa menerima pesananmu kali ini.`,
+                    title: "Order Declined",
+                    body: `${technicianName} is unable to accept your order at this time.`,
                     type: "order_declined",
                     bookingId,
                 });
             }
             else {
-                // Customer cancel → notify kedua pihak
                 await _sendNotif(userId, {
-                    title: "Pesanan Dibatalkan",
-                    body: "Pesanan servis telah dibatalkan.",
+                    title: "Order Cancelled",
+                    body: "Your service order has been cancelled.",
                     type: "order_cancelled",
                     bookingId,
                 });
                 await _sendNotif(technicianId, {
-                    title: "Pesanan Dibatalkan",
-                    body: `${userName} membatalkan pesanan servis.`,
+                    title: "Order Cancelled",
+                    body: `${userName} has cancelled the service order.`,
                     type: "order_cancelled",
                     bookingId,
                 });
@@ -94,24 +92,24 @@ exports.onBookingStatusChanged = (0, firestore_1.onDocumentUpdated)("bookings/{b
             break;
         case "on_progress":
             await _sendNotif(userId, {
-                title: "Teknisi Sudah Tiba!",
-                body: `${technicianName} mulai mengerjakan perangkat kamu.`,
+                title: "Technician Has Arrived!",
+                body: `${technicianName} has started working on your device.`,
                 type: "on_progress",
                 bookingId,
             });
             break;
         case "awaiting_payment":
             await _sendNotif(userId, {
-                title: "Tagihan Siap Dibayar",
-                body: "Perbaikan selesai. Silakan konfirmasi pembayaran.",
+                title: "Invoice Ready",
+                body: "Repair completed. Please confirm your payment.",
                 type: "awaiting_payment",
                 bookingId,
             });
             break;
         case "done":
             await _sendNotif(technicianId, {
-                title: "Pembayaran Diterima",
-                body: `${userName} telah mengkonfirmasi pembayaran. Pekerjaan selesai!`,
+                title: "Payment Received",
+                body: `${userName} has confirmed the payment. Job complete!`,
                 type: "payment_confirmed",
                 bookingId,
             });
@@ -152,7 +150,7 @@ exports.onChatMessageCreated = (0, firestore_1.onDocumentCreated)("chats/{chatId
     if (!fcmToken)
         return;
     // Susun preview pesan
-    const body = imageUrl ? "📷 mengirim foto" : (text.length > 80 ? text.substring(0, 80) + "…" : text);
+    const body = imageUrl ? "📷 sent a photo" : (text.length > 80 ? text.substring(0, 80) + "…" : text);
     try {
         await admin.messaging().send({
             token: fcmToken,

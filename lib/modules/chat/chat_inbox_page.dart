@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../config/routes.dart';
@@ -25,13 +25,13 @@ class ChatInboxPage extends GetView<ChatInboxController> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: Colors.black,
+            color: Color(0xFF0A0A0A),
           ),
         ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return const _ChatInboxSkeleton();
         }
         if (controller.chatRooms.isEmpty) {
           return const _EmptyInboxState();
@@ -75,15 +75,9 @@ class _ChatRoomTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: hasUnread ? const Color(0xFFF5F7FF) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: hasUnread ? Color(0xFFF5F7FF) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
         child: Row(
           children: [
@@ -103,7 +97,7 @@ class _ChatRoomTile extends StatelessWidget {
                             fontWeight: hasUnread
                                 ? FontWeight.w800
                                 : FontWeight.w700,
-                            color: Colors.black,
+                            color: Color(0xFF0A0A0A),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -114,7 +108,7 @@ class _ChatRoomTile extends StatelessWidget {
                           fontSize: 11,
                           color: hasUnread
                               ? const Color(0xFF4163FF)
-                              : const Color(0xFF94A3B8),
+                              : Color(0xFF94A3B8),
                           fontWeight: hasUnread
                               ? FontWeight.w700
                               : FontWeight.w400,
@@ -131,7 +125,7 @@ class _ChatRoomTile extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             color: hasUnread
-                                ? const Color(0xFF0F172A)
+                                ? Color(0xFF0A0A0A)
                                 : const Color(0xFF6B7280),
                             fontWeight: hasUnread
                                 ? FontWeight.w600
@@ -157,9 +151,9 @@ class _ChatRoomTile extends StatelessWidget {
                             horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: room.isPreBooking
-                              ? const Color(0xFFEEF2FF)
+                              ? Color(0xFFEEF2FF)
                               : const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           room.isPreBooking ? 'CONSULT' : 'BOOKING',
@@ -168,7 +162,7 @@ class _ChatRoomTile extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.3,
                             color: room.isPreBooking
-                                ? const Color(0xFF4F46E5)
+                                ? Color(0xFF4F46E5)
                                 : const Color(0xFF059669),
                           ),
                         ),
@@ -188,7 +182,7 @@ class _ChatRoomTile extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text('Delete Conversation',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
         content: const Text(
@@ -258,7 +252,7 @@ class _EmptyInboxState extends StatelessWidget {
             height: 80,
             decoration: BoxDecoration(
               color: const Color(0xFFEEF2FF),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.chat_bubble_outline_rounded,
                 size: 36, color: Color(0xFF6366F1)),
@@ -276,6 +270,87 @@ class _EmptyInboxState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Skeleton ───────────────────────────────────────────────────────────────
+class _ChatInboxSkeleton extends StatefulWidget {
+  const _ChatInboxSkeleton();
+
+  @override
+  State<_ChatInboxSkeleton> createState() => _ChatInboxSkeletonState();
+}
+
+class _ChatInboxSkeletonState extends State<_ChatInboxSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Widget _box(Color c, {required double w, required double h, double r = 6}) =>
+      Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+            color: c, borderRadius: BorderRadius.circular(r)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final c = Color.lerp(
+            const Color(0xFFE2E8F0), Color(0xFFF8FAFC), _anim.value)!;
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          itemCount: 5,
+          separatorBuilder: (_, __) =>
+              const Divider(height: 1, indent: 72, color: Color(0xFFEEF0F5)),
+          itemBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                _box(c, w: 52, h: 52, r: 26),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _box(c, w: 130, h: 13),
+                          _box(c, w: 36, h: 11),
+                        ],
+                      ),
+                      const SizedBox(height: 7),
+                      _box(c, w: double.infinity, h: 11),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -303,7 +378,7 @@ class _AvatarCircle extends StatelessWidget {
         style: TextStyle(
           fontWeight: FontWeight.w800,
           fontSize: radius * 0.75,
-          color: const Color(0xFF3654FF),
+          color: Color(0xFF3654FF),
         ),
       ),
     );

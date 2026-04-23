@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -90,7 +90,7 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                   GestureDetector(
                     onTap: () => Get.back(),
                     child: const Icon(Icons.arrow_back_ios_new_rounded,
-                        color: Color(0xFF0F172A)),
+                        color: Color(0xFF0A0A0A)),
                   ),
                   const SizedBox(width: 16),
                   const Text(
@@ -98,7 +98,7 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF0A0A0A),
                     ),
                   ),
                 ],
@@ -130,7 +130,7 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                         child: const Icon(
                           Icons.hourglass_bottom_rounded,
                           size: 44,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A0A0A),
                         ),
                       ),
                     ),
@@ -147,7 +147,7 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
+                    color: Color(0xFF0A0A0A),
                     height: 1.2,
                   ),
                 ),
@@ -173,8 +173,8 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                 return Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8F9FB),
-                    borderRadius: BorderRadius.circular(16),
+                    color: Color(0xFFF8F9FB),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Row(
@@ -198,7 +198,7 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF0F172A),
+                                color: Color(0xFF0A0A0A),
                               ),
                             ),
                           ],
@@ -236,18 +236,18 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
                   ),
                   icon: const Icon(Icons.chat_bubble_outline_rounded,
-                      size: 18, color: Color(0xFF0F172A)),
+                      size: 18, color: Color(0xFF0A0A0A)),
                   label: const Text(
                     'CHAT',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF0A0A0A),
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -259,8 +259,8 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FB),
-                  borderRadius: BorderRadius.circular(16),
+                  color: Color(0xFFF8F9FB),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,14 +268,14 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                     const Row(
                       children: [
                         Icon(Icons.info_outline_rounded,
-                            size: 18, color: Color(0xFF0F172A)),
+                            size: 18, color: Color(0xFF0A0A0A)),
                         SizedBox(width: 8),
                         Text(
                           'Important information',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                            color: Color(0xFF0A0A0A),
                           ),
                         ),
                       ],
@@ -283,7 +283,7 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                     const SizedBox(height: 16),
                     _InfoRow(
                       icon: Icons.check_circle_outline_rounded,
-                      iconColor: const Color(0xFF16A34A),
+                      iconColor: Color(0xFF16A34A),
                       title: 'If approved',
                       subtitle:
                           'You will be taken directly to the repair stage and can begin working.',
@@ -291,7 +291,7 @@ class _RepairApprovalPageState extends State<RepairApprovalPage>
                     const SizedBox(height: 12),
                     _InfoRow(
                       icon: Icons.cancel_outlined,
-                      iconColor: const Color(0xFFDC2626),
+                      iconColor: Color(0xFFDC2626),
                       title: 'If rejected',
                       subtitle:
                           'Work is stopped. The customer will only pay the standard diagnostic fee.',
@@ -337,7 +337,7 @@ class _InfoRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: Color(0xFF0A0A0A),
                 ),
               ),
               const SizedBox(height: 2),
@@ -397,7 +397,7 @@ class _DashedCirclePainter extends CustomPainter {
           center.dy + radius * math.sin(angle),
         ),
         4,
-        Paint()..color = const Color(0xFF0F172A),
+        Paint()..color = const Color(0xFF0A0A0A),
       );
     }
   }

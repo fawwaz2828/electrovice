@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../config/routes.dart';
@@ -7,7 +7,7 @@ import 'booking_controller.dart';
 // ── Palette ───────────────────────────────────────────────────────────────────
 const Color _bg   = Color(0xFFF2F3F7);
 const Color _card = Colors.white;
-const Color _ink  = Color(0xFF0F172A);
+const Color _ink  = Color(0xFF0A0A0A);
 const Color _muted= Color(0xFF64748B);
 const Color _blue = Color(0xFF0061FF);
 
@@ -106,7 +106,7 @@ class _BookingFormPageState extends State<BookingFormPage> {
                     const SizedBox(height: 14),
 
                     // ── 4. Catatan + Foto kerusakan ──────────────────────
-                    _SectionLabel(label: 'NOTES & DAMAGE PHOTOS (OPTIONAL)'),
+                    _SectionLabel(label: 'NOTES & DAMAGE PHOTOS'),
                     const SizedBox(height: 10),
                     _NotesAndPhotosCard(notesController: _notesCtrl, ctrl: _ctrl),
                     const SizedBox(height: 14),
@@ -131,7 +131,7 @@ class _BookingFormPageState extends State<BookingFormPage> {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
@@ -190,14 +190,8 @@ class _SelectedServiceCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: _card,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
         child: Row(
           children: [
@@ -205,13 +199,12 @@ class _SelectedServiceCard extends StatelessWidget {
             Container(
               width: 52,
               height: 52,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEF4FF),
-                borderRadius: BorderRadius.circular(14),
+              decoration: const BoxDecoration(
+                color: Color(0xFFEEF4FF),
+                shape: BoxShape.circle,
               ),
               child: tech?.photoUrl != null && tech!.photoUrl!.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                  ? ClipOval(
                       child: Image.network(tech.photoUrl!, fit: BoxFit.cover),
                     )
                   : const Icon(Icons.person_rounded,
@@ -286,14 +279,8 @@ class _ScheduleCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,8 +342,8 @@ class _ScheduleCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF4FF),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Color(0xFFEEF4FF),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
                       'Change',
@@ -510,14 +497,8 @@ class _AddressCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -551,7 +532,7 @@ class _AddressCard extends StatelessWidget {
               hintStyle: TextStyle(
                   color: _muted.withValues(alpha: 0.7), fontSize: 13),
               filled: true,
-              fillColor: const Color(0xFFF8FAFC),
+              fillColor: Color(0xFFF8FAFC),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -574,13 +555,13 @@ class _AddressCard extends StatelessWidget {
                     horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: hasPin
-                      ? const Color(0xFFEEF2FF)
+                      ? Color(0xFFEEF2FF)
                       : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: hasPin
                         ? _blue.withValues(alpha: 0.4)
-                        : const Color(0xFFE2E8F0),
+                        : Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Row(
@@ -655,14 +636,8 @@ class _NotesAndPhotosCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -678,7 +653,7 @@ class _NotesAndPhotosCard extends StatelessWidget {
               hintStyle:
                   TextStyle(color: _muted.withValues(alpha: 0.7), fontSize: 13),
               filled: true,
-              fillColor: const Color(0xFFF8FAFC),
+              fillColor: Color(0xFFF8FAFC),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -722,7 +697,7 @@ class _NotesAndPhotosCard extends StatelessWidget {
                     clipBehavior: Clip.none,
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                         child: Image.file(
                           photos[i],
                           width: 80,
@@ -759,9 +734,9 @@ class _NotesAndPhotosCard extends StatelessWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFFD1D9E6),
+                          color: Color(0xFFD1D9E6),
                           style: BorderStyle.solid,
                         ),
                       ),
@@ -797,8 +772,8 @@ class _SecurityNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF4FF),
-        borderRadius: BorderRadius.circular(14),
+        color: Color(0xFFEEF4FF),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFBFD7FF)),
       ),
       child: const Row(

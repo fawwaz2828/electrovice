@@ -207,6 +207,7 @@ class AppRoutes {
     GetPage(
       name: verification,
       page: () => const VerificationPage(),
+      preventDuplicates: false,
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),
@@ -214,6 +215,7 @@ class AppRoutes {
     GetPage(
       name: activeJob,
       page: () => const ActiveJobPage(),
+      preventDuplicates: false,
       binding: BindingsBuilder(() {
         Get.lazyPut<TechnicianController>(() => TechnicianController(), fenix: true);
       }),

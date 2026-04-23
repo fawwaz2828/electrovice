@@ -25,8 +25,8 @@ export const onBookingCreated = onDocumentCreated(
     const category: string = data.category ?? "";
 
     await _sendNotif(technicianId, {
-      title: "Pesanan Masuk!",
-      body: `${userName} membutuhkan bantuan servis ${category}.`,
+      title: "New Order!",
+      body: `${userName} needs help with ${category} repair.`,
       type: "new_order",
       bookingId,
     });
@@ -51,15 +51,15 @@ export const onBookingStatusChanged = onDocumentUpdated(
     const bookingId = event.params.bookingId;
     const userId: string = after.userId ?? "";
     const technicianId: string = after.technicianId ?? "";
-    const technicianName: string = after.technicianName ?? "Teknisi";
+    const technicianName: string = after.technicianName ?? "Technician";
     const userName: string = after.userName ?? "Customer";
     const cancelledBy: string = after.cancelledBy ?? "";
 
     switch (after.status as string) {
       case "pending":
         await _sendNotif(technicianId, {
-          title: "Pesanan Masuk!",
-          body: `${userName} membutuhkan bantuan servis ${after.category ?? ""}.`,
+          title: "New Order!",
+          body: `${userName} needs help with ${after.category ?? ""} repair.`,
           type: "new_order",
           bookingId,
         });
@@ -67,8 +67,8 @@ export const onBookingStatusChanged = onDocumentUpdated(
 
       case "confirmed":
         await _sendNotif(userId, {
-          title: "Pesanan Diterima!",
-          body: `${technicianName} sedang dalam perjalanan ke lokasi kamu.`,
+          title: "Order Accepted!",
+          body: `${technicianName} is on the way to your location.`,
           type: "order_accepted",
           bookingId,
         });
@@ -76,24 +76,22 @@ export const onBookingStatusChanged = onDocumentUpdated(
 
       case "cancelled":
         if (cancelledBy === "technician") {
-          // Teknisi decline → hanya notify customer dengan pesan spesifik
           await _sendNotif(userId, {
-            title: "Pesanan Ditolak",
-            body: `${technicianName} tidak bisa menerima pesananmu kali ini.`,
+            title: "Order Declined",
+            body: `${technicianName} is unable to accept your order at this time.`,
             type: "order_declined",
             bookingId,
           });
         } else {
-          // Customer cancel → notify kedua pihak
           await _sendNotif(userId, {
-            title: "Pesanan Dibatalkan",
-            body: "Pesanan servis telah dibatalkan.",
+            title: "Order Cancelled",
+            body: "Your service order has been cancelled.",
             type: "order_cancelled",
             bookingId,
           });
           await _sendNotif(technicianId, {
-            title: "Pesanan Dibatalkan",
-            body: `${userName} membatalkan pesanan servis.`,
+            title: "Order Cancelled",
+            body: `${userName} has cancelled the service order.`,
             type: "order_cancelled",
             bookingId,
           });
@@ -102,8 +100,8 @@ export const onBookingStatusChanged = onDocumentUpdated(
 
       case "on_progress":
         await _sendNotif(userId, {
-          title: "Teknisi Sudah Tiba!",
-          body: `${technicianName} mulai mengerjakan perangkat kamu.`,
+          title: "Technician Has Arrived!",
+          body: `${technicianName} has started working on your device.`,
           type: "on_progress",
           bookingId,
         });
@@ -111,8 +109,8 @@ export const onBookingStatusChanged = onDocumentUpdated(
 
       case "awaiting_payment":
         await _sendNotif(userId, {
-          title: "Tagihan Siap Dibayar",
-          body: "Perbaikan selesai. Silakan konfirmasi pembayaran.",
+          title: "Invoice Ready",
+          body: "Repair completed. Please confirm your payment.",
           type: "awaiting_payment",
           bookingId,
         });
@@ -120,8 +118,8 @@ export const onBookingStatusChanged = onDocumentUpdated(
 
       case "done":
         await _sendNotif(technicianId, {
-          title: "Pembayaran Diterima",
-          body: `${userName} telah mengkonfirmasi pembayaran. Pekerjaan selesai!`,
+          title: "Payment Received",
+          body: `${userName} has confirmed the payment. Job complete!`,
           type: "payment_confirmed",
           bookingId,
         });
@@ -167,7 +165,7 @@ export const onChatMessageCreated = onDocumentCreated(
     if (!fcmToken) return;
 
     // Susun preview pesan
-    const body = imageUrl ? "📷 mengirim foto" : (text.length > 80 ? text.substring(0, 80) + "…" : text);
+    const body = imageUrl ? "📷 sent a photo" : (text.length > 80 ? text.substring(0, 80) + "…" : text);
 
     try {
       await admin.messaging().send({

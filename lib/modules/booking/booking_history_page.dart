@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../config/routes.dart';
@@ -162,7 +162,7 @@ class _HistoryRecordCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
@@ -173,7 +173,7 @@ class _HistoryRecordCard extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F3F7),
+                  color: Color(0xFFF1F3F7),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(badge.$3, color: badge.$2),
@@ -193,7 +193,7 @@ class _HistoryRecordCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: badge.$1.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   badge.$4,
@@ -212,8 +212,8 @@ class _HistoryRecordCard extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   color: item.status == OrderHistoryStatus.verificationFailed
-                      ? const Color(0xFFD17B20)
-                      : Colors.black,
+                      ? Color(0xFFD17B20)
+                      : const Color(0xFF0A0A0A),
                 ),
               ),
             ],
@@ -241,35 +241,35 @@ class _HistoryRecordCard extends StatelessWidget {
       case OrderHistoryStatus.success:
         return (
           const Color(0xFF7B8DEB),
-          const Color(0xFF4F5C88),
+          Color(0xFF4F5C88),
           icon,
           'DONE',
         );
       case OrderHistoryStatus.canceled:
         return (
           const Color(0xFF9AA2B4),
-          const Color(0xFF6D7486),
+          Color(0xFF6D7486),
           icon,
           'CANCELLED',
         );
       case OrderHistoryStatus.verificationFailed:
         return (
           const Color(0xFFD79A2B),
-          const Color(0xFFB3671F),
+          Color(0xFFB3671F),
           icon,
           'VERIF FAILED',
         );
       case OrderHistoryStatus.active:
         return (
           const Color(0xFF3B82F6),
-          const Color(0xFF1D4ED8),
+          Color(0xFF1D4ED8),
           Icons.autorenew_rounded,
           'ACTIVE',
         );
       case OrderHistoryStatus.awaitingPayment:
         return (
           const Color(0xFF10B981),
-          const Color(0xFF047857),
+          Color(0xFF047857),
           Icons.payment_rounded,
           'PAY',
         );
@@ -288,8 +288,8 @@ class _ReviewPromptCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFDDE7FB),
-        borderRadius: BorderRadius.circular(18),
+        color: Color(0xFFDDE7FB),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,7 +308,7 @@ class _ReviewPromptCard extends StatelessWidget {
               arguments: unreviewedBooking,
             ),
             style: FilledButton.styleFrom(
-                backgroundColor: Colors.black, foregroundColor: Colors.white),
+                backgroundColor: Color(0xFF0A0A0A), foregroundColor: Colors.white),
             child: const Text('WRITE REVIEW',
                 style: TextStyle(fontWeight: FontWeight.w800)),
           ),
@@ -358,7 +358,7 @@ class _HistorySkeletonState extends State<_HistorySkeleton>
       builder: (context, child) {
         final c = Color.lerp(
           const Color(0xFFE2E8F0),
-          const Color(0xFFF8FAFC),
+          Color(0xFFF8FAFC),
           _anim.value,
         )!;
         return SingleChildScrollView(
@@ -384,7 +384,7 @@ class _HistorySkeletonState extends State<_HistorySkeleton>
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [

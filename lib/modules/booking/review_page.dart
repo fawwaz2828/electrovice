@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
@@ -140,11 +140,11 @@ class _ReviewPageState extends State<ReviewPage> {
                     FilledButton(
                       onPressed: _isSubmitting ? null : _submit,
                       style: FilledButton.styleFrom(
-                        backgroundColor: Colors.black,
+                        backgroundColor: Color(0xFF0A0A0A),
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(56),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28)),
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       child: _isSubmitting
                           ? const SizedBox(
@@ -188,14 +188,14 @@ class _TechCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
           Container(
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: const Color(0xFFDCE7FB),
+              color: Color(0xFFDCE7FB),
               borderRadius: BorderRadius.circular(12),
             ),
             child: booking.technicianPhotoUrl != null &&
@@ -228,8 +228,8 @@ class _TechCard extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
-              borderRadius: BorderRadius.circular(8),
+              color: Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Text(
               'DONE',
@@ -259,7 +259,7 @@ class _StarRatingCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
           const Text(
@@ -282,7 +282,7 @@ class _StarRatingCard extends StatelessWidget {
                         : Icons.star_outline_rounded,
                     size: 40,
                     color: star <= selected
-                        ? const Color(0xFFFBBF24)
+                        ? Color(0xFFFBBF24)
                         : const Color(0xFFCBD5E1),
                   ),
                 ),
@@ -296,10 +296,10 @@ class _StarRatingCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
               fontSize: 14,
               color: selected >= 4
-                  ? const Color(0xFF10B981)
+                  ? Color(0xFF10B981)
                   : selected == 3
                       ? const Color(0xFFF59E0B)
-                      : const Color(0xFFEF4444),
+                      : Color(0xFFEF4444),
             ),
           ),
         ],
@@ -318,7 +318,7 @@ class _ReviewTextField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(18)),
+          color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -341,9 +341,9 @@ class _ReviewTextField extends StatelessWidget {
                   'Example: The technician arrived on time, work was neat and fast...',
               hintStyle: const TextStyle(color: Color(0xFFB7C0D2)),
               filled: true,
-              fillColor: const Color(0xFFF5F7FB),
+              fillColor: Color(0xFFF5F7FB),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
               contentPadding: const EdgeInsets.all(14),
@@ -367,7 +367,7 @@ class _RecommendToggle extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -390,7 +390,7 @@ class _RecommendToggle extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: const Color(0xFF4163FF),
+            activeThumbColor: Color(0xFF4163FF),
             activeTrackColor: const Color(0xFFBFCBFF),
           ),
         ],
@@ -439,8 +439,8 @@ class _QuickTagsRow extends StatelessWidget {
                           horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFD1D9E6)),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Color(0xFFD1D9E6)),
                       ),
                       child: Text(
                         tag,

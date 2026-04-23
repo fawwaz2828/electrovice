@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../config/routes.dart';
 import '../../services/technician_service.dart' show ServiceEstimate;
+import '../../widgets/skeleton_widgets.dart';
 import 'technician_controller.dart';
 
 class MyServicePage extends GetView<TechnicianController> {
@@ -10,7 +11,7 @@ class MyServicePage extends GetView<TechnicianController> {
 
   static const Color _bg   = Color(0xFFF2F3F7);
   static const Color _card = Colors.white;
-  static const Color _ink  = Color(0xFF0F172A);
+  static const Color _ink  = Color(0xFF0A0A0A);
   static const Color _muted= Color(0xFF64748B);
   static const Color _blue = Color(0xFF0061FF);
   static const Color _red  = Color(0xFFE11D48);
@@ -73,12 +74,7 @@ class MyServicePage extends GetView<TechnicianController> {
             Expanded(
               child: Obx(() {
                 if (controller.isLoadingServices.value) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: _blue,
-                      strokeWidth: 2.5,
-                    ),
-                  );
+                  return const _MyServiceSkeleton();
                 }
 
                 final services = controller.serviceEstimates;
@@ -129,7 +125,7 @@ class MyServicePage extends GetView<TechnicianController> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text(
           'Delete Service?',
           style: TextStyle(fontWeight: FontWeight.w900, color: _ink),
@@ -180,7 +176,7 @@ class _ServiceCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  static const Color _ink  = Color(0xFF0F172A);
+  static const Color _ink  = Color(0xFF0A0A0A);
   static const Color _muted= Color(0xFF64748B);
   static const Color _blue = Color(0xFF0061FF);
   static const Color _red  = Color(0xFFE11D48);
@@ -191,14 +187,8 @@ class _ServiceCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +267,7 @@ class _ServiceCard extends StatelessWidget {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text(
                   'Edit',
@@ -298,7 +288,7 @@ class _ServiceCard extends StatelessWidget {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text(
                   'Delete',
@@ -323,8 +313,8 @@ class _DurationBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
-        borderRadius: BorderRadius.circular(20),
+        color: Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFBBF7D0), width: 1),
       ),
       child: Text(
@@ -360,7 +350,7 @@ class _AddServiceCard extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: const Color(0xFFEEF4FF),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.add_rounded,
                     color: Color(0xFF0061FF), size: 20),
@@ -426,6 +416,73 @@ class _DashBorderPainter extends CustomPainter {
   bool shouldRepaint(_DashBorderPainter oldDelegate) => false;
 }
 
+// ── Service list skeleton ─────────────────────────────────────────────────────
+class _MyServiceSkeleton extends StatelessWidget {
+  const _MyServiceSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonShimmer(
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        itemCount: 3,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (_, __) => const _ServiceSkeletonCard(),
+      ),
+    );
+  }
+}
+
+class _ServiceSkeletonCard extends StatelessWidget {
+  const _ServiceSkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Expanded(child: SkeletonBox(width: 160, height: 16)),
+              SizedBox(width: 10),
+              SkeletonBox(width: 70, height: 26, radius: 20),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const SkeletonBox(height: 12, radius: 6),
+          const SizedBox(height: 4),
+          const SkeletonBox(width: 200, height: 12, radius: 6),
+          const SizedBox(height: 14),
+          const SkeletonBox(height: 1, radius: 0),
+          const SizedBox(height: 12),
+          Row(
+            children: const [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 60, height: 10, radius: 5),
+                    SizedBox(height: 4),
+                    SkeletonBox(width: 100, height: 15, radius: 6),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8),
+              SkeletonBox(width: 56, height: 34, radius: 10),
+              SizedBox(width: 8),
+              SkeletonBox(width: 64, height: 34, radius: 10),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Empty state ───────────────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAdd;
@@ -443,8 +500,8 @@ class _EmptyState extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF4FF),
-                borderRadius: BorderRadius.circular(24),
+                color: Color(0xFFEEF4FF),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.build_outlined,
                   color: Color(0xFF0061FF), size: 40),
@@ -455,7 +512,7 @@ class _EmptyState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
+                color: Color(0xFF0A0A0A),
               ),
             ),
             const SizedBox(height: 8),
@@ -472,12 +529,12 @@ class _EmptyState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onAdd,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF0061FF),
+                backgroundColor: Color(0xFF0061FF),
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(12)),
               ),
               icon: const Icon(Icons.add_rounded),
               label: const Text('Add First Service',

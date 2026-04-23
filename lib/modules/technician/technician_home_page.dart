@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widget/app_bottom_nav_bar.dart';
@@ -29,7 +29,7 @@ class _ActiveJobCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isConfirmed = status == BookingStatus.confirmed;
-    final bgColor = isConfirmed ? const Color(0xFF1E293B) : const Color(0xFF0061FF);
+    final bgColor = isConfirmed ? const Color(0xFF1E293B) : Color(0xFF0061FF);
     final statusLabel = isConfirmed ? 'EN ROUTE' : 'IN PROGRESS';
     final buttonLabel = isConfirmed ? 'ENTER VERIFICATION CODE' : 'VIEW JOB';
 
@@ -37,14 +37,8 @@ class _ActiveJobCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: bgColor.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,7 +65,7 @@ class _ActiveJobCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   statusLabel,
@@ -187,7 +181,11 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
               const SizedBox(height: 28),
 
               Obx(() {
-                final activeOrder = _controller.activeOrder.value;
+                if (_controller.isLoadingOrders.value) {
+                  return const _IncomingOrdersSkeleton();
+                }
+
+                final activeOrdersList = _controller.activeOrders;
                 final pendingOrders = _controller.incomingOrders
                     .where((o) => o.status == BookingStatus.pending)
                     .toList();
@@ -195,32 +193,33 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Current Assignment (confirmed atau on_progress) ────────
-                    if (activeOrder != null) ...[
+                    // ── Active Jobs (multiple supported) ──────────────────────
+                    if (activeOrdersList.isNotEmpty) ...[
                       const Text(
-                        'Active Job',
+                        'Active Jobs',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF0F172A),
+                          color: Color(0xFF0A0A0A),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _ActiveJobCard(
-                        title: _damageLabel(activeOrder.damageType),
-                        customerName: activeOrder.userName,
-                        status: activeOrder.status,
-                        onTap: () {
-                          _controller.selectOrder(activeOrder);
-                          // Confirmed → belum verif kode → ke verification
-                          // OnProgress → sudah verif → ke active job
-                          if (activeOrder.status == BookingStatus.confirmed) {
-                            Get.toNamed(AppRoutes.verification);
-                          } else {
-                            Get.toNamed(AppRoutes.activeJob);
-                          }
-                        },
-                      ),
+                      ...activeOrdersList.map((activeOrder) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _ActiveJobCard(
+                              title: activeOrder.serviceName.isNotEmpty ? activeOrder.serviceName : _damageLabel(activeOrder.damageType),
+                              customerName: activeOrder.userName,
+                              status: activeOrder.status,
+                              onTap: () {
+                                _controller.selectOrder(activeOrder);
+                                if (activeOrder.status == BookingStatus.confirmed) {
+                                  Get.toNamed(AppRoutes.verification);
+                                } else {
+                                  Get.toNamed(AppRoutes.activeJob);
+                                }
+                              },
+                            ),
+                          )),
                       // Tetap tampilkan incoming requests di bawah jika ada
                       if (pendingOrders.isNotEmpty) ...[
                         const SizedBox(height: 28),
@@ -229,7 +228,7 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF0F172A),
+                            color: Color(0xFF0A0A0A),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -238,14 +237,14 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                               child: _PendingRequestCard(
                                 category: order.category.toUpperCase(),
                                 distance: _formatSchedule(order.scheduledAt),
-                                title: _damageLabel(order.damageType),
+                                title: order.serviceName.isNotEmpty ? order.serviceName : _damageLabel(order.damageType),
                                 description: order.description.isEmpty
                                     ? 'No additional description'
                                     : order.description,
                                 deadline: order.createdAt.add(const Duration(minutes: 5)),
                                 onTap: () {
                                   _controller.selectOrder(order);
-                                  Get.toNamed(AppRoutes.jobDetail);
+                                  Get.toNamed(AppRoutes.jobDetail, arguments: order);
                                 },
                                 onExpired: () async {
                                   _controller.selectOrder(order);
@@ -263,7 +262,7 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF0F172A),
+                              color: Color(0xFF0A0A0A),
                             ),
                           ),
                           const Spacer(),
@@ -315,14 +314,14 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                                     ? _PendingRequestCard(
                                         category: order.category.toUpperCase(),
                                         distance: _formatSchedule(order.scheduledAt),
-                                        title: _damageLabel(order.damageType),
+                                        title: order.serviceName.isNotEmpty ? order.serviceName : _damageLabel(order.damageType),
                                         description: order.description.isEmpty
                                             ? 'No additional description'
                                             : order.description,
                                         deadline: order.createdAt.add(const Duration(minutes: 5)),
                                         onTap: () {
                                           _controller.selectOrder(order);
-                                          Get.toNamed(AppRoutes.jobDetail);
+                                          Get.toNamed(AppRoutes.jobDetail, arguments: order);
                                         },
                                         onExpired: () async {
                                           _controller.selectOrder(order);
@@ -331,10 +330,10 @@ class _TechnicianHomePageState extends State<TechnicianHomePage> {
                                       )
                                     : _RequestCard(
                                         category: order.category.toUpperCase(),
-                                        categoryColor: const Color(0xFF16A34A),
+                                        categoryColor: const Color(0xFF0061FF),
                                         icon: Icons.bolt_rounded,
                                         distance: _formatSchedule(order.scheduledAt),
-                                        title: _damageLabel(order.damageType),
+                                        title: order.serviceName.isNotEmpty ? order.serviceName : _damageLabel(order.damageType),
                                         description: order.description.isEmpty
                                             ? 'No additional description'
                                             : order.description,
@@ -391,18 +390,12 @@ class _TechNotifBell extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Color(0xFF0A0A0A), width: 1),
               ),
               child: const Icon(
                 Icons.notifications_none_rounded,
-                color: Color(0xFF0F172A),
+                color: Color(0xFF0A0A0A),
                 size: 20,
               ),
             ),
@@ -464,7 +457,7 @@ class _Header extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF0F172A),
+                  color: Color(0xFF0A0A0A),
                   height: 1.15,
                 ),
               ),
@@ -489,18 +482,12 @@ class _Header extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Color(0xFF0A0A0A), width: 1),
             ),
             child: const Icon(
               Icons.chat_bubble_outline_rounded,
-              color: Color(0xFF0F172A),
+              color: Color(0xFF0A0A0A),
               size: 20,
             ),
           ),
@@ -514,22 +501,15 @@ class _Header extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isOnline
-                  ? const Color(0xFFEEF9F0)
+                  ? Color(0xFFEFF6FF)
                   : Colors.white,
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isOnline
-                    ? const Color(0xFF22C55E)
-                    : const Color(0xFFE2E8F0),
+                    ? const Color(0xFF0061FF)
+                    : Color(0xFFE2E8F0),
                 width: 1.5,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -540,7 +520,7 @@ class _Header extends StatelessWidget {
                     height: 10,
                     child: CircularProgressIndicator(
                       strokeWidth: 1.5,
-                      color: Color(0xFF22C55E),
+                      color: Color(0xFF0061FF),
                     ),
                   )
                 else
@@ -550,7 +530,7 @@ class _Header extends StatelessWidget {
                     height: 8,
                     decoration: BoxDecoration(
                       color: isOnline
-                          ? const Color(0xFF22C55E)
+                          ? Color(0xFF0061FF)
                           : const Color(0xFF94A3B8),
                       shape: BoxShape.circle,
                     ),
@@ -563,7 +543,7 @@ class _Header extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.4,
                     color: isOnline
-                        ? const Color(0xFF16A34A)
+                        ? Color(0xFF0061FF)
                         : const Color(0xFF94A3B8),
                   ),
                   child: Text(isOnline ? 'ONLINE' : 'OFFLINE'),
@@ -606,8 +586,8 @@ class _EarningsCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(20),
+          color: Color(0xFF0A0A0A),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,8 +653,8 @@ class _EarningsSkeleton extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(20),
+        color: Color(0xFF0A0A0A),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -706,29 +686,23 @@ class _OrdersCompletedCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Color(0xFF0A0A0A), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(width: 140, height: 10,
-                  decoration: BoxDecoration(color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(6))),
+                  decoration: BoxDecoration(color: Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(12))),
               const SizedBox(height: 12),
               Container(width: 60, height: 36,
-                  decoration: BoxDecoration(color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(8))),
+                  decoration: BoxDecoration(color: Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(12))),
               const SizedBox(height: 14),
               Container(height: 6, decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
-                  borderRadius: BorderRadius.circular(4))),
+                  color: Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(12))),
             ],
           ),
         );
@@ -739,14 +713,8 @@ class _OrdersCompletedCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFF0A0A0A), width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -770,19 +738,19 @@ class _OrdersCompletedCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 42,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF16A34A),
+                      color: Color(0xFF0061FF),
                       height: 1.0,
                       letterSpacing: -1,
                     ),
                   ),
                   const SizedBox(height: 14),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(12),
                     child: LinearProgressIndicator(
                       value: completed == 0 ? 0.0 : (completed % 10) / 10.0,
-                      backgroundColor: const Color(0xFFF1F5F9),
+                      backgroundColor: Color(0xFFF1F5F9),
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF16A34A),
+                        Color(0xFF0061FF),
                       ),
                       minHeight: 6,
                     ),
@@ -806,15 +774,15 @@ class _OrdersCompletedCard extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFECFDF5),
+                color: Color(0xFFEFF6FF),
                 border: Border.all(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.3),
+                  color: const Color(0xFF0061FF).withValues(alpha: 0.3),
                   width: 1.5,
                 ),
               ),
               child: const Icon(
                 Icons.check_circle_outline_rounded,
-                color: Color(0xFF16A34A),
+                color: Color(0xFF0061FF),
                 size: 20,
               ),
             ),
@@ -849,7 +817,7 @@ class _FilterChip extends StatelessWidget {
           color: selected
               ? const Color.fromARGB(255, 0, 0, 0)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           label,
@@ -857,7 +825,7 @@ class _FilterChip extends StatelessWidget {
             fontSize: 11,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.4,
-            color: selected ? Colors.white : const Color(0xFF94A3B8),
+            color: selected ? Colors.white : Color(0xFF94A3B8),
           ),
         ),
       ),
@@ -893,14 +861,8 @@ class _RequestCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -913,7 +875,7 @@ class _RequestCard extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: const Color(0xFF475569), size: 22),
@@ -964,7 +926,7 @@ class _RequestCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: Color(0xFF0A0A0A),
                     height: 1.25,
                   ),
                 ),
@@ -988,7 +950,7 @@ class _RequestCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: Color(0xFFEEF2FF),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
@@ -1035,6 +997,100 @@ class _PendingRequestCard extends StatefulWidget {
   State<_PendingRequestCard> createState() => _PendingRequestCardState();
 }
 
+// ─────────────────────────────────────────────────────────────────
+//  SKELETON FOR INCOMING ORDERS
+// ─────────────────────────────────────────────────────────────────
+class _IncomingOrdersSkeleton extends StatefulWidget {
+  const _IncomingOrdersSkeleton();
+
+  @override
+  State<_IncomingOrdersSkeleton> createState() =>
+      _IncomingOrdersSkeletonState();
+}
+
+class _IncomingOrdersSkeletonState extends State<_IncomingOrdersSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.4, end: 0.9)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Widget _box(Color c, {required double w, required double h, double r = 6}) =>
+      Container(
+        width: w,
+        height: h,
+        decoration:
+            BoxDecoration(color: c, borderRadius: BorderRadius.circular(r)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        final c = Color.lerp(
+            const Color(0xFFE2E8F0), Color(0xFFF8FAFC), _anim.value)!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _box(c, w: 160, h: 20, r: 8),
+            const SizedBox(height: 16),
+            ...List.generate(
+              3,
+              (_) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _box(c, w: 46, h: 46, r: 12),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _box(c, w: 80, h: 10),
+                            const SizedBox(height: 6),
+                            _box(c, w: 140, h: 14),
+                            const SizedBox(height: 6),
+                            _box(c, w: double.infinity, h: 10),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _box(c, w: 56, h: 40, r: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _PendingRequestCardState extends State<_PendingRequestCard> {
   Timer? _timer;
   Duration _remaining = Duration.zero;
@@ -1079,7 +1135,7 @@ class _PendingRequestCardState extends State<_PendingRequestCard> {
   Widget build(BuildContext context) {
     final urgentColor = _remaining.inSeconds < 60
         ? const Color(0xFFEF4444)
-        : const Color(0xFFF59E0B);
+        : Color(0xFFF59E0B);
 
     return Opacity(
       opacity: _expired ? 0.5 : 1.0,
@@ -1087,22 +1143,15 @@ class _PendingRequestCardState extends State<_PendingRequestCard> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: _expired
-                ? const Color(0xFFE2E8F0)
+                ? Color(0xFFE2E8F0)
                 : _remaining.inSeconds < 60
                     ? const Color(0xFFEF4444).withValues(alpha: 0.3)
                     : Colors.transparent,
             width: 1.5,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1113,7 +1162,7 @@ class _PendingRequestCardState extends State<_PendingRequestCard> {
                 Container(
                   width: 46, height: 46,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.build_rounded,
@@ -1159,9 +1208,9 @@ class _PendingRequestCardState extends State<_PendingRequestCard> {
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: _expired
-                              ? const Color(0xFFF1F5F9)
+                              ? Color(0xFFF1F5F9)
                               : urgentColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1181,7 +1230,7 @@ class _PendingRequestCardState extends State<_PendingRequestCard> {
                               style: TextStyle(
                                 fontSize: 10, fontWeight: FontWeight.w800,
                                 color: _expired
-                                    ? const Color(0xFF94A3B8)
+                                    ? Color(0xFF94A3B8)
                                     : urgentColor,
                               ),
                             ),
@@ -1195,7 +1244,7 @@ class _PendingRequestCardState extends State<_PendingRequestCard> {
                     widget.title,
                     style: const TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A), height: 1.25,
+                      color: Color(0xFF0A0A0A), height: 1.25,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -1215,7 +1264,7 @@ class _PendingRequestCardState extends State<_PendingRequestCard> {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: _expired
-                      ? const Color(0xFFF1F5F9)
+                      ? Color(0xFFF1F5F9)
                       : const Color(0xFFEEF2FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1225,7 +1274,7 @@ class _PendingRequestCardState extends State<_PendingRequestCard> {
                   style: TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w800,
                     color: _expired
-                        ? const Color(0xFF94A3B8)
+                        ? Color(0xFF94A3B8)
                         : const Color(0xFF0061FF),
                     height: 1.3,
                   ),

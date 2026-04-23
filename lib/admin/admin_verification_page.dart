@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -193,8 +193,8 @@ class AdminVerificationPage extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-                color: const Color(0xFF374151),
-                borderRadius: BorderRadius.circular(10)),
+                color: Color(0xFF374151),
+                borderRadius: BorderRadius.circular(12)),
             child: Center(
               child: Text(initials,
                   style: const TextStyle(
@@ -221,7 +221,7 @@ class AdminVerificationPage extends StatelessWidget {
                       horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(statusLabel,
                       style: TextStyle(
@@ -396,7 +396,7 @@ class AdminVerificationPage extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
           border: Border.all(color: _divider),
-          borderRadius: BorderRadius.circular(8)),
+          borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -430,7 +430,7 @@ class AdminVerificationPage extends StatelessWidget {
                       horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                       border: Border.all(color: _divider),
-                      borderRadius: BorderRadius.circular(20)),
+                      borderRadius: BorderRadius.circular(12)),
                   child: Text(cat,
                       style: const TextStyle(
                           fontSize: 13, color: Colors.black87)),
@@ -456,7 +456,7 @@ class AdminVerificationPage extends StatelessWidget {
                 side: const BorderSide(color: _decline),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('DECLINE',
                   style: TextStyle(
@@ -472,7 +472,7 @@ class AdminVerificationPage extends StatelessWidget {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('APPROVE',
                   style: TextStyle(
@@ -489,7 +489,7 @@ class AdminVerificationPage extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text('Approve Technician?',
             style: TextStyle(fontWeight: FontWeight.w700)),
         content: Text(
@@ -515,7 +515,7 @@ class AdminVerificationPage extends StatelessWidget {
                 backgroundColor: _approve,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8))),
+                    borderRadius: BorderRadius.circular(12))),
             child: const Text('Yes, Approve'),
           ),
         ],
@@ -528,7 +528,7 @@ class AdminVerificationPage extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text('Decline Technician?',
             style: TextStyle(fontWeight: FontWeight.w700)),
         content: Text(
@@ -554,7 +554,7 @@ class AdminVerificationPage extends StatelessWidget {
                 backgroundColor: _decline,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8))),
+                    borderRadius: BorderRadius.circular(12))),
             child: const Text('Yes, Decline'),
           ),
         ],
@@ -628,12 +628,12 @@ class AdminVerificationPage extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         border: Border.all(color: _divider),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         color: const Color(0xFFF9FAFB),
       ),
       child: url.isNotEmpty
           ? ClipRRect(
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(12),
               child: Image.network(
                 url,
                 fit: BoxFit.cover,
