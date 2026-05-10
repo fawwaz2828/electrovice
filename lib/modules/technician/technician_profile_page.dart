@@ -102,23 +102,38 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                _MenuCard(
-                  children: [
-                    _MenuItem(
-                      icon: Icons.build_outlined,
-                      label: 'Services List',
-                      subtitle: 'Manage your service offerings',
-                      onTap: () => Get.toNamed(AppRoutes.myService),
-                    ),
-                    const _Divider(),
-                    _MenuItem(
-                      icon: Icons.location_on_outlined,
-                      label: 'Saved Addresses',
-                      subtitle: 'Workshop & service locations',
-                      onTap: () => Get.toNamed(AppRoutes.technicianSavedAddress),
-                    ),
-                  ],
-                ),
+                Obx(() {
+                  final showUpgrade = !controller.hasCertification.value;
+                  return _MenuCard(
+                    children: [
+                      _MenuItem(
+                        icon: Icons.build_outlined,
+                        label: 'Services List',
+                        subtitle: 'Manage your service offerings',
+                        onTap: () => Get.toNamed(AppRoutes.myService),
+                      ),
+                      const _Divider(),
+                      _MenuItem(
+                        icon: Icons.location_on_outlined,
+                        label: 'Saved Addresses',
+                        subtitle: 'Workshop & service locations',
+                        onTap: () =>
+                            Get.toNamed(AppRoutes.technicianSavedAddress),
+                      ),
+                      if (showUpgrade) ...[
+                        const _Divider(),
+                        _MenuItem(
+                          icon: Icons.workspace_premium_outlined,
+                          label: 'Upgrade Certification',
+                          subtitle: 'Upload or register for a new exam',
+                          onTap: () => Get
+                              .toNamed(AppRoutes.upgradeCertification)
+                              ?.then((_) => controller.refreshProfile()),
+                        ),
+                      ],
+                    ],
+                  );
+                }),
                 const SizedBox(height: 12),
 
                 // ── Logout ────────────────────────────────────────────

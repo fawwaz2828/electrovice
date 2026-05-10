@@ -46,6 +46,12 @@ class TechnicianController extends GetxController with WidgetsBindingObserver {
   final RxList<String> deviceCategories = <String>[].obs;
   final RxList<String> serviceMethod = <String>[].obs;
 
+  // ── Certification status ─────────────────────────────────────
+  /// True jika teknisi sudah punya minimal 1 sertifikasi/akreditasi.
+  /// Dipakai untuk menyembunyikan menu "Upgrade Certification" pada
+  /// halaman profil ketika teknisi sudah tersertifikasi.
+  final RxBool hasCertification = false.obs;
+
   // ── Legacy Rx untuk backward compat dengan home page UI ───────
   /// currentJob dipakai oleh TechnicianHomePage via .value
   final Rxn<TechnicianJobRecord> currentJob = Rxn<TechnicianJobRecord>();
@@ -129,6 +135,7 @@ class TechnicianController extends GetxController with WidgetsBindingObserver {
       if (techOnline != null) {
         deviceCategories.value = techOnline.deviceCategories;
         serviceMethod.value = techOnline.serviceMethod;
+        hasCertification.value = techOnline.accreditations.isNotEmpty;
       }
 
       _listenToOrders(user.uid);

@@ -1,10 +1,29 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onChatMessageCreated = exports.onBookingStatusChanged = exports.onBookingCreated = void 0;
+exports.onChatMessageCreated = exports.onBookingStatusChanged = exports.onBookingCreated = exports.midtransWebhook = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
+const https_1 = require("firebase-functions/v2/https");
 const v2_1 = require("firebase-functions/v2");
 const admin = require("firebase-admin");
+const express = require("express");
+const midtrans_route_1 = require("./midtrans/midtrans.route");
 admin.initializeApp();
+// ─────────────────────────────────────────────────────────────────
+//  Midtrans Webhook — POST /midtransWebhook/midtrans/webhook
+// ─────────────────────────────────────────────────────────────────
+exports.midtransWebhook = (0, https_1.onRequest)((req, res) => {
+    var _a;
+    const serverKey = (_a = process.env.MIDTRANS_SERVER_KEY) !== null && _a !== void 0 ? _a : "";
+    if (!serverKey) {
+        v2_1.logger.error("MIDTRANS_SERVER_KEY is not set");
+        res.status(500).json({ message: "Server misconfiguration" });
+        return;
+    }
+    const app = express();
+    app.use(express.json());
+    app.use("/midtrans", (0, midtrans_route_1.createMidtransRouter)(serverKey));
+    app(req, res);
+});
 const db = admin.firestore();
 // ─────────────────────────────────────────────────────────────────
 //  Trigger: booking baru dibuat (status: pending)

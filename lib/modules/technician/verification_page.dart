@@ -229,7 +229,6 @@ class _ClientSummaryCard extends StatelessWidget {
     return Obx(() {
       final order = ctrl.selectedOrder.value ?? ctrl.activeOrder.value;
       final customerName = (order?.userName ?? '').isNotEmpty ? order!.userName : '-';
-      final phone = (order?.userPhone ?? '').isNotEmpty ? order!.userPhone : null;
       final address = (order?.userAddress.isNotEmpty ?? false)
           ? order!.userAddress
           : 'Address not available';
@@ -380,23 +379,6 @@ class _ClientSummaryCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (phone != null) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(Icons.phone_outlined, size: 16, color: Color(0xFF6F88AE)),
-                        const SizedBox(width: 8),
-                        Text(
-                          phone,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF6F88AE),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                   const SizedBox(height: 24),
                   // Issue Summary Card
                   Container(

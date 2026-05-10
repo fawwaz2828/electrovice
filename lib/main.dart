@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -17,6 +18,8 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'
 void main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: binding);
+
+  await dotenv.load(fileName: '.env');
 
   if (!kIsWeb) {
     MapboxOptions.setAccessToken(mapboxPublicToken);

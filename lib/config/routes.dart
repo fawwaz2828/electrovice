@@ -44,6 +44,8 @@ import '../modules/technician/technician_saved_address_page.dart';
 import '../modules/notification/notification_controller.dart';
 import '../modules/notification/notification_page.dart';
 import '../modules/technician/technician_pending_page.dart';
+import '../modules/technician/upgrade_certification_page.dart';
+import '../modules/technician/certification_registration_form_page.dart';
 import '../admin/admin_home_page.dart';
 import '../admin/admin_verification_page.dart';
 
@@ -85,6 +87,9 @@ class AppRoutes {
   static const chatInbox = '/chat-inbox';
   static const notifications = '/notifications';
   static const technicianPending = '/technician/pending';
+  static const upgradeCertification = '/technician/upgrade-certification';
+  static const certificationRegistration =
+      '/technician/certification-registration';
   static const adminHome = '/admin-home';
   static const adminVerification = '/admin-verification';
 
@@ -346,6 +351,20 @@ class AppRoutes {
     GetPage(
       name: technicianPending,
       page: () => const TechnicianPendingPage(),
+    ),
+
+    // ── Certification Upgrade ────────────────────────────────────
+    GetPage(
+      name: upgradeCertification,
+      page: () => const UpgradeCertificationPage(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<TechnicianController>(
+            () => TechnicianController(), fenix: true);
+      }),
+    ),
+    GetPage(
+      name: certificationRegistration,
+      page: () => const CertificationRegistrationFormPage(),
     ),
   ];
 }

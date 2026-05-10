@@ -1,8 +1,27 @@
 import { onDocumentUpdated, onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onRequest } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import * as express from "express";
+import { createMidtransRouter } from "./midtrans/midtrans.route";
 
 admin.initializeApp();
+
+// ─────────────────────────────────────────────────────────────────
+//  Midtrans Webhook — POST /midtransWebhook/midtrans/webhook
+// ─────────────────────────────────────────────────────────────────
+export const midtransWebhook = onRequest((req, res) => {
+  const serverKey = process.env.MIDTRANS_SERVER_KEY ?? "";
+  if (!serverKey) {
+    logger.error("MIDTRANS_SERVER_KEY is not set");
+    res.status(500).json({ message: "Server misconfiguration" });
+    return;
+  }
+  const app = express();
+  app.use(express.json());
+  app.use("/midtrans", createMidtransRouter(serverKey));
+  app(req, res);
+});
 
 const db = admin.firestore();
 

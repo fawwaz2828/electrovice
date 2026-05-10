@@ -103,11 +103,11 @@ class AuthService {
     Future<void> updateUserProfile(
       String uid, {
       required String name,
-      required String phone,
+      String? phone,
     }) async {
       await _firestore.collection('users').doc(uid).update({
         'name': name,
-        'phone': phone,
+        if (phone != null) 'phone': phone,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }

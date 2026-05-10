@@ -1030,6 +1030,50 @@ class _TechnicianCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (technician.serviceMethod.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 5,
+                    children: technician.serviceMethod.map((m) {
+                      final isPickup = m == 'pickup';
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isPickup
+                              ? const Color(0xFFF0FDF4)
+                              : const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isPickup
+                                  ? Icons.local_shipping_outlined
+                                  : Icons.store_outlined,
+                              size: 9,
+                              color: isPickup
+                                  ? const Color(0xFF16A34A)
+                                  : const Color(0xFFEA580C),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              isPickup ? 'Pickup' : 'Drop-in',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: isPickup
+                                    ? const Color(0xFF16A34A)
+                                    : const Color(0xFFEA580C),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
                 const SizedBox(height: 10),
                 // Book Now button
                 GestureDetector(

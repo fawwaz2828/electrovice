@@ -163,7 +163,6 @@ class _TechnicianProfileEditPageState
       await _technicianService.updateTechnicianProfile(
         user.uid,
         name: _nameController.text.trim(),
-        phone: _phoneController.text.trim(),
         specialty: _specialtyController.text.trim(),
         bio: _bioController.text.trim(),
         yearsExperience: _yearsExperience,
@@ -180,14 +179,13 @@ class _TechnicianProfileEditPageState
         serviceMethod: _serviceMethod,
       );
 
-      // Update diagnosisFee juga di users collection jika ada
-      if (_phoneController.text.trim().isNotEmpty) {
-        await _authService.updateUserProfile(
-          user.uid,
-          name: _nameController.text.trim(),
-          phone: _phoneController.text.trim(),
-        );
-      }
+      await _authService.updateUserProfile(
+        user.uid,
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+      );
 
       Get.back();
       Get.snackbar('Success', 'Profile saved successfully',

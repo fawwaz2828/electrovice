@@ -5,6 +5,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox
 
 import '../../config/routes.dart';
 import '../../services/technician_service.dart';
+import '../../widget/certified_badge.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────
 const Color _ink  = Color(0xFF0A0A0A);
@@ -31,6 +32,7 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
   // ── Filter state ─────────────────────────────────────────────────────────
   String _searchQuery = '';
   String? _selectedCategory;
+  String? _selectedServiceMethod;
   String _sortBy = 'distance'; // 'distance' | 'rating' | 'jobs'
 
   static const _categoryFilters = [
@@ -58,7 +60,9 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
           t.category.toLowerCase().contains(q);
       final matchCat =
           _selectedCategory == null || t.category == _selectedCategory;
-      return matchQ && matchCat;
+      final matchSM = _selectedServiceMethod == null ||
+          t.serviceMethod.contains(_selectedServiceMethod);
+      return matchQ && matchCat && matchSM;
     }).toList();
 
     switch (_sortBy) {
@@ -251,6 +255,12 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
                   options: _sortOptions,
                   selected: _sortBy,
                   onSelect: (v) => setState(() => _sortBy = v),
+                ),
+                const SizedBox(height: 6),
+                _ServiceMethodFilterRow(
+                  selected: _selectedServiceMethod,
+                  onSelect: (v) =>
+                      setState(() => _selectedServiceMethod = v),
                 ),
               ],
             ),
@@ -473,6 +483,7 @@ class _TechnicianListPageState extends State<TechnicianListPage> {
                   onPressed: () => setState(() {
                     _searchCtrl.clear();
                     _selectedCategory = null;
+                    _selectedServiceMethod = null;
                   }),
                   child: const Text('Reset Filter'),
                 ),
@@ -753,13 +764,25 @@ class _TechnicianCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    technician.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: _ink,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          technician.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: _ink,
+                          ),
+                        ),
+                      ),
+                      if (isCertifiedDemo(technician.uid)) ...[
+                        const SizedBox(width: 6),
+                        const CertifiedBadge(),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 3),
                   // ── Rating stars ──────────────────────────
@@ -803,6 +826,18 @@ class _TechnicianCard extends StatelessWidget {
                         color: Color(0xFFF1F5F9),
                         textColor: _muted,
                       ),
+                      ...technician.serviceMethod.map((m) {
+                        final isPickup = m == 'pickup';
+                        return _SmallTag(
+                          label: isPickup ? 'Pickup' : 'Drop-in',
+                          color: isPickup
+                              ? const Color(0xFFF0FDF4)
+                              : const Color(0xFFFFF7ED),
+                          textColor: isPickup
+                              ? const Color(0xFF16A34A)
+                              : const Color(0xFFEA580C),
+                        );
+                      }),
                     ],
                   ),
                 ],
@@ -835,6 +870,89 @@ class _TechnicianCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SERVICE METHOD FILTER ROW
+// ════════════════════════════════════════════════════════════════════════════
+class _ServiceMethodFilterRow extends StatelessWidget {
+  final String? selected;
+  final ValueChanged<String?> onSelect;
+
+  const _ServiceMethodFilterRow({
+    required this.selected,
+    required this.onSelect,
+  });
+
+  static const _options = [
+    {'label': 'All Methods', 'value': null, 'icon': Icons.tune_rounded},
+    {'label': 'Pickup', 'value': 'pickup', 'icon': Icons.local_shipping_outlined},
+    {'label': 'Drop-in', 'value': 'dropoff', 'icon': Icons.store_outlined},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          const Text(
+            'Service:',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(width: 8),
+          ..._options.map((opt) {
+            final val = opt['value'] as String?;
+            final isSelected = selected == val;
+            return GestureDetector(
+              onTap: () => onSelect(val),
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.transparent
+                        : Colors.white.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      opt['icon'] as IconData,
+                      size: 13,
+                      color: isSelected ? _ink : Colors.white,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      opt['label'] as String,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected ? _ink : Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

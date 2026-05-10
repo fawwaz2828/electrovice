@@ -1,10 +1,8 @@
 ﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
-import '../../services/auth_service.dart';
 import '../../utils/maps_launcher.dart';
 import '../../widget/app_bottom_nav_bar.dart';
 import '../technician/technician_controller.dart';
@@ -18,31 +16,8 @@ class ActiveJobPage extends StatefulWidget {
 
 class _ActiveJobPageState extends State<ActiveJobPage> {
   bool _isCompleting = false;
-  bool _isCalling = false;
   Timer? _timer;
   Duration _elapsed = Duration.zero;
-
-  Future<void> _callCustomer() async {
-    final ctrl = Get.find<TechnicianController>();
-    final order = ctrl.selectedOrder.value ?? ctrl.activeOrder.value;
-    if (order == null) return;
-    setState(() => _isCalling = true);
-    try {
-      final user = await AuthService().getUserModel(order.userId);
-      final phone = (user?.phone ?? '').trim();
-      if (phone.isEmpty) {
-        Get.snackbar('Not available', 'Customer phone number is not registered',
-            snackPosition: SnackPosition.TOP);
-        return;
-      }
-      await launchUrl(Uri(scheme: 'tel', path: phone));
-    } catch (e) {
-      Get.snackbar('Failed', 'Unable to open phone app',
-          snackPosition: SnackPosition.TOP);
-    } finally {
-      if (mounted) setState(() => _isCalling = false);
-    }
-  }
 
   @override
   void initState() {
@@ -110,7 +85,6 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
                 bookingId: order?.bookingId.substring(0, 8).toUpperCase() ?? '--------',
                 issueTitle: (order?.serviceName.isNotEmpty ?? false) ? order!.serviceName : _damageLabel(order?.damageType ?? ''),
                 customerName: (order?.userName ?? '').isNotEmpty ? order!.userName : '-',
-                userPhone: (order?.userPhone ?? '').isNotEmpty ? order!.userPhone : null,
                 userAddress: order?.userAddress ?? 'Address not available',
                 status: order?.status ?? BookingStatus.onProgress,
                 elapsedLabel: _elapsedLabel,
@@ -123,15 +97,6 @@ class _ActiveJobPageState extends State<ActiveJobPage> {
               // ── Actions Grid ────────────────────────────────────────
               Row(
                 children: [
-                  Expanded(
-                    child: _ActionCard(
-                      icon: Icons.phone_in_talk_rounded,
-                      label: 'CALL CLIENT',
-                      sublabel: order?.userName ?? '-',
-                      onTap: _isCalling ? null : _callCustomer,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: _ActionCard(
                       icon: Icons.chat_bubble_rounded,
@@ -257,7 +222,6 @@ class _WorkOrderHeader extends StatelessWidget {
   final String bookingId;
   final String issueTitle;
   final String customerName;
-  final String? userPhone;
   final String userAddress;
   final String status;
   final String elapsedLabel;
@@ -268,7 +232,6 @@ class _WorkOrderHeader extends StatelessWidget {
     required this.bookingId,
     required this.issueTitle,
     required this.customerName,
-    this.userPhone,
     required this.userAddress,
     required this.status,
     required this.elapsedLabel,
@@ -357,19 +320,6 @@ class _WorkOrderHeader extends StatelessWidget {
                   color: Color(0xFF475569),
                 ),
               ),
-              if (userPhone != null) ...[
-                const SizedBox(width: 16),
-                const Icon(Icons.phone_outlined, size: 15, color: Color(0xFF94A3B8)),
-                const SizedBox(width: 6),
-                Text(
-                  userPhone!,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF475569),
-                  ),
-                ),
-              ],
             ],
           ),
           const SizedBox(height: 20),

@@ -41,11 +41,7 @@ class FcmHandler {
     final messaging = FirebaseMessaging.instance;
 
     // Minta izin notifikasi (Android 13+ & iOS)
-    await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    await messaging.requestPermission(alert: true, badge: true, sound: true);
 
     // Pastikan notif Android foreground tampil sebagai heads-up
     await messaging.setForegroundNotificationPresentationOptions(

@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-import 'package:url_launcher/url_launcher.dart';
 import '../../config/routes.dart';
 import '../../models/booking_document.dart';
 import '../../services/auth_service.dart';
@@ -20,7 +19,6 @@ class JobDetailPage extends StatefulWidget {
 class _JobDetailPageState extends State<JobDetailPage> {
   bool _isAccepting = false;
   bool _isDeclining = false;
-  bool _isCalling = false;
   String? _customerPhotoUrl;
   bool _isLoadingCustomer = true;
 
@@ -53,27 +51,6 @@ class _JobDetailPageState extends State<JobDetailPage> {
     }
   }
 
-  Future<void> _callCustomer() async {
-    final order = Get.find<TechnicianController>().selectedOrder.value;
-    if (order == null) return;
-
-    setState(() => _isCalling = true);
-    try {
-      final user = await AuthService().getUserModel(order.userId);
-      final phone = (user?.phone ?? '').trim();
-      if (phone.isEmpty) {
-        Get.snackbar('Not available', 'Customer phone number is not registered',
-            snackPosition: SnackPosition.TOP);
-        return;
-      }
-      await launchUrl(Uri(scheme: 'tel', path: phone));
-    } catch (e) {
-      Get.snackbar('Failed', 'Unable to open phone app',
-          snackPosition: SnackPosition.TOP);
-    } finally {
-      if (mounted) setState(() => _isCalling = false);
-    }
-  }
 
   String _damageLabel(String type) => switch (type) {
         'screen' => 'Screen Damage',
@@ -293,16 +270,6 @@ class _JobDetailPageState extends State<JobDetailPage> {
                                       ),
                             );
                           }),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _ActionButton(
-                            icon: Icons.phone_outlined,
-                            label: 'CALL',
-                            color: Color(0xFFF5F6FA),
-                            textColor: const Color(0xFF111111),
-                            onTap: _isCalling ? null : _callCustomer,
-                          ),
                         ),
                       ],
                     ),

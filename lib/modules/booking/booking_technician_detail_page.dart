@@ -7,6 +7,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox
 import '../../config/routes.dart';
 import '../../services/technician_service.dart';
 import '../../utils/maps_launcher.dart';
+import '../../widget/certified_badge.dart';
 import '../../widgets/skeleton_widgets.dart';
 import 'booking_controller.dart';
 
@@ -126,13 +127,26 @@ class _ProfileHeader extends GetView<BookingController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      tech.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: _ink,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            tech.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: _ink,
+                            ),
+                          ),
+                        ),
+                        if (isCertifiedDemo(tech.uid)) ...[
+                          const SizedBox(width: 8),
+                          const CertifiedBadge.large(),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 3),
                     Row(

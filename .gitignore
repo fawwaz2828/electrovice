@@ -63,3 +63,4 @@ WORKFLOW_BARU.md
 # Firebase Functions
 functions/node_modules/
 functions/lib/
+functions/.env
