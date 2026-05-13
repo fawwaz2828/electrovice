@@ -8,6 +8,7 @@ import '../../config/routes.dart';
 import '../../services/technician_service.dart';
 import '../../utils/maps_launcher.dart';
 import '../../widget/certified_badge.dart';
+import '../../widget/verified_avatar.dart';
 import '../../widgets/skeleton_widgets.dart';
 import 'booking_controller.dart';
 
@@ -121,7 +122,12 @@ class _ProfileHeader extends GetView<BookingController> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Avatar(photoUrl: tech.photoUrl, size: 80),
+              VerifiedAvatar(
+                size: 80,
+                imageUrl: tech.photoUrl,
+                isCertified: tech.isCertified,
+                backgroundColor: const Color(0xFFE6EEFF),
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -142,7 +148,7 @@ class _ProfileHeader extends GetView<BookingController> {
                             ),
                           ),
                         ),
-                        if (isCertifiedDemo(tech.uid)) ...[
+                        if (tech.isCertified) ...[
                           const SizedBox(width: 8),
                           const CertifiedBadge.large(),
                         ],
@@ -247,30 +253,6 @@ class _ProfileHeader extends GetView<BookingController> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Avatar extends StatelessWidget {
-  final String? photoUrl;
-  final double size;
-  const _Avatar({required this.size, this.photoUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        shape: BoxShape.circle,
-        border: Border.all(color: Color(0xFF0A0A0A), width: 1),
-      ),
-      child: photoUrl != null && photoUrl!.isNotEmpty
-          ? ClipOval(
-              child: Image.network(photoUrl!, fit: BoxFit.cover),
-            )
-          : Icon(Icons.person_rounded, color: Color(0xFF94A3B8), size: size * 0.45),
     );
   }
 }

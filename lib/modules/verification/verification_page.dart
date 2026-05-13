@@ -1362,7 +1362,7 @@ class _Step5 extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Saran: Rp 25.000 – Rp 75.000 untuk kebanyakan teknisi.',
+            'Recommended: Rp 25,000 – Rp 75,000 for most technicians.',
             style: TextStyle(color: _hint, fontSize: 12),
           ),
         ],
@@ -1465,7 +1465,7 @@ class _Step6 extends StatelessWidget {
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Akun akan langsung diaktifkan setelah submit.',
+                        'Your account will be activated immediately after submission.',
                         style: TextStyle(
                             color: Color(0xFF166534),
                             fontSize: 12,

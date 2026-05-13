@@ -154,12 +154,12 @@ class BookingService {
   /// Teknisi verifikasi kode 6 digit → status jadi `on_progress`.
   Future<void> verifyCode(String bookingId, String enteredCode) async {
     final snap = await _db.collection('bookings').doc(bookingId).get();
-    if (!snap.exists) throw Exception('Booking tidak ditemukan');
+    if (!snap.exists) throw Exception('Booking not found');
 
     final booking = BookingDocument.fromFirestore(snap);
 
     if (booking.status != BookingStatus.confirmed) {
-      throw Exception('Booking tidak dalam status confirmed');
+      throw Exception('Booking is not in confirmed status');
     }
     if (booking.isCodeExpired) {
       // Kode kadaluarsa → generate ulang agar customer bisa lihat kode baru
@@ -170,10 +170,10 @@ class BookingService {
         'codeExpiryAt': Timestamp.fromDate(newExpiry),
         'updatedAt': FieldValue.serverTimestamp(),
       });
-      throw Exception('Kode sudah kadaluarsa dan telah diperbarui.\nMinta pelanggan lihat kode baru di halaman tracking.');
+      throw Exception('The code has expired and was refreshed.\nAsk the customer to check the new code on the tracking page.');
     }
     if (booking.verificationCode != enteredCode) {
-      throw Exception('Kode verifikasi salah');
+      throw Exception('Invalid verification code');
     }
 
     await _db.collection('bookings').doc(bookingId).update({

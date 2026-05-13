@@ -22,11 +22,10 @@ class _CertificationRegistrationFormPageState
   static const Color _accent = Color(0xFF3254FF);
   static const Color _border = Color(0xFFE2E8F0);
 
-  // ── LSP standard fees (Indonesian Rupiah) ────────────────────
-  static const int _registrationFee = 150000;
-  static const int _examFee = 350000;
-  static const int _adminFee = 25000;
-  static const int _totalCost = _registrationFee + _examFee + _adminFee;
+  // ── Certification fees (Indonesian Rupiah) ───────────────────
+  static const int _examFee = 1500000;
+  static const int _serviceFee = 200000;
+  static const int _totalCost = _examFee + _serviceFee;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -702,11 +701,9 @@ class _CertificationRegistrationFormPageState
           ),
           child: Column(
             children: [
-              _costRow('Registration Fee', _registrationFee),
-              const SizedBox(height: 10),
               _costRow('Exam Fee', _examFee),
               const SizedBox(height: 10),
-              _costRow('Admin Fee', _adminFee),
+              _costRow('Service Fee (Electrovice)', _serviceFee),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 14),
                 child: Divider(color: _border, height: 1),

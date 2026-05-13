@@ -311,20 +311,45 @@ class _BillRow extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 //  SELECTABLE PAYMENT METHOD SECTION
 // ─────────────────────────────────────────────────────────────────
-class _PaymentMethodSection extends StatelessWidget {
+class _PaymentMethodSection extends GetView<BookingController> {
   const _PaymentMethodSection();
 
   @override
   Widget build(BuildContext context) {
-    // Only Cash is available — other methods are not yet integrated
-    return _SelectableTile(
-      icon: Icons.payments_outlined,
-      iconColor: const Color(0xFF16A34A),
-      title: 'Cash',
-      subtitle: 'Pay directly to the technician',
-      selected: true,
-      onTap: () {},
-    );
+    // Prototype only — none of the methods are wired to a real gateway.
+    return Obx(() {
+      final selected = controller.paymentMethod.value;
+      return Column(
+        children: [
+          _SelectableTile(
+            icon: Icons.payments_outlined,
+            iconColor: const Color(0xFF16A34A),
+            title: 'Cash',
+            subtitle: 'Pay directly to the technician',
+            selected: selected == 'cash',
+            onTap: () => controller.setPaymentMethod('cash'),
+          ),
+          const SizedBox(height: 10),
+          _SelectableTile(
+            icon: Icons.account_balance_outlined,
+            iconColor: const Color(0xFF0061FF),
+            title: 'Bank Transfer',
+            subtitle: 'BCA, Mandiri, BNI, BRI',
+            selected: selected == 'bank_transfer',
+            onTap: () => controller.setPaymentMethod('bank_transfer'),
+          ),
+          const SizedBox(height: 10),
+          _SelectableTile(
+            icon: Icons.account_balance_wallet_outlined,
+            iconColor: const Color(0xFF7C3AED),
+            title: 'E-Money',
+            subtitle: 'GoPay, OVO, DANA, ShopeePay',
+            selected: selected == 'e_money',
+            onTap: () => controller.setPaymentMethod('e_money'),
+          ),
+        ],
+      );
+    });
   }
 }
 

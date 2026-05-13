@@ -30,7 +30,6 @@ class _TechnicianProfileEditPageState
   final _bioController = TextEditingController();
   final _workshopAddressController = TextEditingController();
   final _diagnosisFeeController = TextEditingController();
-  final _newAccreditationController = TextEditingController();
 
   // State
   List<String> _deviceCategories = [];
@@ -41,10 +40,9 @@ class _TechnicianProfileEditPageState
   double? _lat;
   double? _lng;
   List<String> _accreditations = [];
-  /// Existing certification photo URLs (from Firestore), parallel to _accreditations
+  /// Existing certification photo URLs (from Firestore), parallel to _accreditations.
+  /// Read-only di halaman ini — edit dilakukan via "Upgrade Certification".
   List<String> _certUrls = [];
-  /// New photo files to upload (null = keep existing URL, if any)
-  List<File?> _certNewFiles = [];
   List<Map<String, dynamic>> _serviceEstimates = [];
   String? _currentPhotoUrl;
   File? _newPhotoFile;
@@ -93,9 +91,9 @@ class _TechnicianProfileEditPageState
         _serviceMethod = List.from(techOnline.serviceMethod);
         _accreditations = List.from(techOnline.accreditations);
         _certUrls = List.from(techOnline.certificationUrls);
-        // Pad _certNewFiles and _certUrls to match _accreditations length
-        while (_certUrls.length < _accreditations.length) { _certUrls.add(''); }
-        _certNewFiles = List.filled(_accreditations.length, null);
+        while (_certUrls.length < _accreditations.length) {
+          _certUrls.add('');
+        }
         if (techOnline.diagnosisFee > 0) {
           _diagnosisFeeController.text = techOnline.diagnosisFee.toString();
         }
@@ -147,19 +145,9 @@ class _TechnicianProfileEditPageState
         await _authService.updateUserPhoto(user.uid, newUrl);
       }
 
-      // Upload any new cert photos and build final URL list
-      final List<String> finalCertUrls = [];
-      for (int i = 0; i < _accreditations.length; i++) {
-        final newFile = i < _certNewFiles.length ? _certNewFiles[i] : null;
-        if (newFile != null) {
-          final uploaded = await _storageService.uploadCertifications(
-              user.uid, [newFile]);
-          finalCertUrls.add(uploaded.isNotEmpty ? uploaded.first : '');
-        } else {
-          finalCertUrls.add(i < _certUrls.length ? _certUrls[i] : '');
-        }
-      }
-
+      // Sertifikat tidak lagi diedit di halaman ini — kirim apa adanya
+      // agar tidak overwrite data existing. Submit/edit sertifikat
+      // dilakukan via halaman "Upgrade Certification".
       await _technicianService.updateTechnicianProfile(
         user.uid,
         name: _nameController.text.trim(),
@@ -172,7 +160,7 @@ class _TechnicianProfileEditPageState
         lat: _lat!,
         lng: _lng!,
         accreditations: _accreditations,
-        certificationUrls: finalCertUrls,
+        certificationUrls: _certUrls,
         serviceEstimates: _serviceEstimates,
         diagnosisFee: diagFee,
         deviceCategories: _deviceCategories,
@@ -218,38 +206,6 @@ class _TechnicianProfileEditPageState
     }
   }
 
-  void _addAccreditation() {
-    final text = _newAccreditationController.text.trim();
-    if (text.isEmpty) return;
-    setState(() {
-      _accreditations.add(text);
-      _certUrls.add('');
-      _certNewFiles.add(null);
-      _newAccreditationController.clear();
-    });
-  }
-
-  void _removeAccreditation(int index) {
-    setState(() {
-      _accreditations.removeAt(index);
-      if (index < _certUrls.length) _certUrls.removeAt(index);
-      if (index < _certNewFiles.length) _certNewFiles.removeAt(index);
-    });
-  }
-
-  Future<void> _pickCertPhoto(int index) async {
-    final picked = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-    if (picked != null) {
-      setState(() {
-        while (_certNewFiles.length <= index) { _certNewFiles.add(null); }
-        _certNewFiles[index] = File(picked.path);
-      });
-    }
-  }
-
   void _removeServiceEstimate(int index) {
     setState(() => _serviceEstimates.removeAt(index));
   }
@@ -262,7 +218,6 @@ class _TechnicianProfileEditPageState
     _bioController.dispose();
     _workshopAddressController.dispose();
     _diagnosisFeeController.dispose();
-    _newAccreditationController.dispose();
     super.dispose();
   }
 
@@ -546,125 +501,106 @@ class _TechnicianProfileEditPageState
     );
   }
 
-  // ── ACCREDITATION SECTION ────────────────────────────────────────
+  // ── ACCREDITATION SECTION (read-only, edit via Upgrade page) ────
   Widget _buildAccreditationSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Existing certs with photo
         if (_accreditations.isNotEmpty) ...[
           ..._accreditations.asMap().entries.map((entry) {
             final i = entry.key;
             final name = entry.value;
-            final newFile = i < _certNewFiles.length ? _certNewFiles[i] : null;
-            final existingUrl = i < _certUrls.length ? _certUrls[i] : '';
-            final hasPhoto = newFile != null || existingUrl.isNotEmpty;
-
+            final url = i < _certUrls.length ? _certUrls[i] : '';
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Color(0xFFF8F9FB),
+                color: const Color(0xFFF8F9FB),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 children: [
-                  // Photo thumbnail / upload button
-                  GestureDetector(
-                    onTap: () => _pickCertPhoto(i),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: hasPhoto
-                          ? (newFile != null
-                              ? Image.file(newFile,
-                                  width: 52, height: 52, fit: BoxFit.cover)
-                              : Image.network(existingUrl,
-                                  width: 52, height: 52, fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => _certPlaceholder()))
-                          : _certPlaceholder(),
-                    ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: url.isNotEmpty
+                        ? Image.network(url,
+                            width: 52,
+                            height: 52,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _certPlaceholder())
+                        : _certPlaceholder(),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: _ink,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        GestureDetector(
-                          onTap: () => _pickCertPhoto(i),
-                          child: Text(
-                            hasPhoto ? 'Change photo' : 'Upload certificate photo',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: _accent,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: _ink,
+                      ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () => _removeAccreditation(i),
-                    child: const Icon(Icons.delete_outline_rounded,
-                        size: 20, color: Color(0xFFE11D48)),
                   ),
                 ],
               ),
             );
           }),
-          const SizedBox(height: 8),
-        ],
+          const SizedBox(height: 4),
+        ] else
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F9FB),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              'No certificates yet. Tap the button below to submit a certificate and earn the "certified" badge.',
+              style: TextStyle(
+                fontSize: 13,
+                color: _muted,
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+          ),
+        const SizedBox(height: 10),
 
-        // Add new cert name
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _newAccreditationController,
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  hintText: 'Example: Apple Certified',
-                  hintStyle: TextStyle(
-                    color: _muted.withValues(alpha: 0.5),
-                    fontWeight: FontWeight.w400,
-                  ),
-                  filled: true,
-                  fillColor: Color(0xFFF8F9FB),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
-                ),
+        // CTA → halaman submit sertifikat (di luar edit profile)
+        InkWell(
+          onTap: () => Get.toNamed(AppRoutes.upgradeCertification),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              color: _accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _accent.withValues(alpha: 0.3),
               ),
             ),
-            const SizedBox(width: 10),
-            GestureDetector(
-              onTap: _addAccreditation,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _accent,
-                  borderRadius: BorderRadius.circular(12),
+            child: Row(
+              children: [
+                const Icon(Icons.workspace_premium_rounded,
+                    color: _accent, size: 22),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Submit a new certificate via "Upgrade Certification"',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _accent,
+                    ),
+                  ),
                 ),
-                child: const Icon(Icons.add_rounded,
-                    color: Colors.white, size: 22),
-              ),
+                const Icon(Icons.chevron_right_rounded,
+                    color: _accent, size: 20),
+              ],
             ),
-          ],
+          ),
         ),
       ],
     );
@@ -675,7 +611,7 @@ class _TechnicianProfileEditPageState
       width: 52,
       height: 52,
       color: const Color(0xFFE2E8F0),
-      child: const Icon(Icons.upload_file_outlined,
+      child: const Icon(Icons.workspace_premium_rounded,
           size: 22, color: Color(0xFF94A3B8)),
     );
   }
@@ -729,10 +665,18 @@ class _TechnicianProfileEditPageState
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => _removeServiceEstimate(entry.key),
-                    child: const Icon(Icons.delete_outline_rounded,
+                  IconButton(
+                    onPressed: () => _removeServiceEstimate(entry.key),
+                    icon: const Icon(Icons.delete_outline_rounded,
                         size: 20, color: Color(0xFFE11D48)),
+                    splashRadius: 22,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                    padding: EdgeInsets.zero,
+                    tooltip: 'Remove estimate',
                   ),
                 ],
               ),

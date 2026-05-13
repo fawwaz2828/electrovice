@@ -6,6 +6,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox
 import '../../config/routes.dart';
 import '../../services/technician_service.dart';
 import '../../widget/certified_badge.dart';
+import '../../widget/verified_avatar.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────
 const Color _ink  = Color(0xFF0A0A0A);
@@ -738,24 +739,11 @@ class _TechnicianCard extends StatelessWidget {
         child: Row(
           children: [
             // ── Avatar ─────────────────────────────────────────
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Color(0xFFF1F5F9),
-                shape: BoxShape.circle,
-                border: Border.all(color: Color(0xFF0A0A0A), width: 1),
-              ),
-              child: technician.photoUrl != null &&
-                      technician.photoUrl!.isNotEmpty
-                  ? ClipOval(
-                      child: Image.network(
-                        technician.photoUrl!,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : const Icon(Icons.person_rounded,
-                      color: Color(0xFF94A3B8), size: 28),
+            VerifiedAvatar(
+              size: 60,
+              imageUrl: technician.photoUrl,
+              isCertified: technician.isCertified,
+              backgroundColor: const Color(0xFFF1F5F9),
             ),
             const SizedBox(width: 12),
 
@@ -778,7 +766,7 @@ class _TechnicianCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (isCertifiedDemo(technician.uid)) ...[
+                      if (technician.isCertified) ...[
                         const SizedBox(width: 6),
                         const CertifiedBadge(),
                       ],

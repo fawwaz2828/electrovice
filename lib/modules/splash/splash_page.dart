@@ -90,12 +90,12 @@ class _SplashPageState extends State<SplashPage>
               ),
               const SizedBox(height: 20),
               const Text(
-                'Update Tersedia',
+                'Update Available',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               Text(
-                'Versi $latestVersion sudah tersedia.\nPerbarui aplikasi untuk melanjutkan.',
+                'Version $latestVersion is now available.\nUpdate the app to continue.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 13,
@@ -123,7 +123,7 @@ class _SplashPageState extends State<SplashPage>
                     elevation: 0,
                   ),
                   child: const Text(
-                    'Download Sekarang',
+                    'Download Now',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                   ),
                 ),

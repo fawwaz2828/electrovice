@@ -324,11 +324,11 @@ class TechnicianOnboardingController extends GetxController {
       final List<Map<String, dynamic>> initialServices = [];
       if (fee > 0) {
         initialServices.add({
-          'service': 'Diagnosa',
+          'service': 'Diagnosis',
           'minPrice': fee,
           'maxPrice': fee,
           'description':
-              'Pemeriksaan awal kondisi perangkat untuk menentukan kerusakan dan estimasi biaya perbaikan.',
+              'Initial inspection of the device to determine the issue and provide a repair cost estimate.',
           'duration': 'same_day',
         });
       }
@@ -345,6 +345,15 @@ class TechnicianOnboardingController extends GetxController {
         'location': point.data,
         'accreditations': certificationNames.map((n) => n.trim()).where((n) => n.isNotEmpty).toList(),
         'certificationUrls': certUrls, // foto sertifikat dari upload
+        // Cert baru selalu masuk antrian approval admin → isCertified false
+        // sampai admin meng-approve di halaman admin.
+        'isCertified': false,
+        'certificationStatus': (certificationNames
+                    .map((n) => n.trim())
+                    .any((n) => n.isNotEmpty) &&
+                certUrls.any((u) => u.trim().isNotEmpty))
+            ? 'pending'
+            : 'none',
         'serviceEstimates': initialServices,
         'serviceRadius': radius,
         'diagnosisFee': fee,

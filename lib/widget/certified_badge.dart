@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// Demo-only allowlist of technician UIDs that render the "Certified" badge.
+/// UID dua akun demo bersertifikat yang di-seed oleh
+/// [CertificationMigrationService.seedDemoCertifiedTechnicians].
 ///
-/// These are mock IDs for the demo build — the badge will appear next to a
-/// technician's name only if their `technicians_online.uid` field matches one
-/// of these strings. Replace or extend with real Firebase Auth UIDs to flag
-/// production accounts as certified.
+/// Sumber kebenaran sebenarnya untuk badge adalah field
+/// `technicians_online.isCertified` di Firestore — konstanta ini hanya
+/// dipakai sebagai dokumentasi / tooling.
 const Set<String> kCertifiedDemoUids = {
   'tech_001',
   'tech_002',
 };
-
-bool isCertifiedDemo(String? uid) =>
-    uid != null && kCertifiedDemoUids.contains(uid);
 
 /// Compact "Certified" badge designed to sit inline next to a technician name.
 ///

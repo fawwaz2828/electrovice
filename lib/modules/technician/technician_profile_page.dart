@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../models/technician_model.dart';
 import '../../services/auth_service.dart';
 import '../../widget/app_bottom_nav_bar.dart';
+import '../../widget/verified_avatar.dart';
 import '../../config/routes.dart';
 import '../../widgets/skeleton_widgets.dart';
 import 'technician_controller.dart';
@@ -60,8 +61,24 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
                 const SizedBox(height: 20),
 
                 // ── Profile hero ──────────────────────────────────────
-                _ProfileHero(data: data),
-                const SizedBox(height: 16),
+                Obx(() => _ProfileHero(
+                      data: data,
+                      isCertified: controller.hasCertification.value,
+                    )),
+                const SizedBox(height: 12),
+
+                // ── Certification approval status banner ──────────────
+                Obx(() {
+                  final status = controller.certificationStatus.value;
+                  if (status != 'pending' && status != 'declined') {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                    child: _CertStatusBanner(status: status),
+                  );
+                }),
+                const SizedBox(height: 4),
 
                 // ── Stats row ─────────────────────────────────────────
                 Padding(
@@ -201,6 +218,73 @@ class TechnicianProfilePage extends GetView<TechnicianController> {
   }
 }
 
+// ── Certification approval status banner ────────────────────────────────────
+class _CertStatusBanner extends StatelessWidget {
+  final String status; // 'pending' | 'declined'
+  const _CertStatusBanner({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = status == 'pending';
+    final Color bg = isPending
+        ? const Color(0xFFFEF3C7)
+        : const Color(0xFFFEE2E2);
+    final Color fg = isPending
+        ? const Color(0xFFB45309)
+        : const Color(0xFFB91C1C);
+    final IconData icon = isPending
+        ? Icons.hourglass_top_rounded
+        : Icons.cancel_outlined;
+    final String title = isPending
+        ? 'Waiting for admin approval'
+        : 'Certificate declined';
+    final String subtitle = isPending
+        ? 'Your uploaded certificate is being verified. The "certified" badge will appear once the admin approves it.'
+        : 'The admin declined your certificate. Please edit and upload again.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: fg.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: fg, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: fg,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: fg.withValues(alpha: 0.85),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Icon button (top bar) ────────────────────────────────────────────────────
 class _IconBtn extends StatelessWidget {
   final IconData icon;
@@ -228,9 +312,9 @@ class _IconBtn extends StatelessWidget {
 // ── Profile hero card ────────────────────────────────────────────────────────
 class _ProfileHero extends StatelessWidget {
   final TechnicianProfileData data;
-  const _ProfileHero({required this.data});
+  final bool isCertified;
+  const _ProfileHero({required this.data, this.isCertified = false});
 
-  static const Color _blue = Color(0xFF0061FF);
   static const Color _ink  = Color(0xFF0A0A0A);
   static const Color _muted= Color(0xFF64748B);
 
@@ -246,44 +330,10 @@ class _ProfileHero extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Avatar circle
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFFEEF4FF),
-                  image: (data.avatarUrl != null && data.avatarUrl!.isNotEmpty)
-                      ? DecorationImage(
-                          image: NetworkImage(data.avatarUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: (data.avatarUrl == null || data.avatarUrl!.isEmpty)
-                    ? const Icon(Icons.person_rounded,
-                        color: Color(0xFF0061FF), size: 48)
-                    : null,
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: _blue,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2.5),
-                  ),
-                  child: const Icon(Icons.verified_rounded,
-                      color: Colors.white, size: 14),
-                ),
-              ),
-            ],
+          VerifiedAvatar(
+            size: 96,
+            imageUrl: data.avatarUrl,
+            isCertified: isCertified,
           ),
           const SizedBox(height: 16),
           // Name

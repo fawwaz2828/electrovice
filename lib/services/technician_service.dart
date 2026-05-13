@@ -49,6 +49,40 @@ class TechnicianService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
+    // Cek apakah cert berubah dibanding data existing → kalau berubah,
+    // reset status ke 'pending' (perlu approve ulang oleh admin).
+    final existing = await _firestore
+        .collection('technicians_online')
+        .doc(uid)
+        .get();
+    final existingData = existing.data() ?? const <String, dynamic>{};
+    final List<String> oldAccr =
+        (existingData['accreditations'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+    final List<String> oldUrls =
+        (existingData['certificationUrls'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+    final String oldStatus =
+        existingData['certificationStatus'] as String? ?? 'none';
+
+    final bool hasCertData = accreditations.isNotEmpty &&
+        certificationUrls.any((u) => u.trim().isNotEmpty);
+    final bool certChanged = !_listEq(oldAccr, accreditations) ||
+        !_listEq(oldUrls, certificationUrls);
+
+    String newStatus;
+    if (!hasCertData) {
+      newStatus = 'none';
+    } else if (certChanged) {
+      // Ada cert baru / diubah → kembali ke pending walaupun sebelumnya approved.
+      newStatus = 'pending';
+    } else {
+      newStatus = oldStatus;
+    }
+    final bool isCertified = newStatus == 'approved';
+
     // Update collection technicians_online
     await _firestore.collection('technicians_online').doc(uid).set({
       'uid': uid,
@@ -60,6 +94,8 @@ class TechnicianService {
       'location': point.data,
       'accreditations': accreditations,
       'certificationUrls': certificationUrls,
+      'isCertified': isCertified,
+      'certificationStatus': newStatus,
       'serviceEstimates': serviceEstimates,
       'serviceRadius': serviceRadius,
       'deviceCategories': deviceCategories,
@@ -67,6 +103,74 @@ class TechnicianService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     // merge: true supaya rating & totalJobs tidak tertimpa
+  }
+
+  static bool _listEq(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  // ── SUBMIT CERTIFICATION (rich data dari form) ────────────────
+  /// Tambah satu entry sertifikasi baru dengan detail lengkap.
+  /// Append ke `accreditations`, `certificationUrls`, dan
+  /// `certificationDetails` (array map paralel). Set status `pending`
+  /// agar masuk antrian approval admin.
+  Future<void> submitCertification(
+    String uid, {
+    required String name,
+    required String issuer,
+    String certNumber = '',
+    required DateTime issueDate,
+    DateTime? expiryDate,
+    required String specialty,
+    String notes = '',
+    required String photoUrl,
+  }) async {
+    final docRef = _firestore.collection('technicians_online').doc(uid);
+    final snap = await docRef.get();
+    final data = snap.data() ?? const <String, dynamic>{};
+
+    final List<String> accr =
+        (data['accreditations'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+    final List<String> urls =
+        (data['certificationUrls'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+    final List<Map<String, dynamic>> details =
+        (data['certificationDetails'] as List<dynamic>? ?? [])
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+
+    accr.add(name);
+    urls.add(photoUrl);
+    details.add({
+      'name': name,
+      'issuer': issuer,
+      'certNumber': certNumber,
+      'issueDate': Timestamp.fromDate(issueDate),
+      'expiryDate':
+          expiryDate != null ? Timestamp.fromDate(expiryDate) : null,
+      'specialty': specialty,
+      'notes': notes,
+      'photoUrl': photoUrl,
+      'status': 'pending',
+      'submittedAt': Timestamp.now(),
+    });
+
+    await docRef.set({
+      'accreditations': accr,
+      'certificationUrls': urls,
+      'certificationDetails': details,
+      'certificationStatus': 'pending',
+      'isCertified': false,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   // ── UPDATE WORKSHOP ADDRESS ONLY ──────────────────────────────
@@ -206,11 +310,11 @@ class TechnicianService {
     if (hasDiagnosa) return list;
     return [
       ServiceEstimate(
-        service: 'Diagnosa',
+        service: 'Diagnosis',
         minPrice: diagFee,
         maxPrice: diagFee,
         description:
-            'Pemeriksaan awal kondisi perangkat untuk menentukan kerusakan dan estimasi biaya perbaikan.',
+            'Initial inspection of the device to determine the issue and provide a repair cost estimate.',
         duration: 'same_day',
       ),
       ...list,
@@ -286,6 +390,16 @@ class TechnicianOnlineModel {
   // Koordinat workshop — null jika belum pernah di-set
   final double? lat;
   final double? lng;
+  /// Single source of truth untuk status sertifikasi LSP teknisi.
+  /// Diisi `true` hanya setelah pendaftaran sertifikasi disetujui.
+  /// Mengontrol tampil/sembunyinya menu "Upgrade Certification" dan
+  /// rendering [CertifiedBadge].
+  final bool isCertified;
+
+  /// Status approval admin untuk sertifikat yang diupload teknisi.
+  /// Nilai: 'none' | 'pending' | 'approved' | 'declined'.
+  /// `isCertified` hanya true jika nilai ini == 'approved'.
+  final String certificationStatus;
 
   const TechnicianOnlineModel({
     required this.uid,
@@ -307,6 +421,8 @@ class TechnicianOnlineModel {
     this.photoUrl,
     this.lat,
     this.lng,
+    this.isCertified = false,
+    this.certificationStatus = 'none',
   });
 
   factory TechnicianOnlineModel.fromMap(
@@ -378,6 +494,9 @@ class TechnicianOnlineModel {
           .toList(),
       lat: lat,
       lng: lng,
+      isCertified: map['isCertified'] as bool? ?? false,
+      certificationStatus:
+          map['certificationStatus'] as String? ?? 'none',
     );
   }
 

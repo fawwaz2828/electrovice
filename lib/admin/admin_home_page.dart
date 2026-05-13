@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../config/routes.dart';
 import '../services/auth_service.dart';
+import '../services/certification_migration_service.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -167,6 +168,13 @@ class _AdminHomePageState extends State<AdminHomePage>
         ],
       ),
       actions: [
+        _CertApprovalAction(),
+        IconButton(
+          tooltip: 'Migrate certifications',
+          icon: const Icon(Icons.cleaning_services_rounded,
+              color: Colors.white70, size: 20),
+          onPressed: _confirmRunMigration,
+        ),
         IconButton(
           icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 22),
           onPressed: () async {
@@ -176,6 +184,52 @@ class _AdminHomePageState extends State<AdminHomePage>
         ),
       ],
     );
+  }
+
+  // ── Migration: reset legacy cert data + seed 2 demo techs ─────────
+  Future<void> _confirmRunMigration() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Run certification migration?'),
+        content: const Text(
+          'This will:\n'
+          '• Set isCertified = false on ALL technicians\n'
+          '• Clear accreditations & certificate URLs\n'
+          '• Delete all certification_registrations docs\n'
+          '• Seed demo accounts tech_001 & tech_002 as certified\n\n'
+          'Safe to re-run.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Run')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final result = await CertificationMigrationService().runFullMigration();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // close progress
+      Get.snackbar('Migration complete', result.toString(),
+          snackPosition: SnackPosition.TOP);
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      Get.snackbar('Migration failed', '$e',
+          snackPosition: SnackPosition.TOP);
+    }
   }
 
   Widget _buildStatsSection(int p, int v, int d) {
@@ -345,26 +399,89 @@ class _AdminHomePageState extends State<AdminHomePage>
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(
-                    color: statusColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                    letterSpacing: 0.5),
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                        letterSpacing: 0.5),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                IconButton(
+                  onPressed: () => _confirmDeleteTechnician(
+                      tech['uid'] as String, tech['name'] as String),
+                  icon: const Icon(Icons.delete_outline_rounded,
+                      color: _colorDeclined, size: 20),
+                  tooltip: 'Delete technician',
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  // ── Delete technician from BOTH users & technicians_online ────────
+  Future<void> _confirmDeleteTechnician(String uid, String name) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete technician?'),
+        content: Text(
+          'This will permanently delete $name from both the users and technicians_online collections. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _colorDeclined,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      // Delete from both collections in parallel
+      await Future.wait([
+        FirebaseFirestore.instance.collection('users').doc(uid).delete(),
+        FirebaseFirestore.instance
+            .collection('technicians_online')
+            .doc(uid)
+            .delete(),
+      ]);
+      Get.snackbar('Deleted', '$name has been removed',
+          snackPosition: SnackPosition.TOP);
+    } catch (e) {
+      Get.snackbar('Failed to delete', '$e',
+          snackPosition: SnackPosition.TOP);
+    }
   }
 
   Widget _buildChip(String label) {
@@ -387,6 +504,58 @@ class _AdminHomePageState extends State<AdminHomePage>
       child: Text(label,
           style: TextStyle(
               color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+// ─── Pending certification approval action (with badge count) ────────────
+class _CertApprovalAction extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('technicians_online')
+          .where('certificationStatus', isEqualTo: 'pending')
+          .snapshots(),
+      builder: (context, snap) {
+        final count = snap.data?.docs.length ?? 0;
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              tooltip: 'Approve certifications',
+              icon: const Icon(Icons.workspace_premium_rounded,
+                  color: Colors.white70, size: 20),
+              onPressed: () =>
+                  Get.toNamed(AppRoutes.adminCertificationApproval),
+            ),
+            if (count > 0)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 5, vertical: 1),
+                  constraints: const BoxConstraints(minWidth: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Text(
+                    count > 9 ? '9+' : '$count',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

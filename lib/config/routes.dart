@@ -46,8 +46,10 @@ import '../modules/notification/notification_page.dart';
 import '../modules/technician/technician_pending_page.dart';
 import '../modules/technician/upgrade_certification_page.dart';
 import '../modules/technician/certification_registration_form_page.dart';
+import '../modules/technician/certification_submit_form_page.dart';
 import '../admin/admin_home_page.dart';
 import '../admin/admin_verification_page.dart';
+import '../admin/admin_certification_approval_page.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -90,8 +92,10 @@ class AppRoutes {
   static const upgradeCertification = '/technician/upgrade-certification';
   static const certificationRegistration =
       '/technician/certification-registration';
+  static const certificationSubmit = '/technician/certification-submit';
   static const adminHome = '/admin-home';
   static const adminVerification = '/admin-verification';
+  static const adminCertificationApproval = '/admin-certification-approval';
 
   static final routes = [
     GetPage(
@@ -346,6 +350,10 @@ class AppRoutes {
       name: adminVerification,
       page: () => const AdminVerificationPage(),
     ),
+    GetPage(
+      name: adminCertificationApproval,
+      page: () => const AdminCertificationApprovalPage(),
+    ),
 
     // ── Technician Pending ───────────────────────────────────────
     GetPage(
@@ -365,6 +373,10 @@ class AppRoutes {
     GetPage(
       name: certificationRegistration,
       page: () => const CertificationRegistrationFormPage(),
+    ),
+    GetPage(
+      name: certificationSubmit,
+      page: () => const CertificationSubmitFormPage(),
     ),
   ];
 }

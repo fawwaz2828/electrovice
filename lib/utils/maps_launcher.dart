@@ -31,13 +31,13 @@ class MapsLauncher {
     }
 
     Get.snackbar(
-      'Tidak Bisa Membuka Maps',
-      'Pastikan aplikasi Maps sudah terpasang',
+      "Can't open Maps",
+      'Make sure the Maps app is installed',
       snackPosition: SnackPosition.TOP,
     );
   }
 
-  /// Buka Google Maps pencarian berdasarkan teks alamat.
+  /// Open Google Maps search by address text.
   static Future<void> searchAddress(String address) async {
     final encoded = Uri.encodeComponent(address);
     final uri = Uri.parse(
@@ -48,8 +48,8 @@ class MapsLauncher {
       return;
     }
     Get.snackbar(
-      'Tidak Bisa Membuka Maps',
-      'Periksa koneksi internet',
+      "Can't open Maps",
+      'Check your internet connection',
       snackPosition: SnackPosition.TOP,
     );
   }

@@ -19,11 +19,24 @@ class StorageService {
   Future<List<String>> uploadCertifications(String uid, List<File> files) async {
     final List<String> urls = [];
     for (int i = 0; i < files.length; i++) {
-      final ref = _storage.ref('technicians/$uid/certifications/cert_$i.jpg');
+      // Pakai timestamp + index supaya tiap upload punya path unik
+      // dan tidak menimpa file sebelumnya.
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final ref = _storage
+          .ref('technicians/$uid/certifications/cert_${ts}_$i.jpg');
       await ref.putFile(files[i], SettableMetadata(contentType: 'image/jpeg'));
       urls.add(await ref.getDownloadURL());
     }
     return urls;
+  }
+
+  /// Upload satu foto sertifikat dengan nama unik. Digunakan oleh form
+  /// submit sertifikasi yang baru.
+  Future<String> uploadSingleCertification(String uid, File file) async {
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final ref = _storage.ref('technicians/$uid/certifications/cert_$ts.jpg');
+    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
+    return await ref.getDownloadURL();
   }
 
   Future<String> uploadProfilePhoto(String uid, File file) async {

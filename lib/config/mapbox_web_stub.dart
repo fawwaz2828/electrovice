@@ -83,7 +83,7 @@ class MapWidget extends StatelessWidget {
             Icon(Icons.map_outlined, size: 64, color: Color(0xFF94A3B8)),
             SizedBox(height: 12),
             Text(
-              'Peta tidak tersedia di web',
+              'Map is not available on the web',
               style: TextStyle(
                 color: Color(0xFF64748B),
                 fontSize: 16,
@@ -92,7 +92,7 @@ class MapWidget extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'Gunakan aplikasi mobile untuk memilih lokasi',
+              'Use the mobile app to pick a location',
               style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
             ),
           ],
